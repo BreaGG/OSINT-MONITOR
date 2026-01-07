@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/ingest?token=${INGEST_SECRET}",
+      "schedule": "*/30 * * * *"
+    }
+  ]
+}

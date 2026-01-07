@@ -1,16 +1,33 @@
 import Parser from "rss-parser"
 import { NextResponse } from "next/server"
 import { rssSources } from "@/lib/rssSources"
-import { Event } from "@/lib/types"
-import { eventStore } from "@/lib/eventStore"
 import { detectCountry } from "@/lib/detectCountry"
+import { detectCategory } from "@/lib/detectCategory"
 import { extractImage } from "@/lib/extractImage"
 import { extractArticle } from "@/lib/extractArticle"
-import { detectCategory } from "@/lib/detectCategory"
+import sql from "@/lib/db"
+import { Event } from "@/lib/types"
+import { headers } from "next/headers"
+
 
 const parser = new Parser()
 
-export async function GET() {
+export async function GET(request: Request) {
+  const headersList = await headers()
+  const authHeader = headersList.get("authorization")
+
+  const { searchParams } = new URL(request.url)
+  const token = searchParams.get("token")
+
+  if (
+    authHeader !== `Bearer ${process.env.INGEST_SECRET}` &&
+    token !== process.env.INGEST_SECRET
+  ) {
+    return new NextResponse("Unauthorized", { status: 401 })
+  }
+
+  let inserted = 0
+
   for (const source of rssSources) {
     try {
       const feed = await parser.parseURL(source.url)
@@ -18,26 +35,28 @@ export async function GET() {
       for (const item of feed.items.slice(0, 20)) {
         const id = `${source.name}-${item.guid || item.link}`
 
-        // Evitar duplicados
-        if (eventStore.some(e => e.id === id)) continue
+        // 🔍 Evitar duplicados (DB, no memoria)
+        const existing = await sql`
+          select id from events where id = ${id}
+        `
+        if (existing.length > 0) continue
 
         const text = `${item.title ?? ""} ${item.contentSnippet ?? ""}`
-        const category = detectCategory(text)
         const detected = detectCountry(text)
+        const category = detectCategory(text)
 
-        // 1️⃣ Intentar imagen desde RSS
-        let image: string | undefined =
+        let image =
           (item.enclosure && item.enclosure.url) ||
           (item as any)["media:content"]?.url ||
-          (item as any)["media:thumbnail"]?.url
+          undefined
 
         if (!image && item.link) {
           image = await extractImage(item.link)
         }
 
         const content = item.link
-        ? await extractArticle(item.link)
-        : []
+          ? await extractArticle(item.link)
+          : []
 
         const event: Event = {
           id,
@@ -54,7 +73,27 @@ export async function GET() {
           content,
         }
 
-        eventStore.push(event)
+        await sql`
+          insert into events (
+            id, title, summary, category, country,
+            lat, lon, date, source, url, image, content
+          ) values (
+            ${event.id},
+            ${event.title},
+            ${event.summary},
+            ${event.category},
+            ${event.country},
+            ${event.lat ?? null},
+            ${event.lon ?? null},
+            ${event.date},
+            ${event.source},
+            ${event.url},
+            ${event.image ?? null},
+            ${event.content ? JSON.stringify(event.content) : null}
+          )
+        `
+
+        inserted++
       }
     } catch (error) {
       console.error(`Error ingesting ${source.name}`, error)
@@ -63,6 +102,6 @@ export async function GET() {
 
   return NextResponse.json({
     status: "ok",
-    count: eventStore.length,
+    inserted,
   })
 }
