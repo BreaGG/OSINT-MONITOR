@@ -1,115 +1,101 @@
 # Global OSINT Monitor
 
-Global OSINT Monitor is a web-based platform designed to collect, classify, and visualize open-source intelligence (OSINT) events from public news sources around the world.
+Global OSINT Monitor is a web-based platform focused on the collection, enrichment, and visualization of open-source intelligence (OSINT) related to global events. The project aims to provide a clear, structured, and continuously updated view of relevant world news by transforming unstructured information into actionable, geolocated events.
 
-The system automatically ingests news feeds, categorizes events, geolocates them, and presents the information through an interactive map and a structured news feed.
-
----
-
-## Features
-
-- Automated ingestion of global news sources via RSS
-- Event categorization (conflict, disaster, politics, health)
-- Country and geolocation detection
-- Interactive world map with event markers
-- Event detail pages with extended content
-- Persistent storage using PostgreSQL
-- Serverless-ready architecture
-- Automated background ingestion via cron jobs
-- Deployed and production-ready on Vercel
+Rather than acting as a simple news aggregator, the platform emphasizes contextualization: identifying where events occur, what type of events they are, and how they relate to broader global trends.
 
 ---
 
-## Tech Stack
+## Project Vision
 
-### Frontend
-- Next.js (App Router)
-- React
-- TypeScript
-- Tailwind CSS
-- Leaflet / React-Leaflet
+In an environment saturated with information, Global OSINT Monitor is designed to reduce noise and surface meaningful signals. The platform automatically processes publicly available news sources and converts them into structured data that can be explored visually and textually.
 
-### Backend
-- Next.js API Routes
-- PostgreSQL (Supabase, pooled connection)
-- RSS ingestion with rss-parser
-- Serverless-compatible SQL client
+The goal is to support use cases such as:
+- Situational awareness and global monitoring
+- Trend analysis across regions and categories
+- Early detection of emerging conflicts, crises, or public health events
+- Exploratory analysis of international news patterns
 
-### Infrastructure
-- Vercel (hosting, cron jobs)
-- Supabase Postgres (database)
-- Environment-based configuration
+The project is built with extensibility in mind, allowing future expansion toward analytics, trend detection, and deeper OSINT workflows.
 
 ---
 
-## Architecture Overview
+## Core Capabilities
 
-The platform follows a serverless-first architecture:
+### Automated Intelligence Collection
+The system continuously ingests data from multiple public news sources, ensuring a steady flow of up-to-date information without manual intervention.
 
-- News sources are periodically ingested through a protected API endpoint.
-- Events are deduplicated and stored in a PostgreSQL database.
-- The frontend fetches persisted events through read-only API endpoints.
-- A cron job triggers ingestion automatically at regular intervals.
-- No in-memory state is used; all data is persisted.
+### Event Classification
+Each event is automatically categorized into high-level domains such as conflict, disaster, politics, or health. This classification enables efficient filtering and thematic exploration of global events.
 
----
+### Geolocation and Context
+Events are enriched with country-level and geographic information, allowing them to be placed on a world map. This spatial context is central to understanding how events are distributed globally.
 
-## Environment Variables
+### Visual Exploration
+An interactive map provides a global overview of events, while a structured news feed allows for detailed inspection. Users can quickly move from a high-level geographic perspective to individual event details.
 
-The following environment variables are required:
+### Detailed Event Views
+Each event includes extended contextual information, enabling users to understand not only what happened, but also the surrounding narrative and implications.
 
-```env
-POSTGRES_URL=postgres://user:password@pooler.supabase.com:6543/postgres
-INGEST_SECRET=your_secret_token
-````
-
-Environment variables are managed through Vercel for production deployments.
+### Data Persistence
+All processed events are stored persistently, allowing historical exploration and ensuring continuity across system restarts. This design supports longitudinal analysis rather than ephemeral data consumption.
 
 ---
 
-## API Endpoints
+## Design Principles
 
-### GET /api/events
+The project follows several key design principles:
 
-Returns the latest persisted events.
-
-### GET /api/ingest
-
-Triggers ingestion of external news sources.
-Protected via token-based authentication.
-
-Example:
-
-```
-/api/ingest?token=YOUR_SECRET
-```
+- **Automation-first**: once configured, the system operates without manual intervention.
+- **Stateless processing**: no reliance on in-memory data, ensuring consistency and reliability.
+- **Scalability by design**: built to handle increasing data volume and additional sources.
+- **Clarity over complexity**: prioritizing understandable data structures and transparent logic.
+- **Extensibility**: new data sources, categories, and analytical layers can be added without redesigning the core system.
 
 ---
 
-## Deployment
+## Use Cases
 
-The project is deployed on Vercel and uses scheduled cron jobs to automatically ingest new events.
+While the platform is generic by design, it is particularly well suited for:
 
-To deploy:
+- OSINT practitioners and analysts
+- Journalists and researchers tracking global developments
+- Security and risk analysis contexts
+- Educational use in data analysis or international relations
+- Technical demonstrations of data ingestion, enrichment, and visualization pipelines
 
-1. Push the repository to GitHub
-2. Import the project into Vercel
-3. Configure environment variables
-4. Deploy
+---
 
-No additional infrastructure setup is required.
+## Future Evolution
+
+Global OSINT Monitor is intended as a foundation rather than a finished product. Potential future extensions include:
+
+- Trend detection and time-based analytics
+- Advanced search and filtering capabilities
+- Event clustering and similarity analysis
+- Region-based dashboards and summaries
+- Integration with additional open data sources
 
 ---
 
 ## Project Status
 
-This project is production-ready and designed as a foundation for further OSINT analysis features such as trending detection, search, and analytics.
+The project is stable, functional, and production-ready. It represents a complete end-to-end system covering data ingestion, processing, persistence, and visualization, and is suitable as a base for further experimentation or real-world applications.
+
+---
+
+## Disclaimer
+
+This project is intended for educational and research purposes only.
+
+Global OSINT Monitor collects and processes information exclusively from publicly available sources. The platform does not generate original intelligence, nor does it verify, validate, or endorse the accuracy, completeness, or reliability of the information presented.
+
+All content displayed reflects the original sources and should be interpreted accordingly. The project is not intended to be used as a decision-making tool for operational, legal, political, or security-related actions.
+
+The author assumes no responsibility for the use, interpretation, or consequences derived from the information provided by this platform.
 
 ---
 
 ## License
 
 MIT License
-
-
-
