@@ -5,7 +5,6 @@ import dynamic from "next/dynamic"
 import EventList from "@/components/EventList"
 import { Event } from "@/lib/types"
 
-// 🚨 IMPORTANTE: dynamic import SIN SSR
 const Map = dynamic(() => import("@/components/Map"), {
   ssr: false,
 })
