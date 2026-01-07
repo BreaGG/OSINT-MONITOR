@@ -19,7 +19,17 @@ export default function EventDetail() {
             .then(res => res.json())
             .then((events: Event[]) => {
                 const found = events.find(e => e.id === decodedId)
-                setEvent(found || null)
+
+                if (!found) {
+                    setEvent(null)
+                } else {
+                    setEvent(found)
+                }
+
+                setLoading(false)
+            })
+            .catch(() => {
+                setEvent(null)
                 setLoading(false)
             })
     }, [decodedId])
@@ -47,6 +57,11 @@ export default function EventDetail() {
     }
 
     const category = categoryColors[event.category]
+
+    // 🔒 Normalización segura de JSONB (TS-safe)
+    const content: string[] = Array.isArray(event.content)
+        ? event.content
+        : []
 
     return (
         <main className="p-6 max-w-3xl mx-auto">
@@ -92,24 +107,28 @@ export default function EventDetail() {
             {/* CONTENIDO */}
             <article className="space-y-4 text-gray-200 leading-relaxed">
                 <p>
-                    {event.summary || "No hay un resumen disponible para este evento."}
+                    {event.summary || "No summary available for this event."}
                 </p>
 
-                {event.content && event.content.length > 0 && (
+                {content.length > 0 ? (
                     <>
-                    <h2 className="text-lg font-semibold mt-6">
-                        Contexto del evento
-                    </h2>
+                        <h2 className="text-lg font-semibold mt-6">
+                            Event context
+                        </h2>
 
-                    {event.content.map((paragraph, idx) => (
-                        <p key={idx}>{paragraph}</p>
-                    ))}
+                        {content.map((paragraph, idx) => (
+                            <p key={idx}>{paragraph}</p>
+                        ))}
                     </>
+                ) : (
+                    <p className="text-sm text-gray-400 italic mt-6">
+                        No extended content is available for this event.
+                    </p>
                 )}
 
                 <p className="text-sm text-gray-400 mt-6">
-                    Este resumen ampliado ha sido generado automáticamente a partir
-                    de fuentes OSINT públicas.
+                    This extended summary has been automatically generated
+                    from publicly available OSINT sources.
                 </p>
             </article>
 
@@ -121,7 +140,7 @@ export default function EventDetail() {
                     rel="noopener noreferrer"
                     className="text-blue-600 underline text-sm"
                 >
-                    Leer la noticia completa en {event.source} →
+                    Read the full article on {event.source} →
                 </a>
             </div>
         </main>
