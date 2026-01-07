@@ -1,37 +1,115 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Global OSINT Monitor
 
-## Getting Started
+Global OSINT Monitor is a web-based platform designed to collect, classify, and visualize open-source intelligence (OSINT) events from public news sources around the world.
 
-First, run the development server:
+The system automatically ingests news feeds, categorizes events, geolocates them, and presents the information through an interactive map and a structured news feed.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## Features
+
+- Automated ingestion of global news sources via RSS
+- Event categorization (conflict, disaster, politics, health)
+- Country and geolocation detection
+- Interactive world map with event markers
+- Event detail pages with extended content
+- Persistent storage using PostgreSQL
+- Serverless-ready architecture
+- Automated background ingestion via cron jobs
+- Deployed and production-ready on Vercel
+
+---
+
+## Tech Stack
+
+### Frontend
+- Next.js (App Router)
+- React
+- TypeScript
+- Tailwind CSS
+- Leaflet / React-Leaflet
+
+### Backend
+- Next.js API Routes
+- PostgreSQL (Supabase, pooled connection)
+- RSS ingestion with rss-parser
+- Serverless-compatible SQL client
+
+### Infrastructure
+- Vercel (hosting, cron jobs)
+- Supabase Postgres (database)
+- Environment-based configuration
+
+---
+
+## Architecture Overview
+
+The platform follows a serverless-first architecture:
+
+- News sources are periodically ingested through a protected API endpoint.
+- Events are deduplicated and stored in a PostgreSQL database.
+- The frontend fetches persisted events through read-only API endpoints.
+- A cron job triggers ingestion automatically at regular intervals.
+- No in-memory state is used; all data is persisted.
+
+---
+
+## Environment Variables
+
+The following environment variables are required:
+
+```env
+POSTGRES_URL=postgres://user:password@pooler.supabase.com:6543/postgres
+INGEST_SECRET=your_secret_token
+````
+
+Environment variables are managed through Vercel for production deployments.
+
+---
+
+## API Endpoints
+
+### GET /api/events
+
+Returns the latest persisted events.
+
+### GET /api/ingest
+
+Triggers ingestion of external news sources.
+Protected via token-based authentication.
+
+Example:
+
+```
+/api/ingest?token=YOUR_SECRET
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deployment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The project is deployed on Vercel and uses scheduled cron jobs to automatically ingest new events.
 
-## Learn More
+To deploy:
 
-To learn more about Next.js, take a look at the following resources:
+1. Push the repository to GitHub
+2. Import the project into Vercel
+3. Configure environment variables
+4. Deploy
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+No additional infrastructure setup is required.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## Project Status
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+This project is production-ready and designed as a foundation for further OSINT analysis features such as trending detection, search, and analytics.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-# OSINT-MONITOR
+---
+
+## License
+
+MIT License
+
+
+
