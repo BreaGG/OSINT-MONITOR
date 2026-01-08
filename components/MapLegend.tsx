@@ -26,22 +26,42 @@ export default function MapLegend() {
 
       <div className="border-t border-gray-800" />
 
-      {/* SPECIAL POINTS */}
+      {/* STRATEGIC & SPECIAL POINTS */}
       <div className="space-y-2">
         <div className="uppercase tracking-wide text-gray-400">
-          Special Points
+          Strategic Points
         </div>
 
         <div className="flex items-center justify-between">
           <span>Strategic capital</span>
-          <span className="w-2.5 h-2.5 bg-red-600 rounded-sm" />
+          <span
+            className="w-2.5 h-2.5 rounded-sm"
+            style={{ backgroundColor: "#7f1d1d" }} // steel blue
+          />
         </div>
 
         <div className="flex items-center justify-between">
           <span>Chokepoint</span>
-          <span className="w-2.5 h-2.5 bg-blue-600 rotate-45" />
+          <span
+            className="w-2.5 h-2.5 rotate-45"
+            style={{ backgroundColor: "#334155" }} // deep navy
+          />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <span>Active conflict</span>
+          <span
+            className="px-2 py-0.5 rounded text-[10px] font-semibold"
+            style={{
+              backgroundColor: "#7f1d1d",
+              color: "#fca5a5",
+            }}
+          >
+            CONFLICT
+          </span>
         </div>
       </div>
+
     </div>
   )
 }
