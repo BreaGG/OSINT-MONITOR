@@ -14,10 +14,7 @@ type Props = {
 function hasCoordinates(
     event: Event
 ): event is Event & { lat: number; lon: number } {
-    return (
-        typeof event.lat === "number" &&
-        typeof event.lon === "number"
-    )
+    return typeof event.lat === "number" && typeof event.lon === "number"
 }
 
 function markerIcon(color: string) {
@@ -30,7 +27,7 @@ function markerIcon(color: string) {
         height:14px;
         border-radius:50%;
         border:2px solid white;
-        box-shadow:0 0 2px rgba(0,0,0,0.6);
+        box-shadow:0 0 4px rgba(0,0,0,0.6);
       "></div>
     `,
         iconSize: [14, 14],
@@ -45,11 +42,16 @@ export default function Map({ events }: Props) {
     useEffect(() => {
         if (mapRef.current || !containerRef.current) return
 
-        const map = L.map(containerRef.current).setView([20, 0], 2)
+        const map = L.map(containerRef.current, {
+            zoomControl: false,
+            attributionControl: false,
+        }).setView([20, 0], 2)
 
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
             attribution: "© OpenStreetMap contributors",
         }).addTo(map)
+
+        L.control.zoom({ position: "bottomright" }).addTo(map)
 
         events
             .filter(hasCoordinates)
@@ -80,24 +82,25 @@ export default function Map({ events }: Props) {
     }, [events])
 
     return (
-        <div>
+        <section className="bg-gray-900 border border-gray-800 rounded-xl shadow-sm">
+            {/* MAPA */}
             <div
                 ref={containerRef}
-                className="h-[500px] w-full rounded"
+                className="h-[300px] w-full rounded-t-xl overflow-hidden"
             />
 
-            {/* Leyenda */}
-            <div className="flex flex-wrap gap-4 mt-3 text-xs">
+            {/* LEYENDA */}
+            <div className="flex flex-wrap gap-4 px-4 py-3 border-t border-gray-800 text-xs text-gray-300">
                 {Object.entries(categoryColors).map(([key, value]) => (
-                    <div key={key} className="flex items-center gap-1">
+                    <div key={key} className="flex items-center gap-2">
                         <span
-                            className="inline-block w-3 h-3 rounded-full"
+                            className="inline-block w-2.5 h-2.5 rounded-full"
                             style={{ backgroundColor: value.color }}
                         />
-                        {value.label}
+                        <span>{value.label}</span>
                     </div>
                 ))}
             </div>
-        </div>
+        </section>
     )
 }

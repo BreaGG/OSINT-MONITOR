@@ -8,6 +8,8 @@ import { extractArticle } from "@/lib/extractArticle"
 import sql from "@/lib/db"
 import { Event } from "@/lib/types"
 import { headers } from "next/headers"
+import { fetchMarketData } from "@/lib/fetchMarket"
+
 
 
 const parser = new Parser()
@@ -32,7 +34,7 @@ export async function GET(request: Request) {
     try {
       const feed = await parser.parseURL(source.url)
 
-      for (const item of feed.items.slice(0, 20)) {
+      for (const item of feed.items.slice(0, 50)) {
         const id = `${source.name}-${item.guid || item.link}`
 
         // 🔍 Evitar duplicados (DB, no memoria)

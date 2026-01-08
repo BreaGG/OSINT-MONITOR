@@ -1,5 +1,5 @@
-import { Event } from "@/lib/types"
 import Link from "next/link"
+import { Event } from "@/lib/types"
 import { categoryColors } from "@/lib/categoryColors"
 
 type Props = {
@@ -10,41 +10,42 @@ export default function EventCard({ event }: Props) {
   const category = categoryColors[event.category]
 
   return (
-    <article className="border border-gray-700 rounded-lg p-4 bg-neutral-900 hover:bg-neutral-800 hover:border-gray-500 transition-colors">
-      {event.image && (
-        <img
-          src={event.image}
-          alt={event.title}
-          className="w-full h-40 object-cover rounded mb-3"
-          loading="lazy"
-        />
-      )}
-      <h2 className="font-semibold text-lg mb-1 text-white">
-        {event.title}
-      </h2>
-
-      <p className="text-sm text-gray-400 mb-2">
-        {event.source} ·{" "}
-        {new Date(event.date).toLocaleDateString()}
-      </p>
-
-      <p className="text-sm text-gray-200 mb-3">
-        {event.summary || "Sin resumen disponible"}
-      </p>
-
-      <div className="flex justify-between items-center">
+    <article className="bg-gray-900 border border-gray-800 rounded-xl px-4 py-3 hover:border-gray-700 transition-colors">
+      {/* CATEGORÍA */}
+      <div className="flex items-center justify-between mb-2">
         <span
-          className="text-xs px-2 py-1 rounded text-white"
+          className="inline-block text-xs px-2 py-0.5 rounded text-white"
           style={{ backgroundColor: category.color }}
         >
           {category.label}
         </span>
 
-        <Link href={`/event/${encodeURIComponent(event.id)}`}
-          className="text-blue-600 text-sm underline"
+        <span className="text-xs text-gray-500">
+          {event.country}
+        </span>
+      </div>
+
+      {/* TÍTULO */}
+      <h3 className="font-semibold leading-snug text-gray-100 mb-1">
+        <Link
+          href={`/event/${encodeURIComponent(event.id)}`}
+          className="hover:underline"
         >
-          Ver detalle
+          {event.title}
         </Link>
+      </h3>
+
+      {/* RESUMEN */}
+      <p className="text-sm text-gray-400 line-clamp-3">
+        {event.summary || "No summary available."}
+      </p>
+
+      {/* METADATA */}
+      <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
+        <span>{event.source}</span>
+        <span>
+          {new Date(event.date).toLocaleDateString()}
+        </span>
       </div>
     </article>
   )

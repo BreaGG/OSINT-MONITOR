@@ -1,10 +1,10 @@
 export const rssSources = [
   {
-    name: "BBC",
+    name: "BBC World",
     url: "https://feeds.bbci.co.uk/news/world/rss.xml",
   },
   {
-    name: "Reuters",
-    url: "https://feeds.reuters.com/Reuters/worldNews",
+    name: "Al Jazeera",
+    url: "https://www.aljazeera.com/xml/rss/all.xml",
   },
-];
+]

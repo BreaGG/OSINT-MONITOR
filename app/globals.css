@@ -50,3 +50,17 @@ body {
   scrollbar-width: thin;
   scrollbar-color: #374151 transparent;
 }
+
+/* Market ticker animation */
+@keyframes market-ticker {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-market-ticker {
+  animation: market-ticker 30s linear infinite;
+}

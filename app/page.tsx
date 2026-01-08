@@ -4,6 +4,8 @@ import { useEffect, useState } from "react"
 import dynamic from "next/dynamic"
 import EventList from "@/components/EventList"
 import { Event } from "@/lib/types"
+import Stream from "@/components/Stream"
+import MarketSnapshot from "@/components/MarketSnapshot"
 
 const Map = dynamic(() => import("@/components/Map"), {
   ssr: false,
@@ -78,18 +80,25 @@ export default function Home() {
 
       {/* GRID PRINCIPAL */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1 min-h-0">
-        {/* COLUMNA IZQUIERDA – MAPA */}
-        <section className="overflow-hidden">
+        {/* COLUMNA IZQUIERDA – MAPA + STREAM */}
+        <section>
           <Map events={filteredEvents} />
+          <Stream />
         </section>
 
-        {/* COLUMNA DERECHA – EVENTOS (SCROLL INDEPENDIENTE) */}
-        <section className="overflow-y-auto pr-2 space-y-4">
-          {loading ? (
-            <p>Cargando eventos...</p>
-          ) : (
-            <EventList events={filteredEvents} />
-          )}
+        {/* COLUMNA DERECHA – ACCIONES + FEED */}
+        <section className="flex flex-col h-[calc(100vh-220px)] space-y-4">
+          {/* MARKET SNAPSHOT (FIJO) */}
+          <MarketSnapshot />
+
+          {/* FEED CON SCROLL INDEPENDIENTE */}
+          <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+            {loading ? (
+              <p>Cargando eventos...</p>
+            ) : (
+              <EventList events={filteredEvents} />
+            )}
+          </div>
         </section>
       </div>
     </main>
