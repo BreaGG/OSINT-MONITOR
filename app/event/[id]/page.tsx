@@ -68,7 +68,7 @@ export default function EventDetail() {
             {/* VOLVER */}
             <button
                 onClick={() => router.push("/")}
-                className="mb-4 text-sm text-blue-600 hover:underline"
+                className="mb-4 text-sm text-white-600 hover:underline"
             >
                 ← Back home
             </button>

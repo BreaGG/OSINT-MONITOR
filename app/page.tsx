@@ -95,7 +95,7 @@ export default function Home() {
       {/* LAYOUT PRINCIPAL */}
       <div className="flex flex-1 min-h-0 gap-6">
         {/* LEYENDA (FUERA DEL GRID) */}
-        <aside className="w-56 flex flex-col gap-6 shrink-0">
+        <aside className="w-30 flex flex-col gap-6 shrink-0">
           <MapLegend />
           <LegendInsights events={filteredEvents} />
         </aside>
@@ -115,7 +115,7 @@ export default function Home() {
 
             <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
               {loading ? (
-                <p>Cargando eventos...</p>
+                <p>Loading events...</p>
               ) : (
                 <EventList events={filteredEvents} />
               )}
