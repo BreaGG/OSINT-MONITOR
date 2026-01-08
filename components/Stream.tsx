@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import { toEmbedUrl } from "@/lib/youtube"
 
 const PRESET_STREAMS = [
@@ -22,13 +22,45 @@ export default function Stream() {
     const [url, setUrl] = useState(PRESET_STREAMS[0].url)
     const [input, setInput] = useState("")
     const [editing, setEditing] = useState(false)
+    const [muted, setMuted] = useState(true)
 
-    const embedUrl = toEmbedUrl(url)
+    const iframeRef = useRef<HTMLIFrameElement | null>(null)
+
+    const baseEmbed = toEmbedUrl(url)
+
+    const embedUrl = baseEmbed
+        ? `${baseEmbed}?autoplay=1&mute=1&controls=1&enablejsapi=1`
+        : null
+
+    function sendCommand(command: "mute" | "unMute") {
+        iframeRef.current?.contentWindow?.postMessage(
+            JSON.stringify({
+                event: "command",
+                func: command,
+                args: [],
+            }),
+            "*"
+        )
+    }
+
+    function toggleMute() {
+        if (muted) {
+            sendCommand("unMute")
+        } else {
+            sendCommand("mute")
+        }
+        setMuted(!muted)
+    }
+
+    // Al cambiar de stream → vuelve a muteado
+    useEffect(() => {
+        setMuted(true)
+    }, [url])
 
     return (
-        <section className="mt-4 space-y-3 text-sm text-gray-200">
-            {/* HEADER + STREAM SELECTOR */}
-            <div className="flex flex-wrap items-center gap-4">
+        <section className="space-y-2 text-sm text-gray-200">
+            {/* HEADER */}
+            <div className="flex items-center gap-4">
                 <span className="uppercase tracking-wide text-gray-400">
                     Live stream
                 </span>
@@ -57,6 +89,15 @@ export default function Stream() {
                         }`}
                 >
                     Custom
+                </button>
+
+                {/* MUTE / UNMUTE */}
+                <button
+                    onClick={toggleMute}
+                    className="ml-auto text-gray-400 hover:text-gray-100 transition"
+                    title={muted ? "Unmute stream" : "Mute stream"}
+                >
+                    {muted ? "Muted" : "Live"}
                 </button>
             </div>
 
@@ -87,9 +128,10 @@ export default function Stream() {
             )}
 
             {/* PLAYER */}
-            <div className="w-full aspect-video bg-black overflow-hidden">
+            <div className="w-full aspect-video bg-black overflow-hidden rounded">
                 {embedUrl ? (
                     <iframe
+                        ref={iframeRef}
                         src={embedUrl}
                         className="w-full h-full"
                         allow="autoplay; encrypted-media"
