@@ -47,82 +47,94 @@ export default function Home() {
   ).sort()
 
   const lastUpdated = useMemo(() => {
-  const now = new Date()
-  return now.toLocaleTimeString()
+    return new Date().toLocaleTimeString()
   }, [])
-
 
   return (
     <main className="p-6 max-w-[1600px] mx-auto h-screen flex flex-col">
-      <div className="flex items-baseline gap-3 mb-4">
-        <h1 className="text-2xl font-bold">
-          Global OSINT Monitor
-        </h1>
+      {/* HEADER: TITLE + FILTERS */}
+      <div className="flex items-center justify-between mb-4 gap-6">
+        {/* TITLE */}
+        <div className="flex items-baseline gap-3">
+          <h1 className="text-2xl font-bold">
+            Global OSINT Monitor
+          </h1>
 
-        <span className="text-xs text-gray-400">
-          Updated {lastUpdated} · Daily update at 02:00 UTC
-        </span>
-      </div>
+          <span className="text-xs text-gray-400">
+            Updated {lastUpdated} · Daily update at 02:00 UTC
+          </span>
+        </div>
 
-      {/* FILTROS */}
-      <div className="flex gap-4 mb-4">
-        <select
-          value={category}
-          onChange={e => setCategory(e.target.value)}
-          className="border p-2 rounded"
-        >
-          <option value="all">All Categorys</option>
-          <option value="conflict">Conflict</option>
-          <option value="disaster">Disaster</option>
-          <option value="politics">Politic</option>
-          <option value="health">Health</option>
-        </select>
+        {/* FILTERS */}
+        <div className="flex gap-3">
+          <select
+            value={category}
+            onChange={e => setCategory(e.target.value)}
+            className="bg-black text-white border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-400"
+          >
+            <option value="all">All categories</option>
+            <option value="conflict">Conflict</option>
+            <option value="disaster">Disaster</option>
+            <option value="politics">Politics</option>
+            <option value="health">Health</option>
+          </select>
 
-        <select
-          value={country}
-          onChange={e => setCountry(e.target.value)}
-          className="border p-2 rounded"
-        >
-          <option value="all">All Countrys</option>
-          {countries.map(c => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
+          <select
+            value={country}
+            onChange={e => setCountry(e.target.value)}
+            className="bg-black text-white border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-400"
+          >
+            <option value="all">All countries</option>
+            {countries.map(c => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* LAYOUT PRINCIPAL */}
-      <div className="flex flex-1 min-h-0 gap-6">
-        {/* LEYENDA (FUERA DEL GRID) */}
-        <aside className="w-30 flex flex-col gap-6 shrink-0">
-          <MapLegend />
-          <LegendInsights events={filteredEvents} />
-        </aside>
+<div className="flex flex-1 min-h-0 gap-6 overflow-hidden">
+  {/* LEYENDA + INSIGHTS */}
+  <aside className="w-32 flex flex-col gap-6 shrink-0">
+    <MapLegend />
+    <LegendInsights events={filteredEvents} />
+  </aside>
 
+  {/* GRID CENTRAL */}
+<div className="grid grid-cols-1 lg:grid-cols-[5fr_0.4fr] gap-6 flex-1 min-h-0 overflow-hidden">
 
-        {/* GRID CENTRAL */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1 min-h-0">
-          {/* MAPA + STREAM */}
-          <section>
-            <Map events={filteredEvents} />
-            <Stream />
-          </section>
+  {/* MAPA + STREAM */}
+  <section className="flex flex-col min-h-0 gap-3">
+    
+    {/* MAPA – protagonista absoluto */}
+    <div className="flex-shrink-0">
+      <Map events={filteredEvents} />
+    </div>
 
-          {/* MARKET + FEED */}
-          <section className="flex flex-col flex-1 min-h-0 space-y-4">
-            <MarketSnapshot />
+    {/* STREAM – claramente secundario */}
+    <div className="flex-shrink-0">
+      <Stream />
+    </div>
+  </section>
 
-            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-              {loading ? (
-                <p>Loading events...</p>
-              ) : (
-                <EventList events={filteredEvents} />
-              )}
-            </div>
-          </section>
-        </div>
-      </div>
+  {/* MARKET + FEED */}
+  <section className="flex flex-col min-h-0 space-y-3">
+    <MarketSnapshot />
+
+    {/* FEED CON SCROLL INDEPENDIENTE */}
+    <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+      {loading ? (
+        <p>Loading events...</p>
+      ) : (
+        <EventList events={filteredEvents} />
+      )}
+    </div>
+  </section>
+</div>
+
+  </div>
     </main>
   )
 }

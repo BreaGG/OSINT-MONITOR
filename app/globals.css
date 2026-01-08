@@ -78,3 +78,34 @@ button {
 button {
   cursor: pointer;
 }
+
+/* === Leaflet popup dark theme === */
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.leaflet-popup-content {
+  margin: 0 !important;
+}
+
+/* ===============================
+   Leaflet popup – Dark OSINT theme
+   =============================== */
+
+.leaflet-popup-content-wrapper {
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+.leaflet-popup-tip {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.leaflet-popup-content {
+  margin: 0 !important;
+}
+
