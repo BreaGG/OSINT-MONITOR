@@ -26,12 +26,12 @@ export default function Stream() {
     const embedUrl = toEmbedUrl(url)
 
     return (
-        <section className="mt-4 space-y-3">
-            {/* HEADER + BUTTONS */}
-            <div className="flex flex-wrap items-center gap-3">
-                <h2 className="text-lg font-semibold mr-2">
+        <section className="mt-4 space-y-3 text-sm text-gray-200">
+            {/* HEADER + STREAM SELECTOR */}
+            <div className="flex flex-wrap items-center gap-4">
+                <span className="uppercase tracking-wide text-gray-400">
                     Live stream
-                </h2>
+                </span>
 
                 {PRESET_STREAMS.map(stream => (
                     <button
@@ -40,28 +40,27 @@ export default function Stream() {
                             setUrl(stream.url)
                             setEditing(false)
                         }}
-                        className={`px-3 py-1.5 rounded text-sm border transition ${url === stream.url
-                                ? "bg-blue-600 text-white border-blue-600"
-                                : "bg-gray-900 border-gray-700 text-gray-300 hover:border-gray-500"
+                        className={`transition ${url === stream.url
+                                ? "text-gray-100"
+                                : "text-gray-500 hover:text-gray-300"
                             }`}
                     >
                         {stream.label}
                     </button>
                 ))}
 
-                {/* CUSTOM STREAM BUTTON */}
                 <button
                     onClick={() => setEditing(!editing)}
-                    className={`px-3 py-1.5 rounded text-sm border transition ${editing
-                            ? "bg-gray-800 text-white border-gray-600"
-                            : "bg-gray-900 border-gray-700 text-gray-300 hover:border-gray-500"
+                    className={`transition ${editing
+                            ? "text-gray-100"
+                            : "text-gray-500 hover:text-gray-300"
                         }`}
                 >
                     Custom
                 </button>
             </div>
 
-            {/* CUSTOM STREAM INPUT (DESPLEGABLE) */}
+            {/* CUSTOM STREAM INPUT */}
             {editing && (
                 <div className="flex gap-2">
                     <input
@@ -69,7 +68,7 @@ export default function Stream() {
                         placeholder="Paste YouTube URL"
                         value={input}
                         onChange={e => setInput(e.target.value)}
-                        className="flex-1 border rounded px-3 py-2 text-sm bg-gray-900 border-gray-700"
+                        className="flex-1 bg-black border border-gray-800 px-3 py-2 text-sm text-gray-200"
                     />
                     <button
                         onClick={() => {
@@ -80,7 +79,7 @@ export default function Stream() {
                                 setEditing(false)
                             }
                         }}
-                        className="px-4 py-2 text-sm bg-blue-600 text-white rounded"
+                        className="text-gray-300 hover:text-gray-100 transition"
                     >
                         Load
                     </button>
@@ -88,7 +87,7 @@ export default function Stream() {
             )}
 
             {/* PLAYER */}
-            <div className="w-full aspect-video bg-black rounded-xl overflow-hidden border border-gray-800">
+            <div className="w-full aspect-video bg-black overflow-hidden">
                 {embedUrl ? (
                     <iframe
                         src={embedUrl}
@@ -97,7 +96,7 @@ export default function Stream() {
                         allowFullScreen
                     />
                 ) : (
-                    <div className="flex items-center justify-center h-full text-gray-400 text-sm">
+                    <div className="flex items-center justify-center h-full text-gray-500">
                         Invalid YouTube URL
                     </div>
                 )}

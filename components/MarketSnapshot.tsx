@@ -77,16 +77,16 @@ export default function MarketSnapshot() {
     }, [])
 
     return (
-        <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-            <div className="flex items-center gap-6 px-4 py-2 whitespace-nowrap animate-market-ticker hover:[animation-play-state:paused]">
-                <span className="text-xs font-semibold text-gray-400 uppercase">
+        <div className="text-xs text-gray-200 overflow-hidden">
+            <div className="flex items-center gap-6 whitespace-nowrap animate-market-ticker hover:[animation-play-state:paused]">
+                <span className="uppercase tracking-wide text-gray-400">
                     Market
                 </span>
 
                 {data.map(item => (
                     <div
                         key={item.id}
-                        className="flex items-center gap-1 text-sm"
+                        className="flex items-center gap-1"
                     >
                         <span className="text-gray-300">
                             {item.label}
@@ -105,7 +105,7 @@ export default function MarketSnapshot() {
                 ))}
 
                 {usingFallback && (
-                    <span className="text-xs text-gray-500 ml-4">
+                    <span className="text-gray-500 ml-4">
                         indicative
                     </span>
                 )}
