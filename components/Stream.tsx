@@ -10,7 +10,7 @@ const PRESET_STREAMS = [
     },
     {
         label: "Al Jazeera",
-        url: "https://www.youtube.com/channel/UCNye-wNBqNL5ZzHSJj3l8Bg/live?app=desktop",
+        url: "https://www.youtube.com/watch?v=gCNeDWCI0vo",
     },
     {
         label: "DW News",
