@@ -36,7 +36,7 @@ export default function MapLegend() {
           <span>Strategic capital</span>
           <span
             className="w-2.5 h-2.5 rounded-sm"
-            style={{ backgroundColor: "#7f1d1d" }} // steel blue
+            style={{ backgroundColor: "#7f1d1d" }} 
           />
         </div>
 
@@ -61,7 +61,7 @@ export default function MapLegend() {
           </span>
         </div>
       </div>
-
+      <div className="border-t border-gray-800" />
     </div>
   )
 }

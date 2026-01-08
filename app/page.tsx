@@ -97,7 +97,7 @@ export default function Home() {
       {/* LAYOUT PRINCIPAL */}
 <div className="flex flex-1 min-h-0 gap-6 overflow-hidden">
   {/* LEYENDA + INSIGHTS */}
-  <aside className="w-32 flex flex-col gap-6 shrink-0">
+  <aside className="w-32 flex flex-col gap-0 shrink-0">
     <MapLegend />
     <LegendInsights events={filteredEvents} />
   </aside>
