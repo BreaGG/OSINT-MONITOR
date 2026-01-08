@@ -37,7 +37,7 @@ export default function EventDetail() {
     if (loading) {
         return (
             <main className="p-6 max-w-3xl mx-auto">
-                <p>Cargando evento...</p>
+                <p>Loading event...</p>
             </main>
         )
     }
@@ -45,12 +45,12 @@ export default function EventDetail() {
     if (!event) {
         return (
             <main className="p-6 max-w-3xl mx-auto">
-                <p>Evento no encontrado</p>
+                <p>Event not found</p>
                 <button
                     onClick={() => router.push("/")}
                     className="mt-4 text-blue-600 underline"
                 >
-                    ← Volver al mapa
+                    ← Back to home
                 </button>
             </main>
         )
@@ -70,7 +70,7 @@ export default function EventDetail() {
                 onClick={() => router.push("/")}
                 className="mb-4 text-sm text-blue-600 hover:underline"
             >
-                ← Volver al mapa
+                ← Back home
             </button>
 
             {/* IMAGEN */}

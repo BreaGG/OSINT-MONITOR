@@ -64,3 +64,12 @@ body {
 .animate-market-ticker {
   animation: market-ticker 30s linear infinite;
 }
+
+a {
+  cursor: pointer;
+}
+
+a,
+button {
+  cursor: pointer;
+}

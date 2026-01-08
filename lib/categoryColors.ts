@@ -1,18 +1,18 @@
 export const categoryColors = {
   conflict: {
-    label: "Conflicto",
-    color: "#dc2626", // rojo
+    label: "Conflict",
+    color: "#dc2626",
   },
   disaster: {
-    label: "Desastre",
-    color: "#ea580c", // naranja
+    label: "Disaster",
+    color: "#ea580c",
   },
   politics: {
-    label: "Política",
-    color: "#2563eb", // azul
+    label: "Politics",
+    color: "#2563eb",
   },
   health: {
-    label: "Salud",
-    color: "#16a34a", // verde
+    label: "Health",
+    color: "#16a34a",
   },
 } as const
