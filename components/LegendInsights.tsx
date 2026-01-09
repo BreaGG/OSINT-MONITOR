@@ -13,7 +13,8 @@ function extractNames(text: string): string[] {
 }
 
 export default function LegendInsights({ events }: Props) {
-    // 🔹 Key Figure
+    /* ===================== ENTITIES ===================== */
+
     const nameCount: Record<string, number> = {}
 
     events.forEach(e => {
@@ -23,11 +24,14 @@ export default function LegendInsights({ events }: Props) {
         })
     })
 
-    const keyFigure = Object.entries(nameCount).sort(
-        (a, b) => b[1] - a[1]
-    )[0]
+    const sortedEntities = Object.entries(nameCount)
+        .sort((a, b) => b[1] - a[1])
 
-    // 🔹 Top Country
+    const keyFigure = sortedEntities[0]
+    const trendingEntities = sortedEntities.slice(0, 5)
+
+    /* ===================== COUNTRIES ===================== */
+
     const countryCount: Record<string, number> = {}
 
     events.forEach(e => {
@@ -39,7 +43,8 @@ export default function LegendInsights({ events }: Props) {
         (a, b) => b[1] - a[1]
     )[0]
 
-    // 🔹 Dominant Category
+    /* ===================== CATEGORIES ===================== */
+
     const categoryCount: Record<CategoryKey, number> = {
         conflict: 0,
         disaster: 0,
@@ -55,7 +60,8 @@ export default function LegendInsights({ events }: Props) {
         Object.entries(categoryCount) as [CategoryKey, number][]
     ).sort((a, b) => b[1] - a[1])[0]
 
-    // 🔹 Activity Level
+    /* ===================== ACTIVITY ===================== */
+
     const activityLevel =
         events.length > 30
             ? "High"
@@ -82,7 +88,34 @@ export default function LegendInsights({ events }: Props) {
                 )}
             </div>
 
-            <div className="border-t border-gray-800" />
+            <div className="border-t border-gray-800  " />
+
+            {/* TRENDING ENTITIES */}
+            <div>
+                <div className="uppercase tracking-wide text-gray-400 mb-1">
+                    Trending Entities
+                </div>
+
+                {trendingEntities.length > 0 ? (
+                    <ul className="space-y-1">
+                        {trendingEntities.map(([name, count]) => (
+                            <li
+                                key={name}
+                                className="flex justify-between gap-4"
+                            >
+                                <span className="truncate">{name}</span>
+                                <span className="text-gray-500">
+                                    {count}
+                                </span>
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <div className="text-gray-500">No data</div>
+                )}
+            </div>
+
+            <div className="border-t border-gray-800  " />
 
             {/* TOP COUNTRY */}
             <div>
@@ -101,7 +134,7 @@ export default function LegendInsights({ events }: Props) {
                 )}
             </div>
 
-            <div className="border-t border-gray-800" />
+            <div className="border-t border-gray-800  " />
 
             {/* DOMINANT CATEGORY */}
             <div>
@@ -109,7 +142,7 @@ export default function LegendInsights({ events }: Props) {
                     Dominant Topic
                 </div>
                 {dominantCategory ? (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-4">
                         <span
                             className="w-2.5 h-2.5 rounded-full"
                             style={{
@@ -126,7 +159,7 @@ export default function LegendInsights({ events }: Props) {
                 )}
             </div>
 
-            <div className="border-t border-gray-800" />
+            <div className="border-t border-gray-800  " />
 
             {/* ACTIVITY LEVEL */}
             <div>
@@ -134,12 +167,13 @@ export default function LegendInsights({ events }: Props) {
                     Activity Level
                 </div>
                 <div
-                    className={`font-medium ${activityLevel === "High"
+                    className={`font-medium ${
+                        activityLevel === "High"
                             ? "text-red-400"
                             : activityLevel === "Medium"
                                 ? "text-yellow-400"
                                 : "text-green-400"
-                        }`}
+                    }`}
                 >
                     {activityLevel}
                 </div>

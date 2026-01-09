@@ -113,7 +113,7 @@ export default function Home() {
       </div>
 
       {/* LAYOUT PRINCIPAL */}
-      <div className="flex flex-1 min-h-0 gap-6 overflow-hidden">
+      <div className="flex flex-1 min-h-0 gap-5 overflow-hidden">
         {/* LEYENDA + INSIGHTS */}
         <aside className="w-32 flex flex-col gap-0 shrink-0">
           <MapLegend />

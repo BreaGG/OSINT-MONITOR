@@ -13,7 +13,7 @@ export default function MapLegend() {
         {Object.entries(categoryColors).map(([key, value]) => (
           <div
             key={key}
-            className="flex items-center justify-between gap-2"
+            className="flex items-center justify-between  gap-1"
           >
             <span>{value.label}</span>
             <span
