@@ -129,7 +129,7 @@ export default function Home() {
 
             {/* MAPA – protagonista absoluto */}
             <div className="flex-shrink-0">
-              {/* <MapboxMap events={filteredEvents} /> */}
+              {/* <MapboxMap events={filteredEvents}  /> */}
               <Map events={filteredEvents} />
             </div>
 

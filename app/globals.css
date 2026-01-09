@@ -155,3 +155,17 @@ button {
 .leaflet-tile {
   filter: brightness(0.98) contrast(0.98);
 }
+
+/* === MAPBOX POPUP – OSINT STYLE === */
+.mapboxgl-popup-content {
+  background: #020617 !important;
+  color: #e5e7eb;
+  border: none !important;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.9) !important;
+  padding: 0 !important; /* usamos nuestro padding interno */
+}
+
+.mapboxgl-popup-tip {
+  border-top-color: #020617 !important;
+  border-bottom-color: #020617 !important;
+}

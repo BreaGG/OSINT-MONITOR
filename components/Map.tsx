@@ -21,12 +21,12 @@ function hasCoordinates(
     return typeof event.lat === "number" && typeof event.lon === "number"
 }
 
-/* ===================== ICONS (SIN CAMBIOS) ===================== */
+/* ===================== ICONS ===================== */
 
 function eventIcon(color: string) {
-    return L.divIcon({
-        className: "",
-        html: `
+  return L.divIcon({
+    className: "",
+    html: `
       <div style="
         background:${color};
         opacity:0.85;
@@ -37,22 +37,23 @@ function eventIcon(color: string) {
         box-shadow:0 0 3px rgba(0,0,0,0.7);
       "></div>
     `,
-        iconSize: [12, 12],
-        iconAnchor: [6, 6],
-    })
+    iconSize: [12, 12],
+    iconAnchor: [6, 6],
+  })
 }
 
-function strategicIcon(level: "LOW" | "MEDIUM" | "HIGH") {
-    const color =
-        level === "HIGH"
-            ? "#7f1d1d"
-            : level === "MEDIUM"
-                ? "#92400e"
-                : "#365314"
 
-    return L.divIcon({
-        className: "",
-        html: `
+function strategicIcon(level: "LOW" | "MEDIUM" | "HIGH") {
+  const color =
+    level === "HIGH"
+      ? "#7f1d1d"   // dark crimson
+      : level === "MEDIUM"
+      ? "#92400e"   // muted amber
+      : "#365314"   // olive green
+
+  return L.divIcon({
+    className: "",
+    html: `
       <div style="
         background:${color};
         width:16px;
@@ -62,17 +63,18 @@ function strategicIcon(level: "LOW" | "MEDIUM" | "HIGH") {
         box-shadow:0 0 5px rgba(0,0,0,0.8);
       "></div>
     `,
-        iconSize: [16, 16],
-        iconAnchor: [8, 8],
-    })
+    iconSize: [16, 16],
+    iconAnchor: [8, 8],
+  })
 }
 
+
 function chokepointIcon() {
-    return L.divIcon({
-        className: "",
-        html: `
+  return L.divIcon({
+    className: "",
+    html: `
       <div style="
-        background:#334155;
+        background:#334155; /* steel blue */
         width:14px;
         height:14px;
         transform:rotate(45deg);
@@ -80,10 +82,11 @@ function chokepointIcon() {
         box-shadow:0 0 5px rgba(0,0,0,0.8);
       "></div>
     `,
-        iconSize: [14, 14],
-        iconAnchor: [7, 7],
-    })
+    iconSize: [14, 14],
+    iconAnchor: [7, 7],
+  })
 }
+
 
 function conflictIcon(label: string) {
     return L.divIcon({
@@ -107,31 +110,51 @@ function conflictIcon(label: string) {
     })
 }
 
+/* 🔹 LABEL DISCRETO (CAPITALES / CHOKEPOINTS) */
 function labelIcon(text: string) {
-    return L.divIcon({
-        className: "",
-        html: `
+  return L.divIcon({
+    className: "",
+    html: `
       <div style="
-        display:inline-block;
+        margin-top:20px;
         font-size:10px;
-        line-height:1.2;
         color:#111827;
-        background:rgba(243,244,246,0.9);
-        padding:3px 6px;
+        background:rgba(243,244,246,0.85);
+        padding:2px 5px;
         border-radius:3px;
         white-space:nowrap;
         pointer-events:none;
-        transform: translateY(18px);
       ">
         ${text}
       </div>
     `,
-        iconAnchor: [0, 0],
-    })
+    iconSize: [0, 0],
+    iconAnchor: [-6, -6],
+  })
 }
 
 
 /* ===================== HELPERS ===================== */
+
+function relatedHeadlines(events: Event[], country: string) {
+    const items = events.filter(e => e.country === country).slice(0, 3)
+
+    if (items.length === 0) {
+        return `<li style="color:#9ca3af;font-size:12px">No recent headlines</li>`
+    }
+
+    return items
+        .map(
+            e => `
+        <li>
+          <a href="/event/${encodeURIComponent(e.id)}"
+             style="color:#60a5fa;text-decoration:underline;font-size:12px">
+            ${e.title}
+          </a>
+        </li>`
+        )
+        .join("")
+}
 
 function popup(content: string) {
     return `
@@ -148,30 +171,6 @@ function popup(content: string) {
   `
 }
 
-/* ===================== HOT ZONES ===================== */
-
-/**
- * Agrupa eventos por proximidad simple (grid rough)
- * y genera zonas calientes OSINT-style
- */
-function computeHotZones(events: Event[]) {
-    const zones: { lat: number; lon: number; count: number }[] = []
-
-    events.filter(hasCoordinates).forEach(e => {
-        const found = zones.find(
-            z => Math.abs(z.lat - e.lat) < 5 && Math.abs(z.lon - e.lon) < 5
-        )
-
-        if (found) {
-            found.count++
-        } else {
-            zones.push({ lat: e.lat, lon: e.lon, count: 1 })
-        }
-    })
-
-    return zones.filter(z => z.count >= 3)
-}
-
 /* ===================== COMPONENT ===================== */
 
 export default function Map({ events }: Props) {
@@ -184,150 +183,102 @@ export default function Map({ events }: Props) {
         const map = L.map(containerRef.current, {
             zoomControl: false,
             attributionControl: false,
-            minZoom: 2,
-            maxZoom: 6,
         }).setView([20, 0], 2)
 
-
-        /* === OSINT BASEMAP (sobrio, no chillón) === */
-        L.tileLayer(
-            "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-            {
-                maxZoom: 6,
-            }
-        ).addTo(map)
-
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map)
         L.control.zoom({ position: "bottomright" }).addTo(map)
 
-
-
-        /* ===================== LAYERS ===================== */
-
-        const eventsLayer = L.layerGroup().addTo(map)
-        const capitalsLayer = L.layerGroup().addTo(map)
-        const chokepointsLayer = L.layerGroup().addTo(map)
-        const conflictsLayer = L.layerGroup().addTo(map)
-        const hotZonesLayer = L.layerGroup().addTo(map)
-
-        /* ===================== EVENTS ===================== */
-
+        /* EVENTS */
         events.filter(hasCoordinates).forEach(event => {
             const color = categoryColors[event.category]?.color ?? "#6b7280"
 
             L.marker([event.lat, event.lon], { icon: eventIcon(color) })
+                .addTo(map)
                 .bindPopup(
                     popup(`
             <strong>${event.title}</strong><br/>
             <span style="color:#9ca3af;font-size:12px">${event.country}</span><br/>
             <span style="color:${color};font-size:12px">
               ${categoryColors[event.category]?.label}
-            </span>
+            </span><br/><br/>
+            <a href="/event/${encodeURIComponent(event.id)}"
+               style="color:#60a5fa;text-decoration:underline;font-size:12px">
+              View details →
+            </a>
           `)
                 )
-                .addTo(eventsLayer)
         })
 
-        /* ===================== HOT ZONES ===================== */
-
-        computeHotZones(events).forEach(zone => {
-            L.circle([zone.lat, zone.lon], {
-                radius: 180000 + zone.count * 50000,
-                color: "#991b1b",
-                fillColor: "#991b1b",
-                fillOpacity: 0.08,
-                weight: 1,
-                dashArray: "4 6",
-            })
-                .bindPopup(
-                    popup(`
-        <strong>Hot zone</strong><br/>
-        <span style="color:#fca5a5">
-          ${zone.count} recent events
-        </span>
-      `)
-                )
-                .addTo(hotZonesLayer)
-        })
-
-
-        /* ===================== CAPITALS ===================== */
-
+        /* CAPITALS */
         strategicPoints.forEach(point => {
-            L.marker([point.lat, point.lon], {
-                icon: strategicIcon(point.level),
-            })
+            L.marker([point.lat, point.lon], { icon: strategicIcon(point.level) })
+                .addTo(map)
                 .bindPopup(
                     popup(`
-        <strong>${point.name}</strong><br/>
-        <span style="color:#9ca3af;font-size:12px">
-          ${point.summary}
-        </span>
-      `)
+            <strong>${point.name}</strong><br/>
+            <span style="color:#9ca3af;font-size:12px">${point.summary}</span><br/><br/>
+            <strong>Status:</strong> ${point.status}<br/>
+            <strong>Key entities:</strong> ${point.entities.join(", ")}<br/><br/>
+            <strong>Related headlines:</strong>
+            <ul>${relatedHeadlines(events, point.country)}</ul>
+          `)
                 )
-                .addTo(capitalsLayer)
 
             L.marker([point.lat, point.lon], {
                 icon: labelIcon(point.name),
                 interactive: false,
-            }).addTo(capitalsLayer)
+            }).addTo(map)
         })
 
-
-        /* ===================== CHOKEPOINTS ===================== */
-
+        /* CHOKEPOINTS */
         strategicChokepoints.forEach(point => {
-            L.marker([point.lat, point.lon], {
-                icon: chokepointIcon(),
-            })
+            L.marker([point.lat, point.lon], { icon: chokepointIcon() })
+                .addTo(map)
                 .bindPopup(
                     popup(`
-        <strong>${point.name}</strong><br/>
-        <span style="color:#9ca3af;font-size:12px">
-          ${point.summary}
-        </span>
-      `)
+            <strong>${point.name}</strong><br/>
+            <span style="color:#9ca3af;font-size:12px">${point.summary}</span><br/><br/>
+            <strong>Status:</strong> ${point.status}<br/><br/>
+            <strong>Related headlines:</strong>
+            <ul>${relatedHeadlines(events, point.country)}</ul>
+          `)
                 )
-                .addTo(chokepointsLayer)
 
             L.marker([point.lat, point.lon], {
                 icon: labelIcon(point.name),
                 interactive: false,
-            }).addTo(chokepointsLayer)
+            }).addTo(map)
         })
 
-
-        /* ===================== CONFLICTS ===================== */
-
+        /* ACTIVE CONFLICTS */
         activeConflicts.forEach(conflict => {
             L.marker([conflict.lat, conflict.lon], {
                 icon: conflictIcon(conflict.name),
             })
+                .addTo(map)
                 .bindPopup(
                     popup(`
             <strong>${conflict.name}</strong><br/>
             <span style="color:#fca5a5;font-size:12px">
               ${conflict.level} intensity
-            </span>
+            </span><br/><br/>
+
+            <strong>Start date:</strong> ${conflict.startDate}<br/>
+            <strong>Casualties:</strong> ${conflict.casualties}<br/>
+            <strong>Displaced:</strong> ${conflict.displaced}<br/><br/>
+
+            <p style="font-size:12px;color:#d1d5db">
+              ${conflict.description}
+            </p>
+
+            <strong>Belligerents:</strong>
+            <ul>${conflict.belligerents.map(b => `<li>${b}</li>`).join("")}</ul>
+
+            <strong>Key developments:</strong>
+            <ul>${conflict.developments.map(d => `<li>${d}</li>`).join("")}</ul>
           `)
                 )
-                .addTo(conflictsLayer)
         })
-
-        /* ===================== LAYER CONTROL ===================== */
-
-        L.control
-            .layers(
-                {},
-                {
-                    "News events": eventsLayer,
-                    "Hot zones": hotZonesLayer,
-                    "Strategic capitals": capitalsLayer,
-                    "Chokepoints": chokepointsLayer,
-                    "Active conflicts": conflictsLayer,
-                },
-                { collapsed: true, position: "topright" }
-            )
-            .addTo(map)
 
         mapRef.current = map
         return () => {
@@ -338,7 +289,7 @@ export default function Map({ events }: Props) {
 
     return (
         <section className="bg-white rounded-xl overflow-hidden border border-gray-200">
-            <div ref={containerRef} className="h-[420px] w-full" />
+            <div ref={containerRef} className="h-[400px] w-full" />
         </section>
     )
 }
