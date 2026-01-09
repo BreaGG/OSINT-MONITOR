@@ -8,6 +8,7 @@ import Stream from "@/components/Stream"
 import MarketSnapshot from "@/components/MarketSnapshot"
 import MapLegend from "@/components/MapLegend"
 import LegendInsights from "@/components/LegendInsights"
+import MapboxMap from "@/components/MapboxMap"
 
 const Map = dynamic(() => import("@/components/Map"), {
   ssr: false,
@@ -128,6 +129,7 @@ export default function Home() {
 
             {/* MAPA – protagonista absoluto */}
             <div className="flex-shrink-0">
+              {/* <MapboxMap events={filteredEvents} /> */}
               <Map events={filteredEvents} />
             </div>
 

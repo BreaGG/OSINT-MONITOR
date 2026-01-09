@@ -8,8 +8,6 @@ import { extractArticle } from "@/lib/extractArticle"
 import sql from "@/lib/db"
 import { Event } from "@/lib/types"
 import { headers } from "next/headers"
-import { fetchMarketData } from "@/lib/fetchMarket"
-
 
 
 const parser = new Parser()
