@@ -31,18 +31,37 @@ function relatedHeadlines(events: Event[], country: string) {
   const items = events.filter(e => e.country === country).slice(0, 3)
 
   if (items.length === 0) {
-    return `<li style="color:#9ca3af;font-size:12px">No recent headlines</li>`
+    return `<li style="color:#9ca3af;font-size:11px">No recent headlines</li>`
   }
 
   return items
     .map(
       e => `
-      <li>
-        <a href="/event/${encodeURIComponent(e.id)}"
-           style="color:#60a5fa;text-decoration:underline;font-size:12px">
-          ${e.title}
-        </a>
-      </li>`
+        <li style="margin-bottom:4px">
+          <a
+            href="/event/${encodeURIComponent(e.id)}"
+            style="
+              display:block;
+              padding:4px 6px;
+              font-size:11px;
+              color:#60a5fa;
+              text-decoration:none;
+              border-radius:4px;
+            "
+            onmouseover="
+              this.style.background='rgba(255,255,255,0.04)';
+              this.style.color='#93c5fd';
+              this.style.textDecoration='underline';
+            "
+            onmouseout="
+              this.style.background='transparent';
+              this.style.color='#60a5fa';
+              this.style.textDecoration='none';
+            "
+          >
+            ${e.title}
+          </a>
+        </li>`
     )
     .join("")
 }
@@ -144,29 +163,69 @@ export default function MapboxIntelMap({ events }: Props) {
       })
 
       map.on("click", "events-layer", e => {
-        const p = e.features?.[0]?.properties as {
-          id: string
-          title: string
-          country: string
-          category: CategoryKey
-          color: string
-        }
+        const p = e.features?.[0]?.properties as any
 
-        new mapboxgl.Popup({ closeButton: false })
+        new mapboxgl.Popup({
+          closeButton: false,
+          closeOnClick: true,
+          offset: {
+            top: [0, 12],
+            bottom: [0, -12],
+            left: [12, 0],
+            right: [-12, 0],
+          },
+        })
+
           .setLngLat(e.lngLat)
           .setHTML(
             popup(`
-              <strong>${p.title}</strong><br/>
-              <span style="color:#9ca3af;font-size:12px">${p.country}</span><br/>
-              <span style="color:${p.color};font-size:12px">
-                ${categoryColors[p.category].label}
-              </span><br/><br/>
-              <a href="/event/${encodeURIComponent(p.id)}"
-                 style="color:#60a5fa;text-decoration:underline;font-size:12px">
-                View details →
-              </a>
-            `)
+    <div style="font-size:12px;line-height:1.3">
+
+      <!-- HEADER -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+        <div style="font-weight:600;font-size:13px;max-width:200px">
+          ${p.title}
+        </div>
+        <div style="font-size:11px;color:#9ca3af;white-space:nowrap">
+          ${p.country}
+        </div>
+      </div>
+
+      <!-- CATEGORY -->
+      <div style="font-size:11px;color:${p.color};margin-bottom:6px">
+        ${categoryColors[p.category as CategoryKey].label}
+      </div>
+
+      <div style="height:1px;background:#e5e7eb;opacity:0.25;margin:6px 0"></div>
+
+      <!-- LINK -->
+<a
+  href="/event/${encodeURIComponent(p.id)}"
+  style="
+    display:block;
+    padding:4px 6px;
+    font-size:11px;
+    color:#ffffff;
+    text-decoration:none;
+    border-radius:4px;
+  "
+  onmouseover="
+    this.style.background='rgba(255,255,255,0.06)';
+    this.style.textDecoration='underline';
+  "
+  onmouseout="
+    this.style.background='transparent';
+    this.style.textDecoration='none';
+  "
+>
+  View details →
+</a>
+
+
+    </div>
+  `)
           )
+
           .addTo(map)
       })
 
@@ -216,7 +275,12 @@ export default function MapboxIntelMap({ events }: Props) {
           type: "FeatureCollection",
           features: strategicPoints.map(p => ({
             type: "Feature",
-            properties: p,
+            properties: {
+              ...p,
+              entities: Array.isArray(p.entities)
+                ? p.entities.join(", ")
+                : p.entities,
+            },
             geometry: {
               type: "Point",
               coordinates: [p.lon, p.lat],
@@ -257,42 +321,62 @@ export default function MapboxIntelMap({ events }: Props) {
       map.on("click", "capitals-layer", e => {
         const p = e.features?.[0]?.properties as any
 
-        new mapboxgl.Popup({ closeButton: false })
+        new mapboxgl.Popup({
+          closeButton: false,
+          closeOnClick: true,
+          offset: {
+            top: [0, 12],
+            bottom: [0, -12],
+            left: [12, 0],
+            right: [-12, 0],
+          },
+        })
+
           .setLngLat(e.lngLat)
           .setHTML(
             popup(`
-              <strong>${p.name}</strong><br/>
-              <span style="color:#9ca3af;font-size:12px">${p.summary}</span><br/><br/>
-              <strong>Status:</strong> ${p.status}<br/>
-              <strong>Key entities:</strong> ${p.entities.join(", ")}<br/><br/>
-              <strong>Related headlines:</strong>
-              <ul>${relatedHeadlines(events, p.country)}</ul>
-            `)
+    <div style="font-size:12px;line-height:1.3">
+
+      <!-- HEADER -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+        <div style="font-weight:600;font-size:14px">
+          ${p.name}
+        </div>
+        <div style="font-size:11px;color:#9ca3af;white-space:nowrap">
+          ${p.status}
+        </div>
+      </div>
+
+      <!-- SUMMARY -->
+      <div style="font-size:11px;color:#d1d5db;margin-bottom:6px">
+        ${p.summary}
+      </div>
+
+      <div style="height:1px;background:#e5e7eb;opacity:0.25;margin:6px 0"></div>
+
+      <!-- ENTITIES -->
+      <div style="font-size:11px;margin-bottom:6px">
+        <span style="color:#9ca3af">Key entities</span><br/>
+        ${p.entities}
+      </div>
+
+      <div style="height:1px;background:#e5e7eb;opacity:0.25;margin:6px 0"></div>
+
+      <!-- HEADLINES -->
+      <div style="font-size:11px">
+        <div style="color:#9ca3af;margin-bottom:2px">
+          Related headlines
+        </div>
+        <ul style="margin:0;padding-left:14px">
+          ${relatedHeadlines(events, p.country)}
+        </ul>
+      </div>
+
+    </div>
+  `)
           )
           .addTo(map)
       })
-
-      const onCapitalClick = (e: mapboxgl.MapLayerMouseEvent) => {
-  const p = e.features?.[0]?.properties as any
-
-  new mapboxgl.Popup({ closeButton: false })
-    .setLngLat(e.lngLat)
-    .setHTML(
-      popup(`
-        <strong>${p.name}</strong><br/>
-        <span style="color:#9ca3af;font-size:12px">${p.summary}</span><br/><br/>
-        <strong>Status:</strong> ${p.status}<br/>
-        <strong>Key entities:</strong> ${p.entities.join(", ")}<br/><br/>
-        <strong>Related headlines:</strong>
-        <ul>${relatedHeadlines(events, p.country)}</ul>
-      `)
-    )
-    .addTo(map)
-}
-
-map.on("click", "capitals-layer", onCapitalClick)
-map.on("click", "capitals-labels", onCapitalClick)
-
 
       /* ===================== CHOKEPOINTS ===================== */
 
@@ -343,40 +427,54 @@ map.on("click", "capitals-labels", onCapitalClick)
       map.on("click", "chokepoints-layer", e => {
         const p = e.features?.[0]?.properties as any
 
-        new mapboxgl.Popup({ closeButton: false })
+        new mapboxgl.Popup({
+          closeButton: false,
+          closeOnClick: true,
+          offset: {
+            top: [0, 12],
+            bottom: [0, -12],
+            left: [12, 0],
+            right: [-12, 0],
+          },
+        })
+
           .setLngLat(e.lngLat)
           .setHTML(
             popup(`
-              <strong>${p.name}</strong><br/>
-              <span style="color:#9ca3af;font-size:12px">${p.summary}</span><br/><br/>
-              <strong>Status:</strong> ${p.status}<br/><br/>
-              <strong>Related headlines:</strong>
-              <ul>${relatedHeadlines(events, p.country)}</ul>
-            `)
+    <div style="font-size:12px;line-height:1.3">
+
+      <!-- HEADER -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+        <div style="font-weight:600;font-size:14px">
+          ${p.name}
+        </div>
+        <div style="font-size:11px;color:#9ca3af;white-space:nowrap">
+          ${p.status}
+        </div>
+      </div>
+
+      <!-- SUMMARY -->
+      <div style="font-size:11px;color:#d1d5db;margin-bottom:6px">
+        ${p.summary}
+      </div>
+
+      <div style="height:1px;background:#e5e7eb;opacity:0.25;margin:6px 0"></div>
+
+      <!-- HEADLINES -->
+      <div style="font-size:11px">
+        <div style="color:#9ca3af;margin-bottom:2px">
+          Related headlines
+        </div>
+        <ul style="margin:0;padding-left:14px">
+          ${relatedHeadlines(events, p.country)}
+        </ul>
+      </div>
+
+    </div>
+  `)
           )
           .addTo(map)
       })
-
-      const onChokepointClick = (e: mapboxgl.MapLayerMouseEvent) => {
-  const p = e.features?.[0]?.properties as any
-
-  new mapboxgl.Popup({ closeButton: false })
-    .setLngLat(e.lngLat)
-    .setHTML(
-      popup(`
-        <strong>${p.name}</strong><br/>
-        <span style="color:#9ca3af;font-size:12px">${p.summary}</span><br/><br/>
-        <strong>Status:</strong> ${p.status}<br/><br/>
-        <strong>Related headlines:</strong>
-        <ul>${relatedHeadlines(events, p.country)}</ul>
-      `)
-    )
-    .addTo(map)
-}
-
-map.on("click", "chokepoints-layer", onChokepointClick)
-map.on("click", "chokepoints-labels", onChokepointClick)
-
 
       /* ===================== CONFLICTS ===================== */
 
@@ -386,7 +484,12 @@ map.on("click", "chokepoints-labels", onChokepointClick)
           type: "FeatureCollection",
           features: activeConflicts.map(c => ({
             type: "Feature",
-            properties: c,
+            properties: {
+              ...c,
+              belligerents: Array.isArray(c.belligerents)
+                ? c.belligerents.join(", ")
+                : c.belligerents,
+            },
             geometry: {
               type: "Point",
               coordinates: [c.lon, c.lat],
@@ -413,22 +516,76 @@ map.on("click", "chokepoints-labels", onChokepointClick)
       map.on("click", "conflicts-layer", e => {
         const c = e.features?.[0]?.properties as any
 
-        new mapboxgl.Popup({ closeButton: false })
+        new mapboxgl.Popup({
+          closeButton: false,
+          closeOnClick: true,
+          offset: {
+            top: [0, 12],
+            bottom: [0, -12],
+            left: [12, 0],
+            right: [-12, 0],
+          },
+        })
+
           .setLngLat(e.lngLat)
           .setHTML(
             popup(`
-              <strong>${c.name}</strong><br/>
-              <span style="color:#fca5a5">${c.level} intensity</span><br/><br/>
-              <strong>Start:</strong> ${c.startDate}<br/>
-              <strong>Casualties:</strong> ${c.casualties}<br/>
-              <strong>Displaced:</strong> ${c.displaced}<br/><br/>
-              <p style="font-size:12px;color:#d1d5db">
-                ${c.description}
-              </p>
-              <strong>Belligerents:</strong>
-              <ul>${c.belligerents.map((b: string) => `<li>${b}</li>`).join("")}</ul>
-            `)
+    <div style="font-size:12px;line-height:1.3">
+
+      <!-- HEADER -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+        <div style="font-weight:600;font-size:14px">
+          ${c.name}
+        </div>
+        <div style="font-size:11px;color:#9ca3af">
+          ${c.startDate}
+        </div>
+      </div>
+
+      <div style="color:#fca5a5;font-size:11px;margin-bottom:6px">
+        ${c.level} intensity
+      </div>
+
+      <div style="height:1px;background:#e5e7eb;opacity:0.25;margin:6px 0"></div>
+
+      <!-- KEY METRICS -->
+      <div style="margin-bottom:6px">
+
+        <div style="display:flex;justify-content:space-between">
+          <span style="color:#9ca3af">Casualties</span>
+          <span>${c.casualties}</span>
+        </div>
+
+        <div style="display:flex;justify-content:space-between">
+          <span style="color:#9ca3af">Displaced</span>
+          <span>${c.displaced}</span>
+        </div>
+
+      </div>
+
+      <div style="height:1px;background:#e5e7eb;opacity:0.25;margin:6px 0"></div>
+
+      <!-- DESCRIPTION -->
+      <div style="color:#d1d5db;font-size:11px;margin-bottom:6px">
+        ${c.description}
+      </div>
+
+      <div style="height:1px;background:#e5e7eb;opacity:0.25;margin:6px 0"></div>
+
+      <!-- BELLIGERENTS -->
+      <div style="font-size:11px">
+        <span style="color:#9ca3af">Belligerents</span><br/>
+        ${String(c.belligerents)
+                .split(",")
+                .map(b => b.trim())
+                .join(" · ")}
+      </div>
+
+    </div>
+  `)
           )
+
+
           .addTo(map)
       })
 
@@ -465,7 +622,6 @@ map.on("click", "chokepoints-labels", onChokepointClick)
 
   return (
     <section className="relative rounded-xl overflow-hidden border border-gray-800">
-      {/* CONTROLES OSINT */}
       <div className="absolute top-2 left-2 z-10 space-y-1 text-xs">
         {Object.entries(layers).map(([key, value]) => (
           <button
@@ -473,11 +629,10 @@ map.on("click", "chokepoints-labels", onChokepointClick)
             onClick={() =>
               setLayers(prev => ({ ...prev, [key]: !prev[key as keyof typeof prev] }))
             }
-            className={`block px-2 py-1 rounded border ${
-              value
-                ? "bg-black/80 text-gray-200 border-gray-700"
-                : "bg-black/40 text-gray-500 border-gray-800"
-            }`}
+            className={`block px-2 py-1 rounded border ${value
+              ? "bg-black/80 text-gray-200 border-gray-700"
+              : "bg-black/40 text-gray-500 border-gray-800"
+              }`}
           >
             {key.toUpperCase()}
           </button>
