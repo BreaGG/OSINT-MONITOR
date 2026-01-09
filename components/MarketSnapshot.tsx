@@ -9,16 +9,37 @@ type MarketItem = {
     fallback?: boolean
 }
 
-type YahooQuote = {
-    symbol: string
-    regularMarketChangePercent?: number
-}
+const FINNHUB_KEY = process.env.NEXT_PUBLIC_FINNHUB_API_KEY!
+
+/**
+ * ETFs y activos líquidos como proxy OSINT
+ * (estándar en análisis macro y geopolítico)
+ */
+const SYMBOLS = [
+    // Commodities (ETFs)
+    { id: "WTI", label: "Oil (WTI)", symbol: "USO" },
+    { id: "BRENT", label: "Oil (Brent)", symbol: "BNO" },
+    { id: "GAS", label: "Natural Gas", symbol: "UNG" },
+    { id: "GOLD", label: "Gold", symbol: "GLD" },
+    { id: "SILVER", label: "Silver", symbol: "SLV" },
+    { id: "AGRI", label: "Agriculture", symbol: "DBA" },
+
+    // Empresas clave
+    { id: "AAPL", label: "Apple", symbol: "AAPL" },
+    { id: "MSFT", label: "Microsoft", symbol: "MSFT" },
+    { id: "NVDA", label: "Nvidia", symbol: "NVDA" },
+    { id: "GOOGL", label: "Alphabet", symbol: "GOOGL" },
+    { id: "AMZN", label: "Amazon", symbol: "AMZN" },
+
+    // Cripto
+    { id: "BTC", label: "Bitcoin", symbol: "BINANCE:BTCUSDT" },
+]
 
 const FALLBACK_DATA: MarketItem[] = [
-    { id: "SPX", label: "S&P 500", change: 0.42, fallback: true },
-    { id: "WTI", label: "Oil (WTI)", change: -0.87, fallback: true },
-    { id: "GOLD", label: "Gold", change: 0.31, fallback: true },
-    { id: "BTC", label: "Bitcoin", change: 1.12, fallback: true },
+    { id: "WTI", label: "Oil (WTI)", change: 0.6, fallback: true },
+    { id: "GOLD", label: "Gold", change: 0.2, fallback: true },
+    { id: "GAS", label: "Natural Gas", change: -0.4, fallback: true },
+    { id: "BTC", label: "Bitcoin", change: 0.9, fallback: true },
 ]
 
 export default function MarketSnapshot() {
@@ -28,45 +49,44 @@ export default function MarketSnapshot() {
     useEffect(() => {
         async function fetchMarket() {
             try {
-                const res = await fetch(
-                    "https://query1.finance.yahoo.com/v7/finance/quote?symbols=%5EGSPC,CL=F,GC=F,BTC-USD",
-                    { cache: "no-store" }
-                )
+                const results = await Promise.all(
+                    SYMBOLS.map(async item => {
+                        const res = await fetch(
+                            `https://finnhub.io/api/v1/quote?symbol=${item.symbol}&token=${FINNHUB_KEY}`,
+                            { cache: "no-store" }
+                        )
 
-                const json = await res.json()
+                        if (!res.ok) return null
 
-                const results: YahooQuote[] =
-                    json?.quoteResponse?.result ?? []
+                        const json = await res.json()
 
-                const mapped: MarketItem[] = results
-                    .map(item => {
-                        if (typeof item.regularMarketChangePercent !== "number") {
+                        if (
+                            typeof json.c !== "number" ||
+                            typeof json.pc !== "number" ||
+                            json.pc === 0
+                        ) {
                             return null
                         }
 
+                        const change =
+                            ((json.c - json.pc) / json.pc) * 100
+
                         return {
-                            id: item.symbol,
-                            label:
-                                item.symbol === "^GSPC"
-                                    ? "S&P 500"
-                                    : item.symbol === "CL=F"
-                                        ? "Oil (WTI)"
-                                        : item.symbol === "GC=F"
-                                            ? "Gold"
-                                            : item.symbol === "BTC-USD"
-                                                ? "Bitcoin"
-                                                : item.symbol,
-                            change: item.regularMarketChangePercent,
+                            id: item.id,
+                            label: item.label,
+                            change,
                         }
                     })
-                    .filter(Boolean) as MarketItem[]
+                )
 
-                if (mapped.length === 0) {
-                    setUsingFallback(true)
-                    setData(FALLBACK_DATA)
-                } else {
-                    setData(mapped)
+                const clean = results.filter(Boolean) as MarketItem[]
+
+                if (clean.length === 0) {
+                    throw new Error("No market data")
                 }
+
+                setUsingFallback(false)
+                setData(clean)
             } catch {
                 setUsingFallback(true)
                 setData(FALLBACK_DATA)
@@ -84,10 +104,7 @@ export default function MarketSnapshot() {
                 </span>
 
                 {data.map(item => (
-                    <div
-                        key={item.id}
-                        className="flex items-center gap-1"
-                    >
+                    <div key={item.id} className="flex items-center gap-1">
                         <span className="text-gray-300">
                             {item.label}
                         </span>

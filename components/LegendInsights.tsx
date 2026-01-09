@@ -101,7 +101,7 @@ export default function LegendInsights({ events }: Props) {
                         {trendingEntities.map(([name, count]) => (
                             <li
                                 key={name}
-                                className="flex justify-between gap-4"
+                                className="flex justify-between  gap-2"
                             >
                                 <span className="truncate">{name}</span>
                                 <span className="text-gray-500">
@@ -142,7 +142,7 @@ export default function LegendInsights({ events }: Props) {
                     Dominant Topic
                 </div>
                 {dominantCategory ? (
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center  gap-2">
                         <span
                             className="w-2.5 h-2.5 rounded-full"
                             style={{

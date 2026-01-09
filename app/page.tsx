@@ -121,7 +121,7 @@ export default function Home() {
         </aside>
 
         {/* GRID CENTRAL */}
-        <div className="grid grid-cols-1 lg:grid-cols-[5fr_0.4fr] gap-6 flex-1 min-h-0 overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_520px] gap-5 flex-1 min-h-0 overflow-hidden">
 
           {/* MAPA + STREAM */}
           <section className="flex flex-col min-h-0 gap-2">
