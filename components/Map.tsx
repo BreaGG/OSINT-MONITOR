@@ -289,7 +289,7 @@ export default function Map({ events }: Props) {
 
     return (
         <section className="bg-white rounded-xl overflow-hidden border border-gray-200">
-            <div ref={containerRef} className="h-[420px] w-full" />
+            <div ref={containerRef} className="h-[400px] w-full" />
         </section>
     )
 }

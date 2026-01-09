@@ -18,6 +18,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [category, setCategory] = useState("all")
   const [country, setCountry] = useState("all")
+  const [search, setSearch] = useState("")
 
   useEffect(() => {
     fetch("/api/events")
@@ -35,8 +36,14 @@ export default function Home() {
     const countryMatch =
       country === "all" || event.country === country
 
-    return categoryMatch && countryMatch
+    const searchMatch =
+      search === "" ||
+      event.title.toLowerCase().includes(search.toLowerCase())
+
+    return categoryMatch && countryMatch && searchMatch
   })
+
+
 
   const countries = Array.from(
     new Set(
@@ -66,7 +73,8 @@ export default function Home() {
         </div>
 
         {/* FILTERS */}
-        <div className="flex gap-3">
+        <div className="flex items-center gap-3">
+          {/* CATEGORY */}
           <select
             value={category}
             onChange={e => setCategory(e.target.value)}
@@ -79,6 +87,7 @@ export default function Home() {
             <option value="health">Health</option>
           </select>
 
+          {/* COUNTRY */}
           <select
             value={country}
             onChange={e => setCountry(e.target.value)}
@@ -91,50 +100,59 @@ export default function Home() {
               </option>
             ))}
           </select>
+
+          {/* SEARCH */}
+          <input
+            type="text"
+            placeholder="Search headline…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="bg-black text-white border border-gray-700 rounded px-3 py-2 text-sm w-56 placeholder-gray-500 focus:outline-none focus:border-gray-400" />
         </div>
+
       </div>
 
       {/* LAYOUT PRINCIPAL */}
-<div className="flex flex-1 min-h-0 gap-6 overflow-hidden">
-  {/* LEYENDA + INSIGHTS */}
-  <aside className="w-32 flex flex-col gap-0 shrink-0">
-    <MapLegend />
-    <LegendInsights events={filteredEvents} />
-  </aside>
+      <div className="flex flex-1 min-h-0 gap-6 overflow-hidden">
+        {/* LEYENDA + INSIGHTS */}
+        <aside className="w-32 flex flex-col gap-0 shrink-0">
+          <MapLegend />
+          <LegendInsights events={filteredEvents} />
+        </aside>
 
-  {/* GRID CENTRAL */}
-<div className="grid grid-cols-1 lg:grid-cols-[5fr_0.4fr] gap-6 flex-1 min-h-0 overflow-hidden">
+        {/* GRID CENTRAL */}
+        <div className="grid grid-cols-1 lg:grid-cols-[5fr_0.4fr] gap-6 flex-1 min-h-0 overflow-hidden">
 
-  {/* MAPA + STREAM */}
-  <section className="flex flex-col min-h-0 gap-3">
-    
-    {/* MAPA – protagonista absoluto */}
-    <div className="flex-shrink-0">
-      <Map events={filteredEvents} />
-    </div>
+          {/* MAPA + STREAM */}
+          <section className="flex flex-col min-h-0 gap-2">
 
-    {/* STREAM – claramente secundario */}
-    <div className="flex-shrink-0">
-      <Stream />
-    </div>
-  </section>
+            {/* MAPA – protagonista absoluto */}
+            <div className="flex-shrink-0">
+              <Map events={filteredEvents} />
+            </div>
 
-  {/* MARKET + FEED */}
-  <section className="flex flex-col min-h-0 space-y-3">
-    <MarketSnapshot />
+            {/* STREAM – claramente secundario */}
+            <div className="flex-shrink-0">
+              <Stream />
+            </div>
+          </section>
 
-    {/* FEED CON SCROLL INDEPENDIENTE */}
-    <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-      {loading ? (
-        <p>Loading events...</p>
-      ) : (
-        <EventList events={filteredEvents} />
-      )}
-    </div>
-  </section>
-</div>
+          {/* MARKET + FEED */}
+          <section className="flex flex-col min-h-0 space-y-3">
+            <MarketSnapshot />
 
-  </div>
+            {/* FEED CON SCROLL INDEPENDIENTE */}
+            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+              {loading ? (
+                <p>Loading events...</p>
+              ) : (
+                <EventList events={filteredEvents} />
+              )}
+            </div>
+          </section>
+        </div>
+
+      </div>
     </main>
   )
 }
