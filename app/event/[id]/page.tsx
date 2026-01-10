@@ -5,6 +5,40 @@ import { useParams, useRouter } from "next/navigation"
 import { Event } from "@/lib/types"
 import { categoryColors } from "@/lib/categoryColors"
 
+/* ===================== HELPERS ===================== */
+
+function shortCountry(country?: string) {
+    if (!country || country === "Unknown") return "Global"
+    if (country === "United States") return "USA"
+    if (country === "United Kingdom") return "UK"
+    return country
+}
+
+function intelSummary(event: Event) {
+    const country = shortCountry(event.country)
+    const category = event.category
+
+    if (category === "conflict") {
+        return `Escalating security-related developments reported in ${country}, indicating potential instability or military activity.`
+    }
+
+    if (category === "politics") {
+        return `Political developments in ${country} may have short-term implications for governance, policy direction, or regional stability.`
+    }
+
+    if (category === "disaster") {
+        return `An unfolding emergency situation in ${country} could impact civilian safety, infrastructure, or humanitarian conditions.`
+    }
+
+    if (category === "health") {
+        return `Health-related developments in ${country} may affect public health systems or population risk levels.`
+    }
+
+    return `Developments reported in ${country} require monitoring for potential regional or strategic impact.`
+}
+
+/* ===================== COMPONENT ===================== */
+
 export default function EventDetail() {
     const { id } = useParams()
     const router = useRouter()
@@ -19,13 +53,7 @@ export default function EventDetail() {
             .then(res => res.json())
             .then((events: Event[]) => {
                 const found = events.find(e => e.id === decodedId)
-
-                if (!found) {
-                    setEvent(null)
-                } else {
-                    setEvent(found)
-                }
-
+                setEvent(found ?? null)
                 setLoading(false)
             })
             .catch(() => {
@@ -37,7 +65,7 @@ export default function EventDetail() {
     if (loading) {
         return (
             <main className="p-6 max-w-3xl mx-auto">
-                <p>Loading event...</p>
+                <p className="text-gray-400">Loading event…</p>
             </main>
         )
     }
@@ -45,102 +73,111 @@ export default function EventDetail() {
     if (!event) {
         return (
             <main className="p-6 max-w-3xl mx-auto">
-                <p>Event not found</p>
+                <p className="text-gray-400">Event not found</p>
                 <button
                     onClick={() => router.push("/")}
-                    className="mt-4 text-blue-600 underline"
+                    className="mt-4 text-sm underline text-gray-300"
                 >
-                    ← Back to home
+                    ← Back to monitor
                 </button>
             </main>
         )
     }
 
     const category = categoryColors[event.category]
-
-    // 🔒 Normalización segura de JSONB (TS-safe)
     const content: string[] = Array.isArray(event.content)
         ? event.content
         : []
 
     return (
-        <main className="p-6 max-w-3xl mx-auto">
-            {/* VOLVER */}
+        <main className="p-6 max-w-3xl mx-auto space-y-6">
+
+            {/* BACK */}
             <button
                 onClick={() => router.push("/")}
-                className="mb-4 text-sm text-white-600 hover:underline"
+                className="text-xs text-gray-400 hover:text-gray-200"
             >
-                ← Back home
+                ← Back to monitor
             </button>
 
-            {/* IMAGEN */}
+            {/* IMAGE */}
             {event.image && (
                 <img
                     src={event.image}
                     alt={event.title}
-                    className="w-full h-64 object-cover rounded mb-6"
+                    className="w-full h-64 object-cover rounded-lg"
                 />
             )}
 
-            {/* TÍTULO */}
-            <h1 className="text-2xl font-bold mb-2">
+            {/* HEADLINE */}
+            <h1 className="text-2xl font-semibold leading-snug">
                 {event.title}
             </h1>
 
             {/* METADATA */}
-            <div className="flex flex-wrap gap-3 text-sm text-gray-400 mb-4">
-                <span>{event.source}</span>
-                <span>•</span>
-                <span>{new Date(event.date).toLocaleString()}</span>
-                <span>•</span>
-                <span>{event.country}</span>
+            <div className="flex flex-wrap items-center gap-2 text-xs text-gray-400">
+            <span>{event.source}</span>
+            <span>•</span>
+            <span>{new Date(event.date).toLocaleString()}</span>
+            <span>•</span>
+            <span>{shortCountry(event.country)}</span>
+            <span>•</span>
+            <span className="uppercase tracking-wide" style={{ color: category.color }}>{category.label}</span>
             </div>
 
-            {/* CATEGORÍA */}
-            <span
-                className="inline-block text-xs px-3 py-1 rounded text-white mb-6"
-                style={{ backgroundColor: category.color }}
-            >
-                {category.label}
-            </span>
+            {/* INTEL SUMMARY */}
+            <section className="border border-gray-800 rounded-lg bg-black/40 p-4">
+                <div className="text-[11px] uppercase tracking-wide text-gray-500 mb-1">
+                    Intel assessment
+                </div>
+                <p className="text-sm text-gray-200 leading-relaxed">
+                    {intelSummary(event)}
+                </p>
+            </section>
 
-            {/* CONTENIDO */}
-            <article className="space-y-4 text-gray-200 leading-relaxed">
-                <p>
+            {/* FACT SUMMARY */}
+            <section className="space-y-3">
+                <div className="text-[11px] uppercase tracking-wide text-gray-500">
+                    Situation overview
+                </div>
+
+                <p className="text-gray-200 leading-relaxed">
                     {event.summary || "No summary available for this event."}
                 </p>
+            </section>
 
-                {content.length > 0 ? (
-                    <>
-                        <h2 className="text-lg font-semibold mt-6">
-                            Event context
-                        </h2>
+            {/* EXTENDED CONTEXT */}
+            {content.length > 0 && (
+                <section className="space-y-4">
+                    <div className="text-[11px] uppercase tracking-wide text-gray-500">
+                        Context & background
+                    </div>
 
-                        {content.map((paragraph, idx) => (
-                            <p key={idx}>{paragraph}</p>
-                        ))}
-                    </>
-                ) : (
-                    <p className="text-sm text-gray-400 italic mt-6">
-                        No extended content is available for this event.
-                    </p>
-                )}
+                    {content.map((paragraph, idx) => (
+                        <p
+                            key={idx}
+                            className="text-gray-300 leading-relaxed"
+                        >
+                            {paragraph}
+                        </p>
+                    ))}
+                </section>
+            )}
 
-                <p className="text-sm text-gray-400 mt-6">
-                    This extended summary has been automatically generated
-                    from publicly available OSINT sources.
-                </p>
-            </article>
+            {/* DISCLAIMER */}
+            <p className="text-[11px] text-gray-500 italic">
+                This assessment is automatically generated from publicly available OSINT sources.
+            </p>
 
-            {/* ENLACE EXTERNO */}
-            <div className="mt-8 border-t border-gray-700 pt-4">
+            {/* SOURCE LINK */}
+            <div className="pt-4 border-t border-gray-800">
                 <a
                     href={event.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 underline text-sm"
+                    className="text-sm underline text-gray-300 hover:text-white"
                 >
-                    Read the full article on {event.source} →
+                    Read full article on {event.source} →
                 </a>
             </div>
         </main>
