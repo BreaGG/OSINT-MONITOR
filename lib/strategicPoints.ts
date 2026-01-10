@@ -107,4 +107,26 @@ export const strategicPoints: StrategicPoint[] = [
     status: "Geopolitical tension",
     entities: ["IRGC", "Supreme Council"],
   },
+  {
+    id: "greenland-strategic",
+    name: "Greenland",
+    country: "Greenland",
+    lat: 59.7726,
+    lon: -43.9160,
+    level: "HIGH",
+    summary:
+      "Greenland has re-emerged as a strategic focal point due to renewed geopolitical interest from the United States. Its location between North America and Europe, control over Arctic access routes, and proximity to emerging polar shipping lanes significantly increase its military and strategic relevance.",
+    status:
+      "Strategic attention",
+    entities: [
+      "United States",
+      "Donald Trump",
+      "Denmark",
+      "NATO",
+      "Arctic Council",
+      "Thule Air Base",
+      "Russia",
+      "China",
+    ],
+  },
 ];

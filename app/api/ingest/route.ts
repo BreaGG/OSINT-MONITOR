@@ -1,7 +1,7 @@
 import Parser from "rss-parser"
 import { NextResponse } from "next/server"
 import { rssSources } from "@/lib/rssSources"
-import { detectCountry } from "@/lib/detectCountry"
+import { resolveCountry } from "@/lib/detectCountry"
 import { detectCategory } from "@/lib/detectCategory"
 import { extractImage } from "@/lib/extractImage"
 import { extractArticle } from "@/lib/extractArticle"
@@ -42,7 +42,7 @@ export async function GET(request: Request) {
         if (existing.length > 0) continue
 
         const text = `${item.title ?? ""} ${item.contentSnippet ?? ""}`
-        const detected = detectCountry(text)
+        const detected = resolveCountry(text)
         const category = detectCategory(text)
 
         let image =

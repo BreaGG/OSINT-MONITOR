@@ -78,18 +78,86 @@ function popup(content: string) {
   `
 }
 
-function computeHotZones(events: Event[]) {
-  const zones: { lat: number; lon: number; count: number }[] = []
+type HotZone = {
+  lat: number
+  lon: number
+  count: number
+  intensity: number
+}
+
+/* ===================== HELPERS ===================== */
+
+// Distancia real en km (Haversine)
+function distanceKm(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+) {
+  const R = 6371
+  const dLat = ((lat2 - lat1) * Math.PI) / 180
+  const dLon = ((lon2 - lon1) * Math.PI) / 180
+
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) ** 2
+
+  return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+function eventWeight(e: Event) {
+  const ts =
+    (e as any).publishedAt ||
+    (e as any).published_at ||
+    (e as any).createdAt ||
+    (e as any).created_at
+
+  if (!ts) return 1
+
+  const hoursAgo = (Date.now() - new Date(ts).getTime()) / 36e5
+
+  if (hoursAgo < 6) return 2
+  if (hoursAgo < 24) return 1.5
+  return 1
+}
+
+/* ===================== HOT ZONES ===================== */
+
+export function computeHotZones(events: Event[]): HotZone[] {
+  const RADIUS_KM = 150        // radio realista
+  const MIN_WEIGHT = 4        // umbral real de actividad
+
+  const zones: HotZone[] = []
 
   events.filter(hasCoordinates).forEach(e => {
-    const found = zones.find(
-      z => Math.abs(z.lat - e.lat) < 5 && Math.abs(z.lon - e.lon) < 5
+    const w = eventWeight(e)
+
+    const zone = zones.find(z =>
+      distanceKm(z.lat, z.lon, e.lat, e.lon) <= RADIUS_KM
     )
-    if (found) found.count++
-    else zones.push({ lat: e.lat, lon: e.lon, count: 1 })
+
+    if (zone) {
+      // centroid dinámico (promedio ponderado)
+      const total = zone.intensity + w
+      zone.lat = (zone.lat * zone.intensity + e.lat * w) / total
+      zone.lon = (zone.lon * zone.intensity + e.lon * w) / total
+      zone.intensity = total
+      zone.count++
+    } else {
+      zones.push({
+        lat: e.lat,
+        lon: e.lon,
+        count: 1,
+        intensity: w,
+      })
+    }
   })
 
-  return zones.filter(z => z.count >= 3)
+  return zones
+    .filter(z => z.intensity >= MIN_WEIGHT)
+    .sort((a, b) => b.intensity - a.intensity)
 }
 
 /* ===================== COMPONENT ===================== */
