@@ -10,6 +10,7 @@ import { categoryColors } from "@/lib/categoryColors"
 import { strategicPoints } from "@/lib/strategicPoints"
 import { strategicChokepoints } from "@/lib/strategicChokepoints"
 import { activeConflicts } from "@/lib/activeConflicts"
+import { strategicMilitaryBases } from "@/lib/strategicMilitaryBases"
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
 
@@ -101,8 +102,8 @@ function distanceKm(
   const a =
     Math.sin(dLat / 2) ** 2 +
     Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) ** 2
+    Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLon / 2) ** 2
 
   return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
@@ -173,6 +174,7 @@ export default function MapboxIntelMap({ events }: Props) {
     capitals: true,
     chokepoints: true,
     conflicts: true,
+    militaryBases: true,
   })
 
   useEffect(() => {
@@ -446,6 +448,101 @@ export default function MapboxIntelMap({ events }: Props) {
           .addTo(map)
       })
 
+      /* ===================== MILITARY BASES ===================== */
+
+      map.addSource("military-bases", {
+        type: "geojson",
+        data: {
+          type: "FeatureCollection",
+          features: strategicMilitaryBases.map(b => ({
+            type: "Feature",
+            properties: b,
+            geometry: {
+              type: "Point",
+              coordinates: [b.lon, b.lat],
+            },
+          })),
+        } as GeoJSON.FeatureCollection,
+      })
+      map.addLayer({
+  id: "military-bases-layer",
+  type: "symbol",
+  source: "military-bases",
+  layout: {
+    "text-field": "★",
+    "text-size": [
+      "interpolate",
+      ["linear"],
+      ["zoom"],
+      1.5, 16,
+      3,   20,
+      5,   26,
+    ],
+    "text-anchor": "center",
+    "text-allow-overlap": true,
+  },
+  paint: {
+    "text-color": "#a855f7",
+    "text-halo-color": "#020617",
+    "text-halo-width": 1.5,
+  },
+})
+
+
+      map.on("click", "military-bases-layer", e => {
+        const b = e.features?.[0]?.properties as any
+
+        new mapboxgl.Popup({
+          closeButton: false,
+          closeOnClick: true,
+          offset: {
+            top: [0, 12],
+            bottom: [0, -12],
+            left: [12, 0],
+            right: [-12, 0],
+          },
+        })
+          .setLngLat(e.lngLat)
+          .setHTML(
+            popup(`
+        <div style="font-size:12px;line-height:1.3">
+
+          <!-- HEADER -->
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+            <div style="font-weight:600;font-size:14px">
+              ${b.name}
+            </div>
+            <div style="font-size:11px;color:#c4b5fd;white-space:nowrap">
+              MILITARY BASE
+            </div>
+          </div>
+
+          <!-- LOCATION -->
+          <div style="font-size:11px;color:#d1d5db;margin-bottom:6px">
+            ${b.country}
+          </div>
+
+          <div style="height:1px;background:#e5e7eb;opacity:0.25;margin:6px 0"></div>
+
+          <!-- DESCRIPTION -->
+          <div style="font-size:11px;color:#d1d5db;margin-bottom:6px">
+            ${b.description}
+          </div>
+
+          <div style="height:1px;background:#e5e7eb;opacity:0.25;margin:6px 0"></div>
+
+          <!-- SIGNIFICANCE -->
+          <div style="font-size:11px">
+            <span style="color:#9ca3af">Strategic significance</span><br/>
+            ${b.significance}
+          </div>
+
+        </div>
+      `)
+          )
+          .addTo(map)
+      })
+
       /* ===================== CHOKEPOINTS ===================== */
 
       map.addSource("chokepoints", {
@@ -691,6 +788,7 @@ export default function MapboxIntelMap({ events }: Props) {
     toggle("chokepoints-layer", layers.chokepoints)
     toggle("chokepoints-labels", layers.chokepoints)
     toggle("conflicts-layer", layers.conflicts)
+    toggle("military-bases-layer", layers.militaryBases)
   }, [layers, ready])
 
   return (

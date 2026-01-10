@@ -39,6 +39,11 @@ export default function MapLegend() {
           style={{ backgroundColor: "#334155" }}
         />
       </div>
+      
+      <div className="flex items-center justify-between gap-2">
+        <span>Military base</span>
+        <span className="text-purple-400 text-sm leading-none">★</span>
+      </div>
 
       <div className="flex items-center justify-between gap-2">
         <span>Active conflict</span>
@@ -52,7 +57,6 @@ export default function MapLegend() {
           CONFLICT
         </span>
       </div>
-
       {/* FINAL BASELINE */}
       <div className="border-t border-gray-800 pt-1 mt-2" />
     </div>
