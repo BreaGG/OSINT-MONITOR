@@ -14,27 +14,82 @@ function shortCountry(country?: string) {
     return country
 }
 
+function pickVariant(variants: string[], seed: string) {
+    const index = Math.abs(hashCode(seed)) % variants.length
+    return variants[index]
+}
+
+function hashCode(str: string) {
+    let hash = 0
+    for (let i = 0; i < str.length; i++) {
+        hash = (hash << 5) - hash + str.charCodeAt(i)
+        hash |= 0
+    }
+    return hash
+}
+
 function intelSummary(event: Event) {
     const country = shortCountry(event.country)
     const category = event.category
 
-    if (category === "conflict") {
-        return `Escalating security-related developments reported in ${country}, indicating potential instability or military activity.`
-    }
+    switch (category) {
+        case "conflict": {
+            const variants = [
+                `Security-related activity reported in ${country} suggests a potential escalation or continuation of armed tensions.`,
+                `Developments in ${country} indicate increased military or security activity, warranting close monitoring.`,
+                `Conflict-related reporting from ${country} points to heightened instability with possible regional implications.`,
+            ]
+            return pickVariant(variants, event.id)
+        }
 
-    if (category === "politics") {
-        return `Political developments in ${country} may have short-term implications for governance, policy direction, or regional stability.`
-    }
+        case "politics": {
+            const variants = [
+                `Political developments in ${country} may influence governance dynamics or near-term policy direction.`,
+                `Reported political activity in ${country} could have implications for internal stability or regional relations.`,
+                `Evolving political conditions in ${country} suggest potential shifts in decision-making or leadership posture.`,
+            ]
+            return pickVariant(variants, event.id)
+        }
 
-    if (category === "disaster") {
-        return `An unfolding emergency situation in ${country} could impact civilian safety, infrastructure, or humanitarian conditions.`
-    }
+        case "disaster": {
+            const variants = [
+                `An unfolding emergency in ${country} may impact civilian safety, critical infrastructure, or humanitarian conditions.`,
+                `Disaster-related reports from ${country} indicate potential disruption requiring situational awareness.`,
+                `Environmental or natural hazard events in ${country} could lead to cascading humanitarian or logistical challenges.`,
+            ]
+            return pickVariant(variants, event.id)
+        }
 
-    if (category === "health") {
-        return `Health-related developments in ${country} may affect public health systems or population risk levels.`
-    }
+        case "health": {
+            const variants = [
+                `Health-related developments in ${country} may place pressure on public health systems or population resilience.`,
+                `Reported health events in ${country} suggest potential public health risks requiring monitoring.`,
+                `Emerging health indicators in ${country} could affect healthcare capacity or disease risk levels.`,
+            ]
+            return pickVariant(variants, event.id)
+        }
 
-    return `Developments reported in ${country} require monitoring for potential regional or strategic impact.`
+        case "economy": {
+            const variants = [
+                `Economic indicators reported in ${country} may signal short-term market volatility or macroeconomic pressure.`,
+                `Developments affecting the economy of ${country} could influence financial stability or investor sentiment.`,
+                `Macroeconomic signals from ${country} suggest potential impacts on growth, inflation, or fiscal conditions.`,
+            ]
+            return pickVariant(variants, event.id)
+        }
+
+        case "sports": {
+            const variants = [
+                `Sports-related reporting from ${country} has limited strategic relevance but may reflect public sentiment.`,
+                `Athletic or sporting developments in ${country} are noted with low strategic impact.`,
+            ]
+            return pickVariant(variants, event.id)
+        }
+
+        default: {
+            return `Reported developments in ${country} require monitoring for potential regional or strategic impact.`
+        }
+    }
 }
 
 /* ===================== COMPONENT ===================== */
@@ -116,13 +171,13 @@ export default function EventDetail() {
 
             {/* METADATA */}
             <div className="flex flex-wrap items-center gap-2 text-xs text-gray-400">
-            <span>{event.source}</span>
-            <span>•</span>
-            <span>{new Date(event.date).toLocaleString()}</span>
-            <span>•</span>
-            <span>{shortCountry(event.country)}</span>
-            <span>•</span>
-            <span className="uppercase tracking-wide" style={{ color: category.color }}>{category.label}</span>
+                <span>{event.source}</span>
+                <span>•</span>
+                <span>{new Date(event.date).toLocaleString()}</span>
+                <span>•</span>
+                <span>{shortCountry(event.country)}</span>
+                <span>•</span>
+                <span className="uppercase tracking-wide" style={{ color: category.color }}>{category.label}</span>
             </div>
 
             {/* INTEL SUMMARY */}

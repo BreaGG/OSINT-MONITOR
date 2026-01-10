@@ -1,208 +1,282 @@
-export const countries = [
-  // 🇺🇸 UNITED STATES
+export type Country = {
+  name: string;
+  lat: number;
+  lon: number;
+  aliases: {
+    strong: string[]; // lugares físicos inequívocos
+    weak: string[]; // actores / gobierno (solo fallback)
+  };
+};
+
+export const countries: Country[] = [
+  /* ===================== NORTH AMERICA ===================== */
+
   {
     name: "United States",
     lat: 37.0902,
     lon: -95.7129,
-    aliases: [
-      "United States",
-      "US",
-      "U.S.",
-      "USA",
-      "America",
-      "American",
-      "Washington",
-      "White House",
-      "Pentagon",
-      "State Department",
-      "Biden",
-      "Congress",
-    ],
+    aliases: {
+      strong: [
+        "United States",
+        "U.S.",
+        "USA",
+        "Washington DC",
+        "New York",
+        "Los Angeles",
+        "Texas",
+        "California",
+        "Florida",
+      ],
+      weak: [
+        "US government",
+        "White House",
+        "Pentagon",
+        "State Department",
+        "Biden administration",
+        "Congress",
+      ],
+    },
   },
 
-  // 🇬🇧 UNITED KINGDOM
+  /* ===================== EUROPE ===================== */
+
   {
     name: "United Kingdom",
     lat: 55.3781,
     lon: -3.436,
-    aliases: [
-      "United Kingdom",
-      "UK",
-      "U.K.",
-      "Britain",
-      "British",
-      "England",
-      "London",
-      "Downing Street",
-      "Prime Minister",
-    ],
+    aliases: {
+      strong: [
+        "United Kingdom",
+        "UK",
+        "U.K.",
+        "Britain",
+        "England",
+        "Scotland",
+        "Wales",
+        "London",
+        "Manchester",
+      ],
+      weak: ["British government", "Downing Street", "Prime Minister"],
+    },
   },
 
-  // 🇫🇷 FRANCE
   {
     name: "France",
     lat: 46.2276,
     lon: 2.2137,
-    aliases: ["France", "French", "Paris", "Elysée", "Macron"],
+    aliases: {
+      strong: [
+        "France",
+        "Paris",
+        "Marseille",
+        "Lyon",
+        "Nice",
+        "French territory",
+      ],
+      weak: ["French government", "Elysée", "Macron"],
+    },
   },
 
-  // 🇩🇪 GERMANY
   {
     name: "Germany",
     lat: 51.1657,
     lon: 10.4515,
-    aliases: ["Germany", "German", "Berlin", "Bundestag", "Scholz"],
+    aliases: {
+      strong: ["Germany", "Berlin", "Munich", "Hamburg", "Frankfurt"],
+      weak: ["German government", "Bundestag", "Scholz"],
+    },
   },
 
-  // 🇪🇸 SPAIN
   {
     name: "Spain",
     lat: 40.4637,
     lon: -3.7492,
-    aliases: ["Spain", "Spanish", "Madrid", "Sanchez"],
+    aliases: {
+      strong: ["Spain", "Madrid", "Barcelona", "Valencia", "Seville"],
+      weak: ["Spanish government", "Sanchez"],
+    },
   },
 
-  // 🇮🇹 ITALY
   {
     name: "Italy",
     lat: 41.8719,
     lon: 12.5674,
-    aliases: ["Italy", "Italian", "Rome", "Meloni"],
+    aliases: {
+      strong: ["Italy", "Rome", "Milan", "Naples", "Sicily"],
+      weak: ["Italian government", "Meloni"],
+    },
   },
 
-  // 🇪🇺 EUROPEAN UNION
   {
     name: "European Union",
     lat: 50.8503,
     lon: 4.3517,
-    aliases: [
-      "European Union",
-      "EU",
-      "E.U.",
-      "Brussels",
-      "European Commission",
-      "EU leaders",
-      "EU summit",
-    ],
+    aliases: {
+      strong: ["European Union", "EU", "E.U.", "Brussels"],
+      weak: ["European Commission", "EU leaders", "EU summit"],
+    },
   },
 
-  // 🇷🇺 RUSSIA
-  {
-    name: "Russia",
-    lat: 61.524,
-    lon: 105.3188,
-    aliases: ["Russia", "Russian", "Moscow", "Kremlin", "Putin"],
-  },
+  /* ===================== EASTERN EUROPE / RUSSIA ===================== */
 
-  // 🇺🇦 UKRAINE
   {
     name: "Ukraine",
     lat: 48.3794,
     lon: 31.1656,
-    aliases: ["Ukraine", "Ukrainian", "Kyiv", "Kiev", "Zelensky"],
+    aliases: {
+      strong: [
+        "Ukraine",
+        "Kyiv",
+        "Kiev",
+        "Kharkiv",
+        "Donetsk",
+        "Luhansk",
+        "Crimea",
+      ],
+      weak: ["Ukrainian forces", "Zelensky"],
+    },
   },
 
-  // 🇨🇳 CHINA
   {
-    name: "China",
-    lat: 35.8617,
-    lon: 104.1954,
-    aliases: ["China", "Chinese", "Beijing", "Xi Jinping", "Communist Party"],
+    name: "Russia",
+    lat: 61.524,
+    lon: 105.3188,
+    aliases: {
+      strong: ["Russia", "Moscow", "Saint Petersburg", "Chechnya"],
+      weak: ["Russian forces", "Kremlin", "Putin"],
+    },
   },
 
-  // 🇹🇼 TAIWAN
+  /* ===================== MIDDLE EAST ===================== */
+
   {
-    name: "Taiwan",
-    lat: 23.6978,
-    lon: 120.9605,
-    aliases: ["Taiwan", "Taipei", "Taiwanese"],
+    name: "Syria",
+    lat: 34.8021,
+    lon: 38.9968,
+    aliases: {
+      strong: ["Syria", "Damascus", "Aleppo", "Homs", "Idlib", "Latakia"],
+      weak: ["Syrian government", "Assad"],
+    },
   },
 
-  // 🇮🇱 ISRAEL
   {
     name: "Israel",
     lat: 31.0461,
     lon: 34.8516,
-    aliases: [
-      "Israel",
-      "Israeli",
-      "Jerusalem",
-      "Tel Aviv",
-      "Gaza",
-      "IDF",
-      "Netanyahu",
-    ],
+    aliases: {
+      strong: ["Israel", "Jerusalem", "Tel Aviv", "Haifa"],
+      weak: ["Israeli army", "IDF", "Netanyahu"],
+    },
   },
 
-  // 🇵🇸 PALESTINE
   {
     name: "Palestine",
     lat: 31.9522,
     lon: 35.2332,
-    aliases: ["Palestine", "Palestinian", "West Bank", "Ramallah", "Hamas"],
+    aliases: {
+      strong: [
+        "Palestine",
+        "Gaza",
+        "West Bank",
+        "Ramallah",
+        "Rafah",
+        "Khan Younis",
+      ],
+      weak: ["Palestinian", "Hamas"],
+    },
   },
 
-  // 🇮🇷 IRAN
   {
     name: "Iran",
     lat: 32.4279,
     lon: 53.688,
-    aliases: ["Iran", "Iranian", "Tehran", "Ayatollah", "IRGC"],
+    aliases: {
+      strong: ["Iran", "Tehran", "Isfahan"],
+      weak: ["Iranian government", "IRGC", "Ayatollah"],
+    },
   },
 
-  // 🇹🇷 TURKEY
   {
     name: "Turkey",
     lat: 38.9637,
     lon: 35.2433,
-    aliases: ["Turkey", "Turkish", "Ankara", "Istanbul", "Erdogan"],
+    aliases: {
+      strong: ["Turkey", "Ankara", "Istanbul"],
+      weak: ["Turkish government", "Erdogan"],
+    },
   },
 
-  // 🇸🇦 SAUDI ARABIA
   {
     name: "Saudi Arabia",
     lat: 23.8859,
     lon: 45.0792,
-    aliases: ["Saudi Arabia", "Saudi", "Riyadh", "MBS", "Crown Prince"],
+    aliases: {
+      strong: ["Saudi Arabia", "Riyadh", "Jeddah"],
+      weak: ["Saudi government", "MBS", "Crown Prince"],
+    },
   },
 
-  // 🇯🇵 JAPAN
+  /* ===================== ASIA ===================== */
+
+  {
+    name: "China",
+    lat: 35.8617,
+    lon: 104.1954,
+    aliases: {
+      strong: ["China", "Beijing", "Shanghai", "Xinjiang", "Hong Kong"],
+      weak: ["Chinese government", "Communist Party", "Xi Jinping"],
+    },
+  },
+
+  {
+    name: "Taiwan",
+    lat: 23.6978,
+    lon: 120.9605,
+    aliases: {
+      strong: ["Taiwan", "Taipei"],
+      weak: ["Taiwanese authorities"],
+    },
+  },
+
   {
     name: "Japan",
     lat: 36.2048,
     lon: 138.2529,
-    aliases: ["Japan", "Japanese", "Tokyo", "Kishida"],
+    aliases: {
+      strong: ["Japan", "Tokyo", "Osaka"],
+      weak: ["Japanese government", "Kishida"],
+    },
   },
 
-  // 🇰🇷 SOUTH KOREA
   {
     name: "South Korea",
     lat: 35.9078,
     lon: 127.7669,
-    aliases: ["South Korea", "Korea", "Seoul", "South Korean"],
+    aliases: {
+      strong: ["South Korea", "Seoul"],
+      weak: ["South Korean government"],
+    },
   },
 
-  // 🇰🇵 NORTH KOREA
   {
     name: "North Korea",
     lat: 40.3399,
     lon: 127.5101,
-    aliases: ["North Korea", "Pyongyang", "Kim Jong Un"],
+    aliases: {
+      strong: ["North Korea", "Pyongyang"],
+      weak: ["Kim Jong Un"],
+    },
   },
 
-  // 🇻🇪 VENEZUELA
+  /* ===================== LATIN AMERICA ===================== */
+
   {
     name: "Venezuela",
     lat: 10.48,
     lon: -66.9,
-    aliases: [
-      "Venezuela",
-      "Venezuelan",
-      "Caracas",
-      "Maduro",
-      "Bolivarian",
-      "Caracas, Venezuela",
-      "República Bolivariana de Venezuela",
-    ],
+    aliases: {
+      strong: ["Venezuela", "Caracas"],
+      weak: ["Venezuelan government", "Maduro", "Bolivarian"],
+    },
   },
 ];
