@@ -58,8 +58,8 @@ function confidenceLabel(score: number) {
 /* ===================== TYPES ===================== */
 
 type Signal = {
-    key: string            // full country name (used internally)
-    label: string          // formatted label (UI)
+    key: string
+    label: string
     category: string
     delta?: number
     trend: "up" | "new"
@@ -124,11 +124,10 @@ export default function NewAndEscalatingPanel({
         const { recent, baseline, category } = data
         const regionLabel = formatRegion(key)
 
-        // NEW
         if (recent > 0 && baseline === 0) {
             newlyActive.push({
                 key,
-                label: `${regionLabel} — ${category}`,
+                label: `${regionLabel} · ${category}`,
                 category,
                 trend: "new",
                 confidence: 1,
@@ -136,7 +135,6 @@ export default function NewAndEscalatingPanel({
             return
         }
 
-        // ESCALATING
         if (
             recent >= MIN_EVENTS_ESCALATION &&
             baseline > 0 &&
@@ -146,7 +144,7 @@ export default function NewAndEscalatingPanel({
 
             escalating.push({
                 key,
-                label: `${regionLabel} — ${category}`,
+                label: `${regionLabel} · ${category}`,
                 category,
                 delta: recent - baseline,
                 trend: "up",
@@ -166,14 +164,14 @@ export default function NewAndEscalatingPanel({
     /* ===================== RENDER ===================== */
 
     return (
-        <section className="space-y-2 flex flex-col text-xs text-gray-200">
+        <section className="flex flex-col space-y-2 text-xs text-gray-200">
 
             {/* HEADER */}
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between">
                 <div className="uppercase tracking-wide text-gray-400">
                     New & Escalating
                     <span className="ml-1 text-[10px] text-gray-500">
-                        ({preset.toUpperCase()})
+                        [{preset.toUpperCase()}]
                     </span>
                 </div>
                 <div className="text-[10px] text-gray-500">
@@ -181,26 +179,26 @@ export default function NewAndEscalatingPanel({
                 </div>
             </div>
 
-            {/* STATUS */}
+            {/* SYSTEM STATUS */}
             <div
-                className={`mb-3 rounded border px-2 py-1.5 text-[11px]
+                className={`rounded border px-2 py-1 text-[11px]
           ${hasEscalation
                         ? "border-red-900/40 bg-red-950/30 text-red-400"
                         : "border-green-900/40 bg-green-950/20 text-green-400"
                     }`}
             >
                 {hasEscalation
-                    ? "Escalating activity detected"
-                    : "System stable · No escalation patterns"}
+                    ? "Escalation patterns detected"
+                    : "System stable · No anomalies"}
             </div>
 
-            {/* CONTENT */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1 min-h-0">
+            {/* SIGNALS */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1">
 
                 {/* ESCALATING */}
                 <div>
-                    <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[11px] text-red-400 uppercase">
+                    <div className="flex items-center justify-between mb-1">
+                        <span className="text-[11px] uppercase text-red-400">
                             Escalating
                         </span>
                         <span className="text-[10px] text-gray-500">
@@ -221,7 +219,9 @@ export default function NewAndEscalatingPanel({
                                         {item.label}
                                     </span>
                                     <span className="text-right">
-                                        <div className="text-red-300">+{item.delta}</div>
+                                        <div className="text-red-300">
+                                            +{item.delta}
+                                        </div>
                                         <div className="text-[10px] text-gray-500">
                                             {confidenceLabel(item.confidence)}
                                         </div>
@@ -230,7 +230,7 @@ export default function NewAndEscalatingPanel({
                             ))}
                         </ul>
                     ) : (
-                        <div className="text-gray-500 italic text-[11px]">
+                        <div className="text-[11px] text-gray-500 italic">
                             No regions exceeding baseline
                         </div>
                     )}
@@ -238,8 +238,8 @@ export default function NewAndEscalatingPanel({
 
                 {/* NEW */}
                 <div>
-                    <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[11px] text-amber-400 uppercase">
+                    <div className="flex items-center justify-between mb-1">
+                        <span className="text-[11px] uppercase text-amber-400">
                             New
                         </span>
                         <span className="text-[10px] text-gray-500">
@@ -261,7 +261,7 @@ export default function NewAndEscalatingPanel({
                             ))}
                         </ul>
                     ) : (
-                        <div className="text-gray-500 italic text-[11px]">
+                        <div className="text-[11px] text-gray-500 italic">
                             No new regions detected
                         </div>
                     )}
@@ -269,7 +269,7 @@ export default function NewAndEscalatingPanel({
             </div>
 
             {/* FOOTER */}
-            <div className="mt-3 pt-2 border-t border-gray-800 text-[10px] text-gray-600">
+            <div className="pt-2 border-t border-gray-800 text-[10px] text-gray-600">
                 Monitoring {filteredEvents.length} events · auto-updating
             </div>
         </section>

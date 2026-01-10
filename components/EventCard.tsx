@@ -6,6 +6,17 @@ type Props = {
   event: Event
 }
 
+function timeAgo(date: string) {
+  const diff = Date.now() - new Date(date).getTime()
+  const hours = Math.floor(diff / 36e5)
+
+  if (hours < 1) return "Just now"
+  if (hours < 24) return `${hours}h ago`
+  if (hours < 48) return "Yesterday"
+
+  return new Date(date).toLocaleDateString()
+}
+
 export default function EventCard({ event }: Props) {
   const category = categoryColors[event.category]
 
@@ -17,7 +28,12 @@ export default function EventCard({ event }: Props) {
 
   return (
     <article
-      className="py-3 pl-3 pr-2 space-y-2 text-sm text-gray-200 relative"
+      className="
+        relative py-3 pl-3 pr-2 space-y-2 text-sm text-gray-200
+        transition-colors
+        hover:bg-black/40
+        group
+      "
       style={{
         borderLeft: `2px solid ${category.color}`,
       }}
@@ -33,7 +49,7 @@ export default function EventCard({ event }: Props) {
           </span>
 
           {isEscalating && (
-            <span className="flex items-center gap-1 text-red-400">
+            <span className="flex items-center gap-1 text-red-400 font-medium">
               <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
               ESCALATING
             </span>
@@ -46,7 +62,7 @@ export default function EventCard({ event }: Props) {
           )}
         </div>
 
-        <span className="text-gray-500">
+        <span className="text-gray-500 truncate max-w-[120px]">
           {event.country}
         </span>
       </div>
@@ -55,7 +71,7 @@ export default function EventCard({ event }: Props) {
       <h3 className="font-medium leading-snug text-gray-100">
         <Link
           href={`/event/${encodeURIComponent(event.id)}`}
-          className="hover:underline"
+          className="group-hover:underline"
         >
           {event.title}
         </Link>
@@ -71,9 +87,7 @@ export default function EventCard({ event }: Props) {
       {/* FOOTER */}
       <div className="flex items-center justify-between text-xs text-gray-500">
         <span>{event.source}</span>
-        <span>
-          {new Date(event.date).toLocaleDateString()}
-        </span>
+        <span>{timeAgo(event.date)}</span>
       </div>
 
       {/* SEPARATOR */}
