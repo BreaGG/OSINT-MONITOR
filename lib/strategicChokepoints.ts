@@ -57,6 +57,6 @@ export const strategicChokepoints: StrategicChokepoint[] = [
     lon: -5.6060,
     summary:
       "The Strait of Gibraltar is one of the world's most critical maritime chokepoints, controlling access between the Atlantic Ocean and the Mediterranean Sea. It is essential for global trade, energy transport, and NATO naval operations, and is sensitive to regional instability in North Africa and Southern Europe.",
-    status: "Strategic maritime chokepoint linking the Atlantic Ocean and the Mediterranean Sea.",
+    status: "Maritime chokepoint",
     }
 ];
