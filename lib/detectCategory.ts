@@ -114,14 +114,10 @@ export function detectCategory(text: string): Category {
     "uefa",
     "olympics",
     "world cup",
-    "match",
     "tournament",
-    "goal",
-    "league",
     "coach",
-    "player",
-    "injury",
-    "season",
+    "real madrid",
+    "mbappe",
   ];
 
   /* ===================== DETECTION (PRIORITY ORDER) ===================== */
