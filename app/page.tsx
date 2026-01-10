@@ -43,7 +43,6 @@ export default function Home() {
   }, [])
 
   /* ===================== PRESET LOGIC ===================== */
-  /* Presets ORCHESTRATE filters */
 
   useEffect(() => {
     if (preset === "all") {
@@ -98,22 +97,22 @@ export default function Home() {
   /* ===================== RENDER ===================== */
 
   return (
-    <main className="p-6 max-w-[1600px] mx-auto h-screen flex flex-col">
-      {/* HEADER: TITLE + FILTERS */}
-      <div className="flex items-center justify-between mb-4 gap-6">
-        {/* TITLE */}
-        <div className="flex items-baseline gap-3">
-          <h1 className="text-2xl font-bold">
+    <main className="p-4 lg:p-6 max-w-[1600px] mx-auto h-screen flex flex-col">
+
+      {/* HEADER */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-4 gap-3">
+        <div className="flex gap-3 overflow-hidden items-center whitespace-nowrap lg:items-baseline lg:whitespace-normal">
+          <h1 className="text-lg font-semibold shrink-0 lg:text-2xl lg:font-bold">
             Global OSINT Monitor
           </h1>
 
-          <span className="text-xs text-gray-400">
+          <span className="text-[11px] text-gray-400 truncate lg:text-xs lg:truncate-none">
             Updated {lastUpdated} · Daily update at 02:00 UTC
           </span>
         </div>
 
-        {/* FILTERS + PRESETS */}
-        <div className="flex items-center gap-4">
+        {/* FILTERS (desktop only) */}
+        <div className="hidden lg:flex items-center gap-4">
           {/* PRESETS */}
           <div className="flex items-center gap-1 text-xs text-gray-400">
             {(["all", "conflicts", "strategic"] as Preset[]).map(p => (
@@ -138,7 +137,7 @@ export default function Home() {
               setPreset("all")
               setCategory(e.target.value)
             }}
-            className="bg-black text-white border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-400"
+            className="bg-black text-white border border-gray-700 rounded px-3 py-2 text-sm"
           >
             <option value="all">All categories</option>
             <option value="conflict">Conflict</option>
@@ -154,7 +153,7 @@ export default function Home() {
               setPreset("all")
               setCountry(e.target.value)
             }}
-            className="bg-black text-white border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-400"
+            className="bg-black text-white border border-gray-700 rounded px-3 py-2 text-sm"
           >
             <option value="all">All countries</option>
             {countries.map(c => (
@@ -173,35 +172,49 @@ export default function Home() {
               setPreset("all")
               setSearch(e.target.value)
             }}
-            className="bg-black text-white border border-gray-700 rounded px-3 py-2 text-sm w-56 placeholder-gray-500 focus:outline-none focus:border-gray-400"
+            className="bg-black text-white border border-gray-700 rounded px-3 py-2 text-sm w-56"
           />
         </div>
       </div>
 
-      {/* LAYOUT PRINCIPAL */}
-      <div className="flex flex-1 min-h-0 gap-5 overflow-hidden">
-        {/* LEYENDA + INSIGHTS */}
-        <aside className="w-38 flex flex-col gap-1 shrink-0">
+      {/* MOBILE PRESETS */}
+      <div className="flex lg:hidden gap-2 mb-3 text-xs text-gray-400">
+        {(["all", "conflicts", "strategic"] as Preset[]).map(p => (
+          <button
+            key={p}
+            onClick={() => setPreset(p)}
+            className={`px-2 py-1 rounded border ${
+              preset === p
+                ? "border-gray-500 text-gray-200"
+                : "border-gray-800"
+            }`}
+          >
+            {p.toUpperCase()}
+          </button>
+        ))}
+      </div>
+
+      {/* MAIN LAYOUT */}
+      <div className="flex flex-col lg:flex-row flex-1 min-h-0 gap-5 overflow-hidden">
+
+        {/* SIDEBAR (desktop only) */}
+        <aside className="hidden lg:flex w-38 flex-col gap-1 shrink-0">
           <MapLegend />
           <LegendInsights events={filteredEvents} />
         </aside>
 
-        {/* GRID CENTRAL */}
+        {/* CENTER + RIGHT */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_450px] gap-5 flex-1 min-h-0 overflow-hidden">
-          {/* MAPA + LOWER PANEL */}
-          <section className="flex flex-col min-h-0 gap-3">
-            {/* MAPA – sigue siendo protagonista */}
-            <div className="flex-shrink-0">
-              <MapboxMap events={filteredEvents} />
-            </div>
 
-            {/* LOWER ROW: STREAM + FUTURE PANEL */}
-            <div className="grid grid-cols-[2fr_1fr] gap-3 h-[420px]">
-              {/* STREAM (izquierda, más ancho) */}
+          {/* MAP COLUMN */}
+          <section className="flex flex-col min-h-0 gap-3 order-1">
+            <MapboxMap events={filteredEvents} />
+
+            {/* STREAM + PANEL (desktop only) */}
+            <div className="hidden lg:grid grid-cols-[2fr_1fr] gap-3 h-[420px]">
               <div className="rounded-lg overflow-hidden">
                 <Stream />
               </div>
-              {/* FUTURE PANEL (derecha) */}
               <div className="rounded-lg bg-black/40">
                 <NewAndEscalatingPanel
                   events={filteredEvents}
@@ -212,7 +225,7 @@ export default function Home() {
           </section>
 
           {/* MARKET + FEED */}
-          <section className="flex flex-col min-h-0 space-y-3">
+          <section className="flex flex-col min-h-0 space-y-3 order-2">
             <MarketSnapshot />
 
             <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
@@ -223,6 +236,7 @@ export default function Home() {
               )}
             </div>
           </section>
+
         </div>
       </div>
     </main>
