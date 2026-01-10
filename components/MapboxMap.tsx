@@ -16,6 +16,7 @@ mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
 
 type Props = {
   events: Event[]
+  hoveredEventId?: string | null
 }
 
 type CategoryKey = keyof typeof categoryColors
@@ -163,7 +164,7 @@ export function computeHotZones(events: Event[]): HotZone[] {
 
 /* ===================== COMPONENT ===================== */
 
-export default function MapboxIntelMap({ events }: Props) {
+export default function MapboxMap({ events, hoveredEventId }: Props) {
   const mapRef = useRef<mapboxgl.Map | null>(null)
   const containerRef = useRef<HTMLDivElement | null>(null)
   const [ready, setReady] = useState(false)
@@ -193,6 +194,7 @@ export default function MapboxIntelMap({ events }: Props) {
 
     map.addControl(new mapboxgl.NavigationControl(), "bottom-right")
 
+
     map.on("load", () => {
       /* ===================== EVENTS ===================== */
 
@@ -219,6 +221,14 @@ export default function MapboxIntelMap({ events }: Props) {
         } as GeoJSON.FeatureCollection,
       })
 
+        map.addSource("event-highlight", {
+          type: "geojson",
+          data: {
+            type: "FeatureCollection",
+            features: [],
+          },
+        })
+
       map.addLayer({
         id: "events-layer",
         type: "circle",
@@ -228,6 +238,19 @@ export default function MapboxIntelMap({ events }: Props) {
           "circle-color": ["get", "color"],
           "circle-opacity": 0.85,
           "circle-stroke-width": 1,
+          "circle-stroke-color": "#ffffff",
+        },
+      })
+
+      map.addLayer({
+        id: "event-highlight-layer",
+        type: "circle",
+        source: "event-highlight",
+        paint: {
+          "circle-radius": 10,
+          "circle-color": "#ffffff",
+          "circle-opacity": 0.25,
+          "circle-stroke-width": 2,
           "circle-stroke-color": "#ffffff",
         },
       })
@@ -465,28 +488,28 @@ export default function MapboxIntelMap({ events }: Props) {
         } as GeoJSON.FeatureCollection,
       })
       map.addLayer({
-  id: "military-bases-layer",
-  type: "symbol",
-  source: "military-bases",
-  layout: {
-    "text-field": "★",
-    "text-size": [
-      "interpolate",
-      ["linear"],
-      ["zoom"],
-      1.5, 16,
-      3,   20,
-      5,   26,
-    ],
-    "text-anchor": "center",
-    "text-allow-overlap": true,
-  },
-  paint: {
-    "text-color": "#a855f7",
-    "text-halo-color": "#020617",
-    "text-halo-width": 1.5,
-  },
-})
+        id: "military-bases-layer",
+        type: "symbol",
+        source: "military-bases",
+        layout: {
+          "text-field": "★",
+          "text-size": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            1.5, 16,
+            3, 20,
+            5, 26,
+          ],
+          "text-anchor": "center",
+          "text-allow-overlap": true,
+        },
+        paint: {
+          "text-color": "#a855f7",
+          "text-halo-color": "#020617",
+          "text-halo-width": 0.75,
+        },
+      })
 
 
       map.on("click", "military-bases-layer", e => {
@@ -645,6 +668,7 @@ export default function MapboxIntelMap({ events }: Props) {
           )
           .addTo(map)
       })
+      
 
       /* ===================== CONFLICTS ===================== */
 
@@ -758,6 +782,9 @@ export default function MapboxIntelMap({ events }: Props) {
 
           .addTo(map)
       })
+    if (map.getLayer("event-highlight-layer")) {
+      map.moveLayer("event-highlight-layer")
+    }
 
       map.on("idle", () => setReady(true))
     })
@@ -774,6 +801,7 @@ export default function MapboxIntelMap({ events }: Props) {
   useEffect(() => {
     if (!ready || !mapRef.current) return
     const map = mapRef.current
+    
 
     const toggle = (id: string, visible: boolean) => {
       if (map.getLayer(id)) {
@@ -790,6 +818,51 @@ export default function MapboxIntelMap({ events }: Props) {
     toggle("conflicts-layer", layers.conflicts)
     toggle("military-bases-layer", layers.militaryBases)
   }, [layers, ready])
+
+  useEffect(() => {
+  if (!mapRef.current) return
+
+  const map = mapRef.current
+  const source = map.getSource("event-highlight") as mapboxgl.GeoJSONSource
+  if (!source) return
+
+  if (!hoveredEventId) {
+    source.setData({
+      type: "FeatureCollection",
+      features: [],
+    })
+    return
+  }
+
+  const event = events.find(e => e.id === hoveredEventId)
+
+  if (
+    !event ||
+    typeof event.lat !== "number" ||
+    typeof event.lon !== "number"
+  ) {
+    source.setData({
+      type: "FeatureCollection",
+      features: [],
+    })
+    return
+  }
+
+  source.setData({
+    type: "FeatureCollection",
+    features: [
+      {
+        type: "Feature",
+        properties: {},
+        geometry: {
+          type: "Point",
+          coordinates: [event.lon, event.lat],
+        },
+      },
+    ],
+  })
+}, [hoveredEventId, events])
+
 
   return (
     <section className="relative rounded-xl overflow-hidden border border-gray-800">

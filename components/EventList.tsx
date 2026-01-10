@@ -6,6 +6,7 @@ import EventCard from "./EventCard"
 
 type Props = {
   events: Event[]
+  onHover?: (id: string | null) => void
 }
 
 const PAGE_SIZE = 20
