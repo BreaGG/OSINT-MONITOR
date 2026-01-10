@@ -9,7 +9,6 @@ import sql from "@/lib/db"
 import { Event } from "@/lib/types"
 import { headers } from "next/headers"
 
-
 const parser = new Parser()
 
 export async function GET(request: Request) {
@@ -58,6 +57,9 @@ export async function GET(request: Request) {
           ? await extractArticle(item.link)
           : []
 
+        // ✅ cambio mínimo: fecha base
+        const dateValue = item.pubDate || new Date().toISOString()
+
         const event: Event = {
           id,
           title: item.title || "Sin título",
@@ -66,7 +68,8 @@ export async function GET(request: Request) {
           country: detected?.name || "Global",
           lat: detected?.lat ?? 20,
           lon: detected?.lon ?? 0,
-          date: item.pubDate || new Date().toISOString(),
+          date: dateValue,
+          timestamp: dateValue, // ✅ STRING, no number
           source: source.name,
           url: item.link || "",
           image,
@@ -76,7 +79,7 @@ export async function GET(request: Request) {
         await sql`
           insert into events (
             id, title, summary, category, country,
-            lat, lon, date, source, url, image, content
+            lat, lon, date, timestamp, source, url, image, content
           ) values (
             ${event.id},
             ${event.title},
@@ -86,6 +89,7 @@ export async function GET(request: Request) {
             ${event.lat ?? null},
             ${event.lon ?? null},
             ${event.date},
+            ${event.timestamp},
             ${event.source},
             ${event.url},
             ${event.image ?? null},

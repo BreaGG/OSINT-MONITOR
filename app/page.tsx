@@ -9,6 +9,7 @@ import MarketSnapshot from "@/components/MarketSnapshot"
 import MapLegend from "@/components/MapLegend"
 import LegendInsights from "@/components/LegendInsights"
 import MapboxMap from "@/components/MapboxMap"
+import NewAndEscalatingPanel from "@/components/NewAndEscalatingPanel"
 
 const Map = dynamic(() => import("@/components/Map"), {
   ssr: false,
@@ -187,14 +188,26 @@ export default function Home() {
 
         {/* GRID CENTRAL */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_450px] gap-5 flex-1 min-h-0 overflow-hidden">
-          {/* MAPA + STREAM */}
-          <section className="flex flex-col min-h-0 gap-2">
+          {/* MAPA + LOWER PANEL */}
+          <section className="flex flex-col min-h-0 gap-3">
+            {/* MAPA – sigue siendo protagonista */}
             <div className="flex-shrink-0">
               <MapboxMap events={filteredEvents} />
             </div>
 
-            <div className="flex-shrink-0">
-              <Stream />
+            {/* LOWER ROW: STREAM + FUTURE PANEL */}
+            <div className="grid grid-cols-[2fr_1fr] gap-3 h-[420px]">
+              {/* STREAM (izquierda, más ancho) */}
+              <div className="rounded-lg overflow-hidden">
+                <Stream />
+              </div>
+              {/* FUTURE PANEL (derecha) */}
+              <div className="rounded-lg bg-black/40">
+                <NewAndEscalatingPanel
+                  events={filteredEvents}
+                  preset={preset}
+                />
+              </div>
             </div>
           </section>
 
