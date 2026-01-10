@@ -4,8 +4,8 @@ export type Event = {
   summary: string
   category: "conflict" | "disaster" | "health" | "politics" | "sports" | "economy" 
   country: string
-  lat: number
-  lon: number
+  lat: number | null
+  lon: number | null
   date: string
   timestamp?: number  // ✅ OPCIONAL
   source: string
