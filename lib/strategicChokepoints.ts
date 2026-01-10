@@ -49,4 +49,14 @@ export const strategicChokepoints: StrategicChokepoint[] = [
       "Connects Black Sea to Mediterranean. Key military and commercial passage.",
     status: "Strategic maritime corridor",
   },
+    {
+    id: "strait-of-gibraltar",
+    name: "Strait of Gibraltar",
+    country: "Spain / Morocco",
+    lat: 35.9780,
+    lon: -5.6060,
+    summary:
+      "The Strait of Gibraltar is one of the world's most critical maritime chokepoints, controlling access between the Atlantic Ocean and the Mediterranean Sea. It is essential for global trade, energy transport, and NATO naval operations, and is sensitive to regional instability in North Africa and Southern Europe.",
+    status: "Strategic maritime chokepoint linking the Atlantic Ocean and the Mediterranean Sea.",
+    }
 ];
