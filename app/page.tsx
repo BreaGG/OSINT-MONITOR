@@ -11,6 +11,7 @@ import LegendInsights from "@/components/LegendInsights"
 import MapboxMap from "@/components/MapboxMap"
 import NewAndEscalatingPanel from "@/components/NewAndEscalatingPanel"
 import FocusTimeline from "@/components/FocusTimeline"
+import { categoryColors } from "@/lib/categoryColors"
 
 const Map = dynamic(() => import("@/components/Map"), {
   ssr: false,
@@ -104,6 +105,15 @@ export default function Home() {
     )
   ).sort()
 
+  const categories = Array.from(
+    new Set(
+      events
+        .map(e => e.category)
+        .filter(c => c && c !== "sports")
+    )
+  ).sort()
+
+
   const lastUpdated = useMemo(() => {
     return new Date().toLocaleTimeString()
   }, [])
@@ -169,11 +179,14 @@ export default function Home() {
             className="bg-black text-white border border-gray-700 rounded px-3 py-2 text-sm"
           >
             <option value="all">All categories</option>
-            <option value="conflict">Conflict</option>
-            <option value="disaster">Disaster</option>
-            <option value="politics">Politics</option>
-            <option value="health">Health</option>
+
+            {categories.map(c => (
+              <option key={c} value={c}>
+                {categoryColors[c as keyof typeof categoryColors]?.label ?? c}
+              </option>
+            ))}
           </select>
+
 
           {/* COUNTRY */}
           <select

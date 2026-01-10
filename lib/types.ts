@@ -2,7 +2,7 @@ export type Event = {
   id: string
   title: string
   summary: string
-  category: "conflict" | "disaster" | "health" | "politics"
+  category: "conflict" | "disaster" | "health" | "politics" | "sports" | "economy" 
   country: string
   lat: number
   lon: number
