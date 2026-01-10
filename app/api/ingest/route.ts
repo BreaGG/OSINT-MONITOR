@@ -9,23 +9,12 @@ import sql from "@/lib/db"
 import { Event } from "@/lib/types"
 import { headers } from "next/headers"
 
-
 const parser = new Parser()
 
-export async function GET(request: Request) {
-  const headersList = await headers()
-  const authHeader = headersList.get("authorization")
+/* ===================== CORE INGEST LOGIC ===================== */
+/* ⚠️ NO CAMBIAR: lógica original encapsulada */
 
-  const { searchParams } = new URL(request.url)
-  const token = searchParams.get("token")
-
-  if (
-    authHeader !== `Bearer ${process.env.INGEST_SECRET}` &&
-    token !== process.env.INGEST_SECRET
-  ) {
-    return new NextResponse("Unauthorized", { status: 401 })
-  }
-
+async function runIngest() {
   let inserted = 0
 
   for (const source of rssSources) {
@@ -99,6 +88,46 @@ export async function GET(request: Request) {
       console.error(`Error ingesting ${source.name}`, error)
     }
   }
+
+  return inserted
+}
+
+/* ===================== GET (EXISTING, UNCHANGED) ===================== */
+/* Uso: cron / scripts / server-to-server */
+
+export async function GET(request: Request) {
+  const headersList = await headers()
+  const authHeader = headersList.get("authorization")
+
+  const { searchParams } = new URL(request.url)
+  const token = searchParams.get("token")
+
+  if (
+    authHeader !== `Bearer ${process.env.INGEST_SECRET}` &&
+    token !== process.env.INGEST_SECRET
+  ) {
+    return new NextResponse("Unauthorized", { status: 401 })
+  }
+
+  const inserted = await runIngest()
+
+  return NextResponse.json({
+    status: "ok",
+    inserted,
+  })
+}
+
+/* ===================== POST (NEW, ADMIN UI) ===================== */
+/* Uso: botón manual con password */
+
+export async function POST(request: Request) {
+  const { password } = await request.json()
+
+  if (password !== process.env.INGEST_PASSWORD) {
+    return new NextResponse("Unauthorized", { status: 401 })
+  }
+
+  const inserted = await runIngest()
 
   return NextResponse.json({
     status: "ok",

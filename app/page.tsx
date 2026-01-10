@@ -12,6 +12,7 @@ import MapboxMap from "@/components/MapboxMap"
 import NewAndEscalatingPanel from "@/components/NewAndEscalatingPanel"
 import FocusTimeline from "@/components/FocusTimeline"
 import { categoryColors } from "@/lib/categoryColors"
+import AdminIngestButton from "@/components/AdminIngestButton"
 
 const Map = dynamic(() => import("@/components/Map"), {
   ssr: false,
@@ -207,17 +208,21 @@ export default function Home() {
           </select>
 
           {/* SEARCH */}
-          <input
-            type="text"
-            placeholder="Search headline…"
-            value={search}
-            onChange={e => {
-              setPreset("all")
-              setFocusRegion(null)
-              setSearch(e.target.value)
-            }}
-            className="bg-black text-white border border-gray-700 rounded px-3 py-2 text-sm w-56"
-          />
+          <div className="flex items-center gap-3">
+            <input
+              type="text"
+              placeholder="Search headline…"
+              value={search}
+              onChange={e => {
+                setPreset("all")
+                setFocusRegion(null)
+                setSearch(e.target.value)
+              }}
+              className="bg-black text-white border border-gray-700 rounded px-3 py-2 text-sm w-56"
+            />
+            {/* ADMIN INGEST */}
+            <AdminIngestButton />
+          </div>
         </div>
       </div>
 
