@@ -8,6 +8,10 @@ const HOURS_BASELINE = 72
 const MIN_EVENTS_ESCALATION = 3
 const ESCALATION_FACTOR = 1.5
 
+const TIMELINE_BINS = 6 // 6 × 12h = 72h
+const BIN_HOURS = HOURS_BASELINE / TIMELINE_BINS
+const BARS = ["▁", "▂", "▃", "▄", "▆", "▇"]
+
 type Preset = "all" | "conflicts" | "strategic"
 
 /* ===================== COUNTRY ACRONYMS ===================== */
@@ -55,6 +59,39 @@ function confidenceLabel(score: number) {
     return "Low"
 }
 
+/* ===================== MICRO TIMELINE ===================== */
+
+function buildTimeline(events: Event[], region: string) {
+    const bins = new Array(TIMELINE_BINS).fill(0)
+
+    events.forEach(e => {
+        if (e.country !== region) return
+        const ts = getEventTimestamp(e)
+        if (!ts) return
+
+        const h = hoursAgo(ts)
+        if (h < 0 || h > HOURS_BASELINE) return
+
+        const index = Math.floor(h / BIN_HOURS)
+        if (index >= 0 && index < TIMELINE_BINS) {
+            bins[TIMELINE_BINS - 1 - index]++
+        }
+    })
+
+    const max = Math.max(...bins, 1)
+
+    return bins
+        .map(v =>
+            BARS[
+            Math.min(
+                BARS.length - 1,
+                Math.floor((v / max) * (BARS.length - 1))
+            )
+            ]
+        )
+        .join("")
+}
+
 /* ===================== TYPES ===================== */
 
 type Signal = {
@@ -64,6 +101,7 @@ type Signal = {
     delta?: number
     trend: "up" | "new"
     confidence: number
+    timeline: string
 }
 
 /* ===================== COMPONENT ===================== */
@@ -124,6 +162,7 @@ export default function NewAndEscalatingPanel({
         const { recent, baseline, category } = data
         const regionLabel = formatRegion(key)
 
+        // NEW
         if (recent > 0 && baseline === 0) {
             newlyActive.push({
                 key,
@@ -131,10 +170,12 @@ export default function NewAndEscalatingPanel({
                 category,
                 trend: "new",
                 confidence: 1,
+                timeline: buildTimeline(filteredEvents, key),
             })
             return
         }
 
+        // ESCALATING
         if (
             recent >= MIN_EVENTS_ESCALATION &&
             baseline > 0 &&
@@ -149,6 +190,7 @@ export default function NewAndEscalatingPanel({
                 delta: recent - baseline,
                 trend: "up",
                 confidence,
+                timeline: buildTimeline(filteredEvents, key),
             })
         }
     })
@@ -157,7 +199,7 @@ export default function NewAndEscalatingPanel({
         .sort((a, b) => (b.delta ?? 0) - (a.delta ?? 0))
         .slice(0, 4)
 
-    const newSorted = newlyActive.slice(0, 4)
+    const newSorted = newlyActive.slice(0, 3)
 
     const hasEscalation = escalatingSorted.length > 0
 
@@ -165,7 +207,6 @@ export default function NewAndEscalatingPanel({
 
     return (
         <section className="flex flex-col space-y-2 text-xs text-gray-200">
-
             {/* HEADER */}
             <div className="flex items-center justify-between">
                 <div className="uppercase tracking-wide text-gray-400">
@@ -194,7 +235,6 @@ export default function NewAndEscalatingPanel({
 
             {/* SIGNALS */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1">
-
                 {/* ESCALATING */}
                 <div>
                     <div className="flex items-center justify-between mb-1">
@@ -214,18 +254,21 @@ export default function NewAndEscalatingPanel({
                                     onClick={() => onSelectRegion?.(item.key)}
                                     className="flex justify-between gap-2 cursor-pointer hover:text-white"
                                 >
-                                    <span className="truncate">
-                                        <span className="mr-1 text-red-400">▲</span>
-                                        {item.label}
-                                    </span>
-                                    <span className="text-right">
-                                        <div className="text-red-300">
-                                            +{item.delta}
-                                        </div>
+                                    <div className="flex flex-col truncate">
+                                        <span>
+                                            <span className="mr-1 text-red-400">▲</span>
+                                            {item.label}
+                                        </span>
+                                        <span className="font-mono text-[10px] text-gray-500 tracking-wide">
+                                            {item.timeline}
+                                        </span>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="text-red-300">+{item.delta}</div>
                                         <div className="text-[10px] text-gray-500">
                                             {confidenceLabel(item.confidence)}
                                         </div>
-                                    </span>
+                                    </div>
                                 </li>
                             ))}
                         </ul>
@@ -253,10 +296,17 @@ export default function NewAndEscalatingPanel({
                                 <li
                                     key={item.key}
                                     onClick={() => onSelectRegion?.(item.key)}
-                                    className="cursor-pointer hover:text-white truncate"
+                                    className="cursor-pointer hover:text-white"
                                 >
-                                    <span className="mr-1 text-amber-400">●</span>
-                                    {item.label}
+                                    <div className="flex flex-col truncate">
+                                        <span>
+                                            <span className="mr-1 text-amber-400">●</span>
+                                            {item.label}
+                                        </span>
+                                        <span className="font-mono text-[10px] text-gray-500 tracking-wide">
+                                            {item.timeline}
+                                        </span>
+                                    </div>
                                 </li>
                             ))}
                         </ul>

@@ -27,7 +27,6 @@ export default function Home() {
 
   /* ===== analytical focus ===== */
   const [focusRegion, setFocusRegion] = useState<string | null>(null)
-  const [hoveredEventId, setHoveredEventId] = useState<string | null>(null)
 
   /* ===== filters ===== */
   const [category, setCategory] = useState("all")
@@ -236,10 +235,7 @@ export default function Home() {
 
           {/* MAP COLUMN */}
           <section className="flex flex-col min-h-0 gap-3">
-            <MapboxMap
-              events={filteredEvents}
-              hoveredEventId={hoveredEventId}
-            />
+            <MapboxMap events={filteredEvents} />
             <div className="hidden lg:grid grid-cols-[2fr_1fr] gap-3 h-[420px]">
               <div className="rounded-lg overflow-hidden">
                 <Stream />
@@ -272,10 +268,7 @@ export default function Home() {
               {loading ? (
                 <p>Loading events...</p>
               ) : (
-                <EventList
-                  events={filteredEvents}
-                  onHover={setHoveredEventId}
-                />
+                <EventList events={filteredEvents} />
               )}
             </div>
           </section>
