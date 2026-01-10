@@ -397,13 +397,18 @@ export default function MapboxIntelMap({ events }: Props) {
 
       map.addLayer({
         id: "chokepoints-layer",
-        type: "circle",
+        type: "symbol",
         source: "chokepoints",
+        layout: {
+          "text-field": "◆",
+          "text-size": 26,
+          "text-allow-overlap": true,
+          "text-anchor": "center",
+        },
         paint: {
-          "circle-radius": 6,
-          "circle-color": "#334155",
-          "circle-stroke-width": 1,
-          "circle-stroke-color": "#ffffff",
+          "text-color": "#334155",
+          "text-halo-color": "#ffffff",
+          "text-halo-width": 1,
         },
       })
 

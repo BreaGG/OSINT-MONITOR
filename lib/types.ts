@@ -11,4 +11,5 @@ export type Event = {
   url: string
   image?: string
   content?: string[]
+  timestamp: string
 }

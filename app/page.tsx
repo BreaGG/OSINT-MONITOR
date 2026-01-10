@@ -14,12 +14,23 @@ const Map = dynamic(() => import("@/components/Map"), {
   ssr: false,
 })
 
+/* ===================== PRESETS ===================== */
+
+type Preset = "all" | "conflicts" | "strategic"
+
 export default function Home() {
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
+
+  /* ===== filters ===== */
   const [category, setCategory] = useState("all")
   const [country, setCountry] = useState("all")
   const [search, setSearch] = useState("")
+
+  /* ===== presets ===== */
+  const [preset, setPreset] = useState<Preset>("all")
+
+  /* ===================== DATA ===================== */
 
   useEffect(() => {
     fetch("/api/events")
@@ -29,6 +40,31 @@ export default function Home() {
         setLoading(false)
       })
   }, [])
+
+  /* ===================== PRESET LOGIC ===================== */
+  /* Presets ORCHESTRATE filters */
+
+  useEffect(() => {
+    if (preset === "all") {
+      setCategory("all")
+      setCountry("all")
+      return
+    }
+
+    if (preset === "conflicts") {
+      setCategory("conflict")
+      setCountry("all")
+      return
+    }
+
+    if (preset === "strategic") {
+      setCategory("politics")
+      setCountry("all")
+      return
+    }
+  }, [preset])
+
+  /* ===================== FILTERING ===================== */
 
   const filteredEvents = events.filter(event => {
     const categoryMatch =
@@ -44,7 +80,7 @@ export default function Home() {
     return categoryMatch && countryMatch && searchMatch
   })
 
-
+  /* ===================== AUX DATA ===================== */
 
   const countries = Array.from(
     new Set(
@@ -57,6 +93,8 @@ export default function Home() {
   const lastUpdated = useMemo(() => {
     return new Date().toLocaleTimeString()
   }, [])
+
+  /* ===================== RENDER ===================== */
 
   return (
     <main className="p-6 max-w-[1600px] mx-auto h-screen flex flex-col">
@@ -73,12 +111,32 @@ export default function Home() {
           </span>
         </div>
 
-        {/* FILTERS */}
-        <div className="flex items-center gap-3">
+        {/* FILTERS + PRESETS */}
+        <div className="flex items-center gap-4">
+          {/* PRESETS */}
+          <div className="flex items-center gap-1 text-xs text-gray-400">
+            {(["all", "conflicts", "strategic"] as Preset[]).map(p => (
+              <button
+                key={p}
+                onClick={() => setPreset(p)}
+                className={`px-2 py-1 rounded border ${
+                  preset === p
+                    ? "border-gray-500 text-gray-200"
+                    : "border-gray-800 hover:border-gray-600"
+                }`}
+              >
+                {p.toUpperCase()}
+              </button>
+            ))}
+          </div>
+
           {/* CATEGORY */}
           <select
             value={category}
-            onChange={e => setCategory(e.target.value)}
+            onChange={e => {
+              setPreset("all")
+              setCategory(e.target.value)
+            }}
             className="bg-black text-white border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-400"
           >
             <option value="all">All categories</option>
@@ -91,7 +149,10 @@ export default function Home() {
           {/* COUNTRY */}
           <select
             value={country}
-            onChange={e => setCountry(e.target.value)}
+            onChange={e => {
+              setPreset("all")
+              setCountry(e.target.value)
+            }}
             className="bg-black text-white border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-400"
           >
             <option value="all">All countries</option>
@@ -107,33 +168,31 @@ export default function Home() {
             type="text"
             placeholder="Search headline…"
             value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="bg-black text-white border border-gray-700 rounded px-3 py-2 text-sm w-56 placeholder-gray-500 focus:outline-none focus:border-gray-400" />
+            onChange={e => {
+              setPreset("all")
+              setSearch(e.target.value)
+            }}
+            className="bg-black text-white border border-gray-700 rounded px-3 py-2 text-sm w-56 placeholder-gray-500 focus:outline-none focus:border-gray-400"
+          />
         </div>
-
       </div>
 
       {/* LAYOUT PRINCIPAL */}
       <div className="flex flex-1 min-h-0 gap-5 overflow-hidden">
         {/* LEYENDA + INSIGHTS */}
-        <aside className="w-32 flex flex-col gap-0 shrink-0">
+        <aside className="w-38 flex flex-col gap-1 shrink-0">
           <MapLegend />
           <LegendInsights events={filteredEvents} />
         </aside>
 
         {/* GRID CENTRAL */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_520px] gap-5 flex-1 min-h-0 overflow-hidden">
-
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_450px] gap-5 flex-1 min-h-0 overflow-hidden">
           {/* MAPA + STREAM */}
           <section className="flex flex-col min-h-0 gap-2">
-
-            {/* MAPA – protagonista absoluto */}
             <div className="flex-shrink-0">
-              <MapboxMap events={filteredEvents}  />
-              {/* <Map events={filteredEvents} /> */}
+              <MapboxMap events={filteredEvents} />
             </div>
 
-            {/* STREAM – claramente secundario */}
             <div className="flex-shrink-0">
               <Stream />
             </div>
@@ -143,7 +202,6 @@ export default function Home() {
           <section className="flex flex-col min-h-0 space-y-3">
             <MarketSnapshot />
 
-            {/* FEED CON SCROLL INDEPENDIENTE */}
             <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
               {loading ? (
                 <p>Loading events...</p>
@@ -153,7 +211,6 @@ export default function Home() {
             </div>
           </section>
         </div>
-
       </div>
     </main>
   )
