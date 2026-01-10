@@ -2,14 +2,14 @@ export type Event = {
   id: string
   title: string
   summary: string
-  category: "conflict" | "disaster" | "politics" | "health"
+  category: "conflict" | "disaster" | "health" | "politics"
   country: string
-  lat?: number
-  lon?: number
+  lat: number
+  lon: number
   date: string
+  timestamp?: number  // ✅ OPCIONAL
   source: string
   url: string
-  image?: string
-  content?: string[]
-  timestamp: string
+  image: any
+  content: string[]
 }
