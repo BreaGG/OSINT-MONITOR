@@ -25,9 +25,9 @@ export default function EventList({ events }: Props) {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col">
       {/* LISTA */}
-      <ul className="space-y-4">
+      <ul className="">
         {paginatedEvents.map(event => (
           <li key={event.id}>
             <EventCard event={event} />

@@ -10,10 +10,27 @@ const ESCALATION_FACTOR = 1.5
 
 type Preset = "all" | "conflicts" | "strategic"
 
+/* ===================== COUNTRY ACRONYMS ===================== */
+
+const COUNTRY_ACRONYMS: Record<string, string> = {
+    "United States": "USA",
+    "United States of America": "USA",
+    "United Kingdom": "UK",
+    "Russian Federation": "RUS",
+    "South Korea": "ROK",
+    "North Korea": "DPRK",
+    "European Union": "EU",
+    "United Arab Emirates": "UAE",
+}
+
 /* ===================== HELPERS ===================== */
 
+function formatRegion(region: string) {
+    return COUNTRY_ACRONYMS[region] ?? region
+}
+
 function getEventTimestamp(e: Event): number | null {
-    const possibleDates = [
+    const date = [
         (e as any).published_at,
         (e as any).publishedAt,
         (e as any).created_at,
@@ -21,11 +38,9 @@ function getEventTimestamp(e: Event): number | null {
         (e as any).date,
         (e as any).published,
         (e as any).timestamp,
-    ]
+    ].find(Boolean)
 
-    const date = possibleDates.find(Boolean)
     if (!date) return null
-
     const ts = new Date(date).getTime()
     return Number.isNaN(ts) ? null : ts
 }
@@ -34,13 +49,21 @@ function hoursAgo(ts: number) {
     return (Date.now() - ts) / 36e5
 }
 
+function confidenceLabel(score: number) {
+    if (score >= 0.8) return "High"
+    if (score >= 0.5) return "Medium"
+    return "Low"
+}
+
 /* ===================== TYPES ===================== */
 
 type Signal = {
-    key: string
-    label: string
+    key: string            // full country name (used internally)
+    label: string          // formatted label (UI)
     category: string
     delta?: number
+    trend: "up" | "new"
+    confidence: number
 }
 
 /* ===================== COMPONENT ===================== */
@@ -48,9 +71,11 @@ type Signal = {
 export default function NewAndEscalatingPanel({
     events,
     preset,
+    onSelectRegion,
 }: {
     events: Event[]
     preset: Preset
+    onSelectRegion?: (region: string) => void
 }) {
     /* ===================== PRESET FILTER ===================== */
 
@@ -97,16 +122,16 @@ export default function NewAndEscalatingPanel({
 
     Object.entries(grouped).forEach(([key, data]) => {
         const { recent, baseline, category } = data
+        const regionLabel = formatRegion(key)
 
         // NEW
         if (recent > 0 && baseline === 0) {
             newlyActive.push({
                 key,
-                label:
-                    key === "Global"
-                        ? `Global signals — ${category}`
-                        : `${key} — ${category}`,
+                label: `${regionLabel} — ${category}`,
                 category,
+                trend: "new",
+                confidence: 1,
             })
             return
         }
@@ -117,16 +142,18 @@ export default function NewAndEscalatingPanel({
             baseline > 0 &&
             recent >= baseline * ESCALATION_FACTOR
         ) {
+            const confidence = Math.min(1, recent / baseline)
+
             escalating.push({
                 key,
-                label: `${key} — ${category}`,
+                label: `${regionLabel} — ${category}`,
                 category,
                 delta: recent - baseline,
+                trend: "up",
+                confidence,
             })
         }
     })
-
-    /* ===================== SORT & LIMIT ===================== */
 
     const escalatingSorted = escalating
         .sort((a, b) => (b.delta ?? 0) - (a.delta ?? 0))
@@ -134,12 +161,15 @@ export default function NewAndEscalatingPanel({
 
     const newSorted = newlyActive.slice(0, 4)
 
+    const hasEscalation = escalatingSorted.length > 0
+
     /* ===================== RENDER ===================== */
 
     return (
-        <section className="h-full flex flex-col text-xs text-gray-200">
+        <section className="space-y-2 flex flex-col text-xs text-gray-200">
+
             {/* HEADER */}
-            <div className="flex justify-between items-baseline mb-2">
+            <div className="flex items-center justify-between mb-2">
                 <div className="uppercase tracking-wide text-gray-400">
                     New & Escalating
                     <span className="ml-1 text-[10px] text-gray-500">
@@ -151,81 +181,96 @@ export default function NewAndEscalatingPanel({
                 </div>
             </div>
 
-            {/* SYSTEM STATUS */}
-            <div className="mb-3 rounded border border-gray-800 bg-black/40 px-2 py-1.5">
-                <div className="text-[11px] text-gray-400">
-                    System status
-                </div>
-                {escalatingSorted.length > 0 ? (
-                    <div className="text-[11px] text-red-400">
-                        Active escalation detected
-                    </div>
-                ) : (
-                    <div className="text-[11px] text-green-400">
-                        No critical escalations detected
-                    </div>
-                )}
+            {/* STATUS */}
+            <div
+                className={`mb-3 rounded border px-2 py-1.5 text-[11px]
+          ${hasEscalation
+                        ? "border-red-900/40 bg-red-950/30 text-red-400"
+                        : "border-green-900/40 bg-green-950/20 text-green-400"
+                    }`}
+            >
+                {hasEscalation
+                    ? "Escalating activity detected"
+                    : "System stable · No escalation patterns"}
             </div>
 
-            {/* ESCALATING */}
-            <div className="mb-3">
-                <div className="text-[11px] text-red-400 mb-1">
-                    Escalating
+            {/* CONTENT */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1 min-h-0">
+
+                {/* ESCALATING */}
+                <div>
+                    <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[11px] text-red-400 uppercase">
+                            Escalating
+                        </span>
+                        <span className="text-[10px] text-gray-500">
+                            {escalatingSorted.length}
+                        </span>
+                    </div>
+
+                    {escalatingSorted.length > 0 ? (
+                        <ul className="space-y-1">
+                            {escalatingSorted.map(item => (
+                                <li
+                                    key={item.key}
+                                    onClick={() => onSelectRegion?.(item.key)}
+                                    className="flex justify-between gap-2 cursor-pointer hover:text-white"
+                                >
+                                    <span className="truncate">
+                                        <span className="mr-1 text-red-400">▲</span>
+                                        {item.label}
+                                    </span>
+                                    <span className="text-right">
+                                        <div className="text-red-300">+{item.delta}</div>
+                                        <div className="text-[10px] text-gray-500">
+                                            {confidenceLabel(item.confidence)}
+                                        </div>
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <div className="text-gray-500 italic text-[11px]">
+                            No regions exceeding baseline
+                        </div>
+                    )}
                 </div>
 
-                {escalatingSorted.length > 0 ? (
-                    <ul className="space-y-1">
-                        {escalatingSorted.map(item => (
-                            <li
-                                key={item.key}
-                                className="flex justify-between gap-2"
-                            >
-                                <span className="truncate">
+                {/* NEW */}
+                <div>
+                    <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[11px] text-amber-400 uppercase">
+                            New
+                        </span>
+                        <span className="text-[10px] text-gray-500">
+                            {newSorted.length}
+                        </span>
+                    </div>
+
+                    {newSorted.length > 0 ? (
+                        <ul className="space-y-1">
+                            {newSorted.map(item => (
+                                <li
+                                    key={item.key}
+                                    onClick={() => onSelectRegion?.(item.key)}
+                                    className="cursor-pointer hover:text-white truncate"
+                                >
+                                    <span className="mr-1 text-amber-400">●</span>
                                     {item.label}
-                                </span>
-                                <span className="text-gray-400">
-                                    +{item.delta}
-                                </span>
-                            </li>
-                        ))}
-                    </ul>
-                ) : (
-                    <div className="text-gray-500 text-[11px] italic">
-                        Activity within baseline thresholds
-                    </div>
-                )}
-            </div>
-
-            {/* NEW */}
-            <div>
-                <div className="flex justify-between items-center mb-1">
-                    <span className="text-[11px] text-amber-400">
-                        New activity
-                    </span>
-                    <span className="text-[10px] text-gray-500">
-                        {newSorted.length} region
-                        {newSorted.length !== 1 ? "s" : ""}
-                    </span>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <div className="text-gray-500 italic text-[11px]">
+                            No new regions detected
+                        </div>
+                    )}
                 </div>
-
-                {newSorted.length > 0 ? (
-                    <ul className="space-y-1">
-                        {newSorted.map(item => (
-                            <li key={item.key} className="truncate">
-                                {item.label}
-                            </li>
-                        ))}
-                    </ul>
-                ) : (
-                    <div className="text-gray-500 text-[11px] italic">
-                        No new activity detected
-                    </div>
-                )}
             </div>
 
-            {/* FOOTER / BASELINE */}
-            <div className="mt-auto pt-2 border-t border-gray-800 text-[10px] text-gray-600">
-                Monitoring {filteredEvents.length} events · auto-updated
+            {/* FOOTER */}
+            <div className="mt-3 pt-2 border-t border-gray-800 text-[10px] text-gray-600">
+                Monitoring {filteredEvents.length} events · auto-updating
             </div>
         </section>
     )

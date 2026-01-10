@@ -10,6 +10,7 @@ import MapLegend from "@/components/MapLegend"
 import LegendInsights from "@/components/LegendInsights"
 import MapboxMap from "@/components/MapboxMap"
 import NewAndEscalatingPanel from "@/components/NewAndEscalatingPanel"
+import FocusTimeline from "@/components/FocusTimeline"
 
 const Map = dynamic(() => import("@/components/Map"), {
   ssr: false,
@@ -22,6 +23,9 @@ type Preset = "all" | "conflicts" | "strategic"
 export default function Home() {
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
+
+  /* ===== analytical focus ===== */
+  const [focusRegion, setFocusRegion] = useState<string | null>(null)
 
   /* ===== filters ===== */
   const [category, setCategory] = useState("all")
@@ -80,6 +84,16 @@ export default function Home() {
     return categoryMatch && countryMatch && searchMatch
   })
 
+  /* ===================== ANALYTICAL FOCUS ===================== */
+
+  const finalEvents = useMemo(() => {
+    if (!focusRegion) return filteredEvents
+
+    return filteredEvents.filter(
+      e => e.country === focusRegion || focusRegion === "Global"
+    )
+  }, [filteredEvents, focusRegion])
+
   /* ===================== AUX DATA ===================== */
 
   const countries = Array.from(
@@ -101,24 +115,38 @@ export default function Home() {
 
       {/* HEADER */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-4 gap-3">
-        <div className="flex gap-3 overflow-hidden items-center whitespace-nowrap lg:items-baseline lg:whitespace-normal">
-          <h1 className="text-lg font-semibold shrink-0 lg:text-2xl lg:font-bold">
+        <div className="flex gap-3 items-center flex-wrap">
+          <h1 className="text-lg font-semibold lg:text-2xl lg:font-bold">
             Global OSINT Monitor
           </h1>
 
-          <span className="text-[11px] text-gray-400 truncate lg:text-xs lg:truncate-none">
+          <span className="text-[11px] text-gray-400">
             Updated {lastUpdated} · Daily update at 02:00 UTC
           </span>
+
+          {/* FOCUS INDICATOR */}
+          {focusRegion && (
+            <span
+              onClick={() => setFocusRegion(null)}
+              className="ml-2 text-[11px] text-gray-300 cursor-pointer border border-gray-700 px-2 py-0.5 rounded hover:bg-black/40"
+            >
+              Focus: {focusRegion} ×
+            </span>
+          )}
         </div>
 
-        {/* FILTERS (desktop only) */}
+        {/* FILTERS (desktop) */}
         <div className="hidden lg:flex items-center gap-4">
+
           {/* PRESETS */}
           <div className="flex items-center gap-1 text-xs text-gray-400">
             {(["all", "conflicts", "strategic"] as Preset[]).map(p => (
               <button
                 key={p}
-                onClick={() => setPreset(p)}
+                onClick={() => {
+                  setPreset(p)
+                  setFocusRegion(null)
+                }}
                 className={`px-2 py-1 rounded border ${
                   preset === p
                     ? "border-gray-500 text-gray-200"
@@ -135,6 +163,7 @@ export default function Home() {
             value={category}
             onChange={e => {
               setPreset("all")
+              setFocusRegion(null)
               setCategory(e.target.value)
             }}
             className="bg-black text-white border border-gray-700 rounded px-3 py-2 text-sm"
@@ -151,6 +180,7 @@ export default function Home() {
             value={country}
             onChange={e => {
               setPreset("all")
+              setFocusRegion(null)
               setCountry(e.target.value)
             }}
             className="bg-black text-white border border-gray-700 rounded px-3 py-2 text-sm"
@@ -170,6 +200,7 @@ export default function Home() {
             value={search}
             onChange={e => {
               setPreset("all")
+              setFocusRegion(null)
               setSearch(e.target.value)
             }}
             className="bg-black text-white border border-gray-700 rounded px-3 py-2 text-sm w-56"
@@ -177,27 +208,10 @@ export default function Home() {
         </div>
       </div>
 
-      {/* MOBILE PRESETS */}
-      <div className="flex lg:hidden gap-2 mb-3 text-xs text-gray-400">
-        {(["all", "conflicts", "strategic"] as Preset[]).map(p => (
-          <button
-            key={p}
-            onClick={() => setPreset(p)}
-            className={`px-2 py-1 rounded border ${
-              preset === p
-                ? "border-gray-500 text-gray-200"
-                : "border-gray-800"
-            }`}
-          >
-            {p.toUpperCase()}
-          </button>
-        ))}
-      </div>
-
       {/* MAIN LAYOUT */}
       <div className="flex flex-col lg:flex-row flex-1 min-h-0 gap-5 overflow-hidden">
 
-        {/* SIDEBAR (desktop only) */}
+        {/* SIDEBAR */}
         <aside className="hidden lg:flex w-38 flex-col gap-1 shrink-0">
           <MapLegend />
           <LegendInsights events={filteredEvents} />
@@ -207,32 +221,42 @@ export default function Home() {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_450px] gap-5 flex-1 min-h-0 overflow-hidden">
 
           {/* MAP COLUMN */}
-          <section className="flex flex-col min-h-0 gap-3 order-1">
-            <MapboxMap events={filteredEvents} />
+          <section className="flex flex-col min-h-0 gap-3">
+            <MapboxMap events={finalEvents} />
 
-            {/* STREAM + PANEL (desktop only) */}
             <div className="hidden lg:grid grid-cols-[2fr_1fr] gap-3 h-[420px]">
               <div className="rounded-lg overflow-hidden">
                 <Stream />
               </div>
-              <div className="rounded-lg bg-black/40">
-                <NewAndEscalatingPanel
-                  events={filteredEvents}
-                  preset={preset}
-                />
+              <div className="rounded-lg bg-black/40 flex flex-col gap-3 p-3 h-full">
+              {/* TOP: SIGNALS */}
+                <div className="rounded-lg bg-black/40 flex flex-col">
+                  <NewAndEscalatingPanel
+                    events={filteredEvents}
+                    preset={preset}
+                    onSelectRegion={setFocusRegion}
+                  />
+                </div>
+
+                <div className="rounded-lg bg-black/40 flex flex-col">
+                  <FocusTimeline
+                    events={filteredEvents}
+                    onSelectRegion={setFocusRegion}
+                  />
+                </div>
               </div>
             </div>
           </section>
 
           {/* MARKET + FEED */}
-          <section className="flex flex-col min-h-0 space-y-3 order-2">
+          <section className="flex flex-col min-h-0 space-y-3">
             <MarketSnapshot />
 
             <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
               {loading ? (
                 <p>Loading events...</p>
               ) : (
-                <EventList events={filteredEvents} />
+                <EventList events={finalEvents} />
               )}
             </div>
           </section>
