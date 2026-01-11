@@ -89,10 +89,22 @@ export default function VisualPanel({ satelliteFocus }: Props) {
             </div>
 
             {/* ===================== CONTENT SLOT ===================== */}
-            <div className="flex-1 min-h-0 p-2">
-                <div className="h-full scale-[0.92] origin-top">
-                    {MODE_COMPONENTS[mode]}
+            <div className="flex-1 min-h-0 p-2 overflow-hidden">
+
+                <div
+                    className={`
+      ${mode === "social"
+                            ? "h-[50vh] max-h-[380px]"
+                            : "h-full"
+                        }
+      min-h-0
+    `}
+                >
+                    <div className="h-full scale-[0.92] origin-top">
+                        {MODE_COMPONENTS[mode]}
+                    </div>
                 </div>
+
             </div>
         </section>
     )
