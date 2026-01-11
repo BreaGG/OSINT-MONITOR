@@ -6,6 +6,8 @@ Rather than functioning as a traditional news aggregator, the platform focuses o
 
 The system emphasizes clarity, prioritization, and contextual relevance, enabling users to move from raw information to informed insight with minimal friction.
 
+![Global OSINT Monitor – Situation Room View](./docs/monitor-overview.png)
+
 ---
 
 ## Intelligence-Focused Vision
