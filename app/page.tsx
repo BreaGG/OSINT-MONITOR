@@ -28,7 +28,7 @@ export default function Home() {
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
   const [satelliteFocus, setSatelliteFocus] =
-  useState<SatelliteFocus | undefined>(undefined)
+    useState<SatelliteFocus | undefined>(undefined)
 
 
   /* ===== analytical focus ===== */
@@ -130,26 +130,36 @@ export default function Home() {
     <main className="p-4 lg:p-6 max-w-[1600px] mx-auto h-screen flex flex-col">
 
       {/* HEADER */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-4 gap-3">
-        <div className="flex gap-3 items-center flex-wrap">
-          <h1 className="text-lg font-semibold lg:text-2xl lg:font-bold">
-            Global OSINT Monitor
-          </h1>
-
-          <span className="text-[11px] text-gray-400">
-            Updated {lastUpdated} · Daily update at 02:00 UTC
-          </span>
-
-          {/* FOCUS INDICATOR */}
-          {focusRegion && (
-            <span
-              onClick={() => setFocusRegion(null)}
-              className="ml-2 text-[11px] text-gray-300 cursor-pointer border border-gray-700 px-2 py-0.5 rounded hover:bg-black/40"
-            >
-              Focus: {focusRegion} ×
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-0 gap-3">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-2 gap-3">
+          <div className="flex gap-3 items-center flex-wrap">
+            <div className="flex flex-col leading-tight">
+              <h1 className="text-lg font-semibold lg:text-2xl lg:font-bold">
+                Global Intelligence Monitor
+              </h1>
+              <span className="text-[11px] text-gray-400 tracking-wide">
+                Open Source Intelligence - <span className="text-[11px] text-gray-400">
+              Updated {lastUpdated} · Daily update at 02:00 UTC
             </span>
-          )}
+              </span> 
+            </div>
+
+            {/* FOCUS INDICATOR */}
+            {focusRegion && (
+              <span
+                onClick={() => setFocusRegion(null)}
+                className="
+          ml-2 text-[11px] text-gray-300 cursor-pointer
+          border border-gray-700 px-2 py-0.5 rounded
+          hover:bg-black/40 transition
+        "
+              >
+                Focus: {focusRegion} ×
+              </span>
+            )}
+          </div>
         </div>
+
 
         {/* FILTERS (desktop) */}
         <div className="hidden lg:flex items-center gap-4">
@@ -164,8 +174,8 @@ export default function Home() {
                   setFocusRegion(null)
                 }}
                 className={`px-2 py-1 rounded border ${preset === p
-                    ? "border-gray-500 text-gray-200"
-                    : "border-gray-800 hover:border-gray-600"
+                  ? "border-gray-500 text-gray-200"
+                  : "border-gray-800 hover:border-gray-600"
                   }`}
               >
                 {p.toUpperCase()}
@@ -245,14 +255,14 @@ export default function Home() {
           {/* MAP COLUMN */}
           <section className="flex flex-col min-h-0 gap-3">
             {/* MAP */}
-            <MapboxMap events={filteredEvents} onSelectSatelliteFocus={setSatelliteFocus}/>
+            <MapboxMap events={filteredEvents} onSelectSatelliteFocus={setSatelliteFocus} />
 
             {/* BOTTOM PANEL */}
             <div className="hidden lg:grid grid-cols-[2fr_1fr] gap-3 h-[420px]">
 
               {/* LEFT: VISUAL PANEL (STREAM | CAMERAS) */}
               <div className="rounded-lg overflow-hidden">
-                <VisualPanel satelliteFocus={satelliteFocus}/>
+                <VisualPanel satelliteFocus={satelliteFocus} />
               </div>
 
               {/* RIGHT: SIGNALS */}

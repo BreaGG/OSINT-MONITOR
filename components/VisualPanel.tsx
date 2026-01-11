@@ -7,6 +7,7 @@ import VisualFeeds from "./VisualFeeds"
 import SatelliteView from "./SatelliteView"
 import type { SatelliteFocus } from "./SatelliteView"
 import SocialView from "./SocialView"
+import UAVView from "./UAVView"
 
 /* ===================== TYPES ===================== */
 
@@ -30,7 +31,7 @@ const AVAILABLE_MODES: VisualMode[] = [
     "cameras",
     "satellite",
     "social",
-    // "uav",
+    "uav",
 ]
 
 /* ===================== COMPONENT ===================== */
@@ -57,11 +58,7 @@ export default function VisualPanel({ satelliteFocus }: Props) {
         cameras: <VisualFeeds />,
         satellite: <SatelliteView focus={satelliteFocus} />,
         social: <SocialView />,
-        uav: (
-            <div className="h-full flex items-center justify-center text-gray-600 text-xs">
-                UAV feed not enabled
-            </div>
-        ),
+        uav: <UAVView focus={satelliteFocus} />,
     }
 
     return (
