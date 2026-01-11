@@ -71,6 +71,109 @@ All processed events are stored persistently, allowing users to review past deve
 
 ---
 
+## How to Read This Monitor
+
+*A briefing-oriented guide*
+
+Global OSINT Monitor is not designed to be consumed linearly.
+It is meant to be **read like an intelligence briefing**, where each panel answers a specific analytical question.
+
+The recommended reading flow is **top-down, left-to-right**, focusing on *signals first*, *details later*.
+
+---
+
+### 1. Global Status — *What is the overall situation?*
+
+At the top of the interface, the **Global Status Indicator** summarizes the current state of the international environment.
+
+This is not a simple counter of events.
+It reflects **aggregated pressure across regions and categories**, derived from severity, volume, and diversity of events.
+
+Key questions answered here:
+
+* Is the global situation stable or deteriorating?
+* Is activity localized or spreading across regions?
+* How confident is the assessment based on available data?
+
+Hovering the status reveals *why* the system is in its current state.
+
+---
+
+### 2. Map View — *Where is activity concentrating?*
+
+The map is the **primary situational awareness layer**.
+
+Each marker represents a structured event, not raw news.
+Density, clustering, and geographic repetition matter more than individual points.
+
+Use the map to:
+
+* Identify hotspots and emerging areas of interest
+* Shift analytical focus geographically
+* Correlate spatial patterns with other panels (timeline, focus, UAV, satellite)
+
+Clicking a region propagates focus across the system.
+
+---
+
+### 3. Focus & Signals Panel — *Where should attention go now?*
+
+This panel answers a critical intelligence question:
+
+> **“If I only had 30 seconds, where should I look?”**
+
+It highlights:
+
+* **Focus & Priority**: regions with sustained or intense recent activity in sensitive domains
+* **New Activity**: regions showing first-time or re-emerging signals within the monitoring window
+
+This is not escalation detection by volume alone.
+It is **attention guidance**, designed to surface *relevance*, not alarm.
+
+---
+
+### 4. Timeline — *Is this noise or a pattern?*
+
+The timeline provides **temporal context**.
+
+It helps distinguish:
+
+* One-off events from sustained activity
+* Short spikes from developing trends
+* Recent developments versus fading signals
+
+Scrolling the timeline allows analysts to observe **how attention should evolve over time**.
+
+---
+
+### 5. Visual Panels (Satellite / UAV / Streams) — *Contextual grounding*
+
+These panels do **not claim live ISR capability**.
+
+Their purpose is contextual:
+
+* Satellite view → strategic geographic understanding
+* UAV view → tactical focus simulation
+* Streams → narrative and broadcast context
+
+They help anchor abstract signals to **real-world geography and media environments**.
+
+---
+
+### 6. Event Detail / Briefing Mode — *Why does this matter?*
+
+Individual event pages are designed as **mini briefings**, not articles.
+
+Each briefing consolidates:
+
+* Facts and source context
+* Automated intelligence assessment
+* “Why this event matters” in the current global situation
+
+The goal is rapid understanding, not exhaustive reading.
+
+---
+
 ## Design Philosophy
 
 Global OSINT Monitor is guided by the following principles:
@@ -104,21 +207,6 @@ The platform is particularly suited for:
 * Portfolio or showcase projects focused on intelligence systems
 
 While generic by design, its structure aligns closely with real-world intelligence monitoring needs.
-
----
-
-## Future Direction
-
-Global OSINT Monitor is conceived as an evolving system. Possible future enhancements include:
-
-* Deeper trend and anomaly detection
-* Regional intelligence summaries and briefings
-* Event clustering and relationship analysis
-* Analyst-driven tagging and annotation
-* Integration with additional open data sources
-* Advanced alerting and notification mechanisms
-
-The current platform provides a solid operational baseline upon which more advanced intelligence capabilities can be built.
 
 ---
 
