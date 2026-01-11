@@ -168,6 +168,7 @@ export default function MapboxMap({ events, hoveredEventId }: Props) {
   const mapRef = useRef<mapboxgl.Map | null>(null)
   const containerRef = useRef<HTMLDivElement | null>(null)
   const [ready, setReady] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
 
   const [layers, setLayers] = useState({
     events: true,
@@ -177,6 +178,41 @@ export default function MapboxMap({ events, hoveredEventId }: Props) {
     conflicts: true,
     militaryBases: true,
   })
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() === "f") {
+        setIsFullscreen(v => !v)
+      }
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [])
+
+  useEffect(() => {
+    if (!mapRef.current) return
+
+    const map = mapRef.current
+    setTimeout(() => {
+      map.resize()
+    }, 200)
+  }, [isFullscreen])
+
+  useEffect(() => {
+    document.body.style.overflow = isFullscreen ? "hidden" : ""
+  }, [isFullscreen])
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsFullscreen(false)
+    }
+
+    if (isFullscreen) {
+      window.addEventListener("keydown", onKey)
+    }
+
+    return () => window.removeEventListener("keydown", onKey)
+  }, [isFullscreen])
 
   useEffect(() => {
     if (mapRef.current || !containerRef.current) return
@@ -221,13 +257,13 @@ export default function MapboxMap({ events, hoveredEventId }: Props) {
         } as GeoJSON.FeatureCollection,
       })
 
-        map.addSource("event-highlight", {
-          type: "geojson",
-          data: {
-            type: "FeatureCollection",
-            features: [],
-          },
-        })
+      map.addSource("event-highlight", {
+        type: "geojson",
+        data: {
+          type: "FeatureCollection",
+          features: [],
+        },
+      })
 
       map.addLayer({
         id: "events-layer",
@@ -668,7 +704,7 @@ export default function MapboxMap({ events, hoveredEventId }: Props) {
           )
           .addTo(map)
       })
-      
+
 
       /* ===================== CONFLICTS ===================== */
 
@@ -782,9 +818,9 @@ export default function MapboxMap({ events, hoveredEventId }: Props) {
 
           .addTo(map)
       })
-    if (map.getLayer("event-highlight-layer")) {
-      map.moveLayer("event-highlight-layer")
-    }
+      if (map.getLayer("event-highlight-layer")) {
+        map.moveLayer("event-highlight-layer")
+      }
 
       map.on("idle", () => setReady(true))
     })
@@ -801,7 +837,7 @@ export default function MapboxMap({ events, hoveredEventId }: Props) {
   useEffect(() => {
     if (!ready || !mapRef.current) return
     const map = mapRef.current
-    
+
 
     const toggle = (id: string, visible: boolean) => {
       if (map.getLayer(id)) {
@@ -819,63 +855,75 @@ export default function MapboxMap({ events, hoveredEventId }: Props) {
     toggle("military-bases-layer", layers.militaryBases)
   }, [layers, ready])
 
+
   useEffect(() => {
-  if (!mapRef.current) return
+    if (!mapRef.current) return
 
-  const map = mapRef.current
-  const source = map.getSource("event-highlight") as mapboxgl.GeoJSONSource
-  if (!source) return
+    const map = mapRef.current
+    const source = map.getSource("event-highlight") as mapboxgl.GeoJSONSource
+    if (!source) return
 
-  if (!hoveredEventId) {
+    if (!hoveredEventId) {
+      source.setData({
+        type: "FeatureCollection",
+        features: [],
+      })
+      return
+    }
+
+    const event = events.find(e => e.id === hoveredEventId)
+
+    if (
+      !event ||
+      typeof event.lat !== "number" ||
+      typeof event.lon !== "number"
+    ) {
+      source.setData({
+        type: "FeatureCollection",
+        features: [],
+      })
+      return
+    }
+
     source.setData({
       type: "FeatureCollection",
-      features: [],
-    })
-    return
-  }
-
-  const event = events.find(e => e.id === hoveredEventId)
-
-  if (
-    !event ||
-    typeof event.lat !== "number" ||
-    typeof event.lon !== "number"
-  ) {
-    source.setData({
-      type: "FeatureCollection",
-      features: [],
-    })
-    return
-  }
-
-  source.setData({
-    type: "FeatureCollection",
-    features: [
-      {
-        type: "Feature",
-        properties: {},
-        geometry: {
-          type: "Point",
-          coordinates: [event.lon, event.lat],
+      features: [
+        {
+          type: "Feature",
+          properties: {},
+          geometry: {
+            type: "Point",
+            coordinates: [event.lon, event.lat],
+          },
         },
-      },
-    ],
-  })
-}, [hoveredEventId, events])
+      ],
+    })
+  }, [hoveredEventId, events])
 
 
   return (
-    <section className="relative rounded-xl overflow-hidden border border-gray-800">
+    <section
+      className={`
+      ${isFullscreen
+          ? "fixed inset-0 z-[999] bg-black rounded-none"
+          : "relative rounded-xl border border-gray-800"}
+      overflow-hidden
+    `}
+    >
+      {/* LAYER TOGGLES */}
       <div className="absolute top-2 left-2 z-10 space-y-1 text-xs">
         {Object.entries(layers).map(([key, value]) => (
           <button
             key={key}
             onClick={() =>
-              setLayers(prev => ({ ...prev, [key]: !prev[key as keyof typeof prev] }))
+              setLayers(prev => ({
+                ...prev,
+                [key]: !prev[key as keyof typeof prev],
+              }))
             }
             className={`block px-2 py-1 rounded border ${value
-              ? "bg-black/80 text-gray-200 border-gray-700"
-              : "bg-black/40 text-gray-500 border-gray-800"
+                ? "bg-black/80 text-gray-200 border-gray-700"
+                : "bg-black/40 text-gray-500 border-gray-800"
               }`}
           >
             {key.toUpperCase()}
@@ -883,7 +931,27 @@ export default function MapboxMap({ events, hoveredEventId }: Props) {
         ))}
       </div>
 
-      <div ref={containerRef} className="h-[420px] w-full" />
+      {/* FULLSCREEN BUTTON */}
+      <button
+        onClick={() => setIsFullscreen(v => !v)}
+        className="
+        absolute top-2 right-2 z-20
+        bg-black/80 border border-gray-700
+        text-gray-200 text-xs
+        px-3 py-1.5
+        hover:bg-black
+        transition
+      "
+      >
+        {isFullscreen ? "EXIT MAP" : "FULL MAP"}
+      </button>
+
+      {/* MAP CONTAINER */}
+      <div
+        ref={containerRef}
+        className={isFullscreen ? "h-full w-full" : "h-[420px] w-full"}
+      />
     </section>
   )
+
 }

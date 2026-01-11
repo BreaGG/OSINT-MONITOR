@@ -13,6 +13,7 @@ import NewAndEscalatingPanel from "@/components/NewAndEscalatingPanel"
 import FocusTimeline from "@/components/FocusTimeline"
 import { categoryColors } from "@/lib/categoryColors"
 import AdminIngestButton from "@/components/AdminIngestButton"
+import VisualPanel from "@/components/VisualPanel"
 
 const Map = dynamic(() => import("@/components/Map"), {
   ssr: false,
@@ -158,11 +159,10 @@ export default function Home() {
                   setPreset(p)
                   setFocusRegion(null)
                 }}
-                className={`px-2 py-1 rounded border ${
-                  preset === p
+                className={`px-2 py-1 rounded border ${preset === p
                     ? "border-gray-500 text-gray-200"
                     : "border-gray-800 hover:border-gray-600"
-                }`}
+                  }`}
               >
                 {p.toUpperCase()}
               </button>
@@ -240,13 +240,21 @@ export default function Home() {
 
           {/* MAP COLUMN */}
           <section className="flex flex-col min-h-0 gap-3">
+            {/* MAP */}
             <MapboxMap events={filteredEvents} />
+
+            {/* BOTTOM PANEL */}
             <div className="hidden lg:grid grid-cols-[2fr_1fr] gap-3 h-[420px]">
+
+              {/* LEFT: VISUAL PANEL (STREAM | CAMERAS) */}
               <div className="rounded-lg overflow-hidden">
-                <Stream />
+                <VisualPanel />
               </div>
+
+              {/* RIGHT: SIGNALS */}
               <div className="rounded-lg bg-black/40 flex flex-col gap-3 p-3 h-full">
-              {/* TOP: SIGNALS */}
+
+                {/* TOP: NEW & ESCALATING */}
                 <div className="rounded-lg bg-black/40 flex flex-col">
                   <NewAndEscalatingPanel
                     events={filteredEvents}
@@ -255,15 +263,18 @@ export default function Home() {
                   />
                 </div>
 
+                {/* BOTTOM: FOCUS TIMELINE */}
                 <div className="rounded-lg bg-black/40 flex flex-col">
                   <FocusTimeline
                     events={filteredEvents}
                     onSelectRegion={setFocusRegion}
                   />
                 </div>
+
               </div>
             </div>
           </section>
+
 
           {/* MARKET + FEED */}
           <section className="flex flex-col min-h-0 space-y-3">
