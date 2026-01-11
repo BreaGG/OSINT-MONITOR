@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/ingest?token=${INGEST_SECRET}",
-      "schedule": "0 2 * * *"
+      "schedule": "0 5 * * *"
     }
   ]
 }
