@@ -1,98 +1,145 @@
 # Global OSINT Monitor
 
-Global OSINT Monitor is a web-based platform focused on the collection, enrichment, and visualization of open-source intelligence (OSINT) related to global events. The project aims to provide a clear, structured, and continuously updated view of relevant world news by transforming unstructured information into actionable, geolocated events.
+**Global OSINT Monitor** is an intelligence-oriented web platform designed to support real-time situational awareness through the collection, structuring, and visualization of open-source intelligence (OSINT) related to global events.
 
-Rather than acting as a simple news aggregator, the platform emphasizes contextualization: identifying where events occur, what type of events they are, and how they relate to broader global trends.
+Rather than functioning as a traditional news aggregator, the platform focuses on **transforming fragmented public information into coherent, actionable signals**. It provides users with a clear understanding of *what is happening*, *where it is happening*, and *why it matters* within a broader global context.
+
+The system emphasizes clarity, prioritization, and contextual relevance, enabling users to move from raw information to informed insight with minimal friction.
 
 ---
 
-## Project Vision
+## Intelligence-Focused Vision
 
-In an environment saturated with information, Global OSINT Monitor is designed to reduce noise and surface meaningful signals. The platform automatically processes publicly available news sources and converts them into structured data that can be explored visually and textually.
+In an environment defined by information overload, Global OSINT Monitor is built to **reduce noise and surface meaningful signals**.
 
-The goal is to support use cases such as:
-- Situational awareness and global monitoring
-- Trend analysis across regions and categories
-- Early detection of emerging conflicts, crises, or public health events
-- Exploratory analysis of international news patterns
+Thousands of news items are published every hour. Most are isolated, repetitive, or lack contextual framing. This platform addresses that challenge by:
 
-The project is built with extensibility in mind, allowing future expansion toward analytics, trend detection, and deeper OSINT workflows.
+* Structuring unstructured news into discrete events
+* Classifying events by domain and relevance
+* Anchoring events geographically and temporally
+* Highlighting emerging patterns, focus areas, and shifts in global dynamics
+
+The objective is not to replace human analysis, but to **augment it**, offering a continuously updated operational picture that supports faster understanding and better prioritization.
 
 ---
 
 ## Core Capabilities
 
-### Automated Intelligence Collection
-The system continuously ingests data from multiple public news sources, ensuring a steady flow of up-to-date information without manual intervention.
+### Continuous Situational Awareness
 
-### Event Classification
-Each event is automatically categorized into high-level domains such as conflict, disaster, politics, or health. This classification enables efficient filtering and thematic exploration of global events.
+The platform maintains a live, evolving view of global events across multiple domains, allowing users to quickly assess the current international landscape at a glance.
 
-### Geolocation and Context
-Events are enriched with country-level and geographic information, allowing them to be placed on a world map. This spatial context is central to understanding how events are distributed globally.
+### Structured Event Intelligence
 
-### Visual Exploration
-An interactive map provides a global overview of events, while a structured news feed allows for detailed inspection. Users can quickly move from a high-level geographic perspective to individual event details.
+Each event is transformed into a structured intelligence unit, including:
 
-### Detailed Event Views
-Each event includes extended contextual information, enabling users to understand not only what happened, but also the surrounding narrative and implications.
+* Category and thematic classification
+* Geographic attribution
+* Temporal context
+* Source traceability
+* Extended narrative context
 
-### Data Persistence
-All processed events are stored persistently, allowing historical exploration and ensuring continuity across system restarts. This design supports longitudinal analysis rather than ephemeral data consumption.
+This structure enables both high-level monitoring and detailed drill-down.
+
+### Global Context & Signal Assessment
+
+Beyond individual events, the system evaluates **aggregate patterns** to infer the overall global state. This includes identifying:
+
+* Regions under increased activity
+* Domains showing abnormal concentration
+* Areas requiring closer monitoring or analytical focus
+
+This layer provides essential context for understanding how isolated events relate to broader trends.
+
+### Visual and Spatial Exploration
+
+An interactive global map enables immediate spatial comprehension of events, while supporting components (timelines, focus panels, signal summaries) help users understand **when and where attention should be directed**.
+
+### Focused Briefings & Event Views
+
+Detailed event pages consolidate all relevant information into a concise briefing format. Users can quickly grasp:
+
+* The core facts
+* The intelligence assessment
+* Why the event is relevant in the current global context
+
+This design supports fast consumption without sacrificing depth.
+
+### Persistence & Historical Perspective
+
+All processed events are stored persistently, allowing users to review past developments and understand how situations evolve over time. This supports longitudinal analysis rather than ephemeral news consumption.
 
 ---
 
-## Design Principles
+## Design Philosophy
 
-The project follows several key design principles:
+Global OSINT Monitor is guided by the following principles:
 
-- **Automation-first**: once configured, the system operates without manual intervention.
-- **Stateless processing**: no reliance on in-memory data, ensuring consistency and reliability.
-- **Scalability by design**: built to handle increasing data volume and additional sources.
-- **Clarity over complexity**: prioritizing understandable data structures and transparent logic.
-- **Extensibility**: new data sources, categories, and analytical layers can be added without redesigning the core system.
+* **Signal over noise**
+  Prioritize relevance, patterns, and context over raw volume.
 
----
+* **Context-first intelligence**
+  Events are meaningful only when understood within a wider operational picture.
 
-## Use Cases
+* **Automation with transparency**
+  Processes are automated, but their outputs remain interpretable and explainable.
 
-While the platform is generic by design, it is particularly well suited for:
+* **Analyst-centric design**
+  Interfaces are built to support rapid comprehension and decision support, not passive reading.
 
-- OSINT practitioners and analysts
-- Journalists and researchers tracking global developments
-- Security and risk analysis contexts
-- Educational use in data analysis or international relations
-- Technical demonstrations of data ingestion, enrichment, and visualization pipelines
+* **Extensible by nature**
+  The system is designed as a foundation for future analytical layers and workflows.
 
 ---
 
-## Future Evolution
+## Intended Use Cases
 
-Global OSINT Monitor is intended as a foundation rather than a finished product. Potential future extensions include:
+The platform is particularly suited for:
 
-- Trend detection and time-based analytics
-- Advanced search and filtering capabilities
-- Event clustering and similarity analysis
-- Region-based dashboards and summaries
-- Integration with additional open data sources
+* OSINT analysts and practitioners
+* Strategic and geopolitical monitoring
+* Risk and security awareness contexts
+* Journalistic and academic research
+* Educational demonstrations of intelligence workflows
+* Portfolio or showcase projects focused on intelligence systems
+
+While generic by design, its structure aligns closely with real-world intelligence monitoring needs.
+
+---
+
+## Future Direction
+
+Global OSINT Monitor is conceived as an evolving system. Possible future enhancements include:
+
+* Deeper trend and anomaly detection
+* Regional intelligence summaries and briefings
+* Event clustering and relationship analysis
+* Analyst-driven tagging and annotation
+* Integration with additional open data sources
+* Advanced alerting and notification mechanisms
+
+The current platform provides a solid operational baseline upon which more advanced intelligence capabilities can be built.
 
 ---
 
 ## Project Status
 
-The project is stable, functional, and production-ready. It represents a complete end-to-end system covering data ingestion, processing, persistence, and visualization, and is suitable as a base for further experimentation or real-world applications.
+The project is **stable, functional, and operational**.
+
+It represents a complete end-to-end intelligence workflow, from ingestion and structuring to visualization and contextual analysis. The platform is suitable both as a standalone monitoring tool and as a foundation for further experimentation or real-world adaptation.
 
 ---
 
 ## Disclaimer
 
-This project is intended for educational and research purposes only.
+This project is intended **solely for educational, research, and demonstration purposes**.
 
-Global OSINT Monitor collects and processes information exclusively from publicly available sources. The platform does not generate original intelligence, nor does it verify, validate, or endorse the accuracy, completeness, or reliability of the information presented.
+Global OSINT Monitor processes information exclusively from publicly available sources. It does not generate original intelligence, nor does it verify, validate, or guarantee the accuracy, completeness, or reliability of the information presented.
 
-All content displayed reflects the original sources and should be interpreted accordingly. The project is not intended to be used as a decision-making tool for operational, legal, political, or security-related actions.
+All content reflects the original sources and should be interpreted accordingly.
+The platform is **not intended for operational, legal, political, or security decision-making**.
 
-The author assumes no responsibility for the use, interpretation, or consequences derived from the information provided by this platform.
+The author assumes no responsibility for any actions taken based on the information displayed.
 
 ---
 

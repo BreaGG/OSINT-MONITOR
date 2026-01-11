@@ -17,6 +17,7 @@ import VisualPanel from "@/components/VisualPanel"
 import type { SatelliteFocus } from "@/components/SatelliteView"
 import { buildGlobalState } from "@/lib/gse"
 import { adaptEventsToGSE } from "@/lib/eventToGSE"
+import GlobalStateIndicator from "@/components/GlobalStateIndicator"
 
 const Map = dynamic(() => import("@/components/Map"), {
   ssr: false,
@@ -129,17 +130,17 @@ export default function Home() {
   /* ===================== GLOBAL STATE ===================== */
 
   const globalState = useMemo(() => {
-  if (events.length === 0) return null
+    if (events.length === 0) return null
 
-  const gseEvents = adaptEventsToGSE(events)
-  return buildGlobalState(gseEvents)
-}, [events])
+    const gseEvents = adaptEventsToGSE(events)
+    return buildGlobalState(gseEvents)
+  }, [events])
 
 
   /* ===================== RENDER ===================== */
 
   return (
-    <main className="p-4 lg:p-6 max-w-[1600px] mx-auto h-screen flex flex-col">
+    <main className="p-4 lg:p-6 max-w-[1600px] mx-auto h-screen flex flex-col min-h-0">
 
       {/* ===================== HEADER ===================== */}
       <div className="flex flex-col gap-2 mb-2">
@@ -160,19 +161,8 @@ export default function Home() {
 
             {/* SYSTEM STATUS (FROM GSE) */}
             {globalState && (
-              <span
-                className={`
-            text-[11px] px-2 py-0.5 rounded border
-            ${globalState.status === "stable" && "border-green-500/40 text-green-400"}
-            ${globalState.status === "regional_escalation" && "border-yellow-500/40 text-yellow-400"}
-            ${globalState.status === "multi_region_escalation" && "border-orange-500/40 text-orange-400"}
-            ${globalState.status === "critical" && "border-red-500/40 text-red-400"}
-          `}
-              >
-                SYSTEM: {globalState.status.replaceAll("_", " ").toUpperCase()}
-              </span>
+              <GlobalStateIndicator state={globalState} />
             )}
-
             {/* FOCUS INDICATOR */}
             {focusRegion && (
               <span
@@ -201,8 +191,8 @@ export default function Home() {
                     setFocusRegion(null)
                   }}
                   className={`px-2 py-1 rounded border ${preset === p
-                      ? "border-gray-500 text-gray-200"
-                      : "border-gray-800 hover:border-gray-600"
+                    ? "border-gray-500 text-gray-200"
+                    : "border-gray-800 hover:border-gray-600"
                     }`}
                 >
                   {p.toUpperCase()}
@@ -283,7 +273,7 @@ export default function Home() {
             <MapboxMap events={filteredEvents} onSelectSatelliteFocus={setSatelliteFocus} />
 
             {/* BOTTOM PANEL */}
-            <div className="hidden lg:grid grid-cols-[2fr_1fr] gap-3 h-[420px]">
+            <div className="hidden lg:grid grid-cols-[2fr_1fr] gap-3 h-[420px] min-h-0">
 
               {/* LEFT: VISUAL PANEL (STREAM | CAMERAS) */}
               <div className="rounded-lg overflow-hidden">
@@ -303,13 +293,14 @@ export default function Home() {
                 </div>
 
                 {/* BOTTOM: FOCUS TIMELINE */}
-                <div className="rounded-lg bg-black/40 flex flex-col">
-                  <FocusTimeline
-                    events={filteredEvents}
-                    onSelectRegion={setFocusRegion}
-                  />
+                <div className="rounded-lg bg-black/40 flex flex-col h-full min-h-0 overflow-hidden">
+                  <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
+                    <FocusTimeline
+                      events={filteredEvents}
+                      onSelectRegion={setFocusRegion}
+                    />
+                  </div>
                 </div>
-
               </div>
             </div>
           </section>

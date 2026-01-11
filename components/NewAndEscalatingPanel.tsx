@@ -2,15 +2,8 @@ import { Event } from "@/lib/types"
 
 /* ===================== CONFIG ===================== */
 
-const HOURS_NEW = 24
+const HOURS_RECENT = 24
 const HOURS_BASELINE = 72
-
-const MIN_EVENTS_ESCALATION = 3
-const ESCALATION_FACTOR = 1.5
-
-const TIMELINE_BINS = 6 // 6 × 12h = 72h
-const BIN_HOURS = HOURS_BASELINE / TIMELINE_BINS
-const BARS = ["▁", "▂", "▃", "▄", "▆", "▇"]
 
 type Preset = "all" | "conflicts" | "strategic"
 
@@ -33,16 +26,14 @@ function formatRegion(region: string) {
     return COUNTRY_ACRONYMS[region] ?? region
 }
 
-function getEventTimestamp(e: Event): number | null {
-    const date = [
-        (e as any).published_at,
-        (e as any).publishedAt,
-        (e as any).created_at,
-        (e as any).createdAt,
-        (e as any).date,
-        (e as any).published,
-        (e as any).timestamp,
-    ].find(Boolean)
+function getTimestamp(e: Event): number | null {
+    const date =
+        (e as any).published_at ||
+        (e as any).publishedAt ||
+        (e as any).created_at ||
+        (e as any).createdAt ||
+        e.date ||
+        e.timestamp
 
     if (!date) return null
     const ts = new Date(date).getTime()
@@ -53,55 +44,19 @@ function hoursAgo(ts: number) {
     return (Date.now() - ts) / 36e5
 }
 
-function confidenceLabel(score: number) {
-    if (score >= 0.8) return "High"
-    if (score >= 0.5) return "Medium"
-    return "Low"
-}
-
-/* ===================== MICRO TIMELINE ===================== */
-
-function buildTimeline(events: Event[], region: string) {
-    const bins = new Array(TIMELINE_BINS).fill(0)
-
-    events.forEach(e => {
-        if (e.country !== region) return
-        const ts = getEventTimestamp(e)
-        if (!ts) return
-
-        const h = hoursAgo(ts)
-        if (h < 0 || h > HOURS_BASELINE) return
-
-        const index = Math.floor(h / BIN_HOURS)
-        if (index >= 0 && index < TIMELINE_BINS) {
-            bins[TIMELINE_BINS - 1 - index]++
-        }
-    })
-
-    const max = Math.max(...bins, 1)
-
-    return bins
-        .map(v =>
-            BARS[
-            Math.min(
-                BARS.length - 1,
-                Math.floor((v / max) * (BARS.length - 1))
-            )
-            ]
-        )
-        .join("")
-}
-
 /* ===================== TYPES ===================== */
 
-type Signal = {
-    key: string
-    label: string
+type FocusSignal = {
+    region: string
     category: string
-    delta?: number
-    trend: "up" | "new"
-    confidence: number
-    timeline: string
+    recent: number
+    reason: string
+}
+
+type NewSignal = {
+    region: string
+    category: string
+    reason: string
 }
 
 /* ===================== COMPONENT ===================== */
@@ -132,7 +87,7 @@ export default function NewAndEscalatingPanel({
     > = {}
 
     filteredEvents.forEach(e => {
-        const ts = getEventTimestamp(e)
+        const ts = getTimestamp(e)
         if (!ts) return
 
         const h = hoursAgo(ts)
@@ -149,165 +104,141 @@ export default function NewAndEscalatingPanel({
             }
         }
 
-        if (h <= HOURS_NEW) grouped[key].recent++
+        if (h <= HOURS_RECENT) grouped[key].recent++
         else grouped[key].baseline++
     })
 
-    /* ===================== DETECT SIGNALS ===================== */
+    /* ===================== BUILD FOCUS & NEW ===================== */
 
-    const escalating: Signal[] = []
-    const newlyActive: Signal[] = []
+    const focus: FocusSignal[] = []
+    const newlyActive: NewSignal[] = []
 
     Object.entries(grouped).forEach(([key, data]) => {
         const { recent, baseline, category } = data
         const regionLabel = formatRegion(key)
 
-        // NEW
-        if (recent > 0 && baseline === 0) {
-            newlyActive.push({
-                key,
-                label: `${regionLabel} · ${category}`,
+        // FOCUS & PRIORITY → where attention should go NOW
+        if (
+            recent >= 3 &&
+            (category === "conflict" || category === "politics") &&
+            key !== "Global"
+        ) {
+            focus.push({
+                region: regionLabel,
                 category,
-                trend: "new",
-                confidence: 1,
-                timeline: buildTimeline(filteredEvents, key),
+                recent,
+                reason: `${recent} relevant events in last 24h`,
             })
-            return
         }
 
-        // ESCALATING
-        if (
-            recent >= MIN_EVENTS_ESCALATION &&
-            baseline > 0 &&
-            recent >= baseline * ESCALATION_FACTOR
-        ) {
-            const confidence = Math.min(1, recent / baseline)
-
-            escalating.push({
-                key,
-                label: `${regionLabel} · ${category}`,
+        // NEW ACTIVITY → first appearance in window
+        if (recent > 0 && baseline === 0 && key !== "Global") {
+            newlyActive.push({
+                region: regionLabel,
                 category,
-                delta: recent - baseline,
-                trend: "up",
-                confidence,
-                timeline: buildTimeline(filteredEvents, key),
+                reason: "First activity in last 72h",
             })
         }
     })
 
-    const escalatingSorted = escalating
-        .sort((a, b) => (b.delta ?? 0) - (a.delta ?? 0))
+    const focusSorted = focus
+        .sort((a, b) => b.recent - a.recent)
         .slice(0, 4)
 
-    const newSorted = newlyActive.slice(0, 3)
-
-    const hasEscalation = escalatingSorted.length > 0
+    const newSorted = newlyActive.slice(0, 4)
 
     /* ===================== RENDER ===================== */
 
     return (
         <section className="flex flex-col space-y-2 text-xs text-gray-200">
+
             {/* HEADER */}
             <div className="flex items-center justify-between">
                 <div className="uppercase tracking-wide text-gray-400">
-                    New & Escalating
+                    Focus & Signals
                     <span className="ml-1 text-[10px] text-gray-500">
                         [{preset.toUpperCase()}]
                     </span>
                 </div>
                 <div className="text-[10px] text-gray-500">
-                    Last {HOURS_BASELINE}h
+                    Decision support
                 </div>
             </div>
 
-            {/* SYSTEM STATUS */}
-            <div
-                className={`rounded border px-2 py-1 text-[11px]
-          ${hasEscalation
-                        ? "border-red-900/40 bg-red-950/30 text-red-400"
-                        : "border-green-900/40 bg-green-950/20 text-green-400"
-                    }`}
-            >
-                {hasEscalation
-                    ? "Escalation patterns detected"
-                    : "System stable · No anomalies"}
-            </div>
-
-            {/* SIGNALS */}
+            {/* TWO COLUMNS */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1">
-                {/* ESCALATING */}
+
+                {/* LEFT — FOCUS & PRIORITY */}
                 <div>
-                    <div className="flex items-center justify-between mb-1">
-                        <span className="text-[11px] uppercase text-red-400">
-                            Escalating
-                        </span>
-                        <span className="text-[10px] text-gray-500">
-                            {escalatingSorted.length}
-                        </span>
+                    <div className="text-[11px] uppercase text-red-400 mb-1">
+                        Focus & priority
                     </div>
 
-                    {escalatingSorted.length > 0 ? (
+                    {focusSorted.length > 0 ? (
                         <ul className="space-y-1">
-                            {escalatingSorted.map(item => (
+                            {focusSorted.map(item => (
                                 <li
-                                    key={item.key}
-                                    onClick={() => onSelectRegion?.(item.key)}
-                                    className="flex justify-between gap-2 cursor-pointer hover:text-white"
+                                    key={item.region}
+                                    onClick={() => onSelectRegion?.(item.region)}
+                                    className="cursor-pointer hover:text-white"
                                 >
-                                    <div className="flex flex-col truncate">
-                                        <span>
-                                            <span className="mr-1 text-red-400">▲</span>
-                                            {item.label}
-                                        </span>
-                                        <span className="font-mono text-[10px] text-gray-500 tracking-wide">
-                                            {item.timeline}
+                                    {/* LINE 1 — REGION */}
+                                    <div className="flex items-center gap-1 leading-tight">
+                                        <span className="text-red-400">●</span>
+                                        <span className="font-medium uppercase tracking-wide">
+                                            {item.region}
                                         </span>
                                     </div>
-                                    <div className="text-right">
-                                        <div className="text-red-300">+{item.delta}</div>
-                                        <div className="text-[10px] text-gray-500">
-                                            {confidenceLabel(item.confidence)}
-                                        </div>
+
+                                    {/* LINE 2 — FIXED HEIGHT CONTEXT */}
+                                    <div className="
+    ml-4 text-[10px] text-gray-500
+    truncate whitespace-nowrap overflow-hidden
+  ">
+                                        {item.category} · {item.recent} events · 24h
                                     </div>
                                 </li>
+
                             ))}
                         </ul>
                     ) : (
                         <div className="text-[11px] text-gray-500 italic">
-                            No regions exceeding baseline
+                            No immediate priority regions
                         </div>
                     )}
                 </div>
 
-                {/* NEW */}
+                {/* RIGHT — NEW ACTIVITY */}
                 <div>
-                    <div className="flex items-center justify-between mb-1">
-                        <span className="text-[11px] uppercase text-amber-400">
-                            New
-                        </span>
-                        <span className="text-[10px] text-gray-500">
-                            {newSorted.length}
-                        </span>
+                    <div className="text-[11px] uppercase text-amber-400 mb-1">
+                        Newly active
                     </div>
 
                     {newSorted.length > 0 ? (
                         <ul className="space-y-1">
                             {newSorted.map(item => (
                                 <li
-                                    key={item.key}
-                                    onClick={() => onSelectRegion?.(item.key)}
+                                    key={item.region}
+                                    onClick={() => onSelectRegion?.(item.region)}
                                     className="cursor-pointer hover:text-white"
                                 >
-                                    <div className="flex flex-col truncate">
-                                        <span>
-                                            <span className="mr-1 text-amber-400">●</span>
-                                            {item.label}
-                                        </span>
-                                        <span className="font-mono text-[10px] text-gray-500 tracking-wide">
-                                            {item.timeline}
+                                    {/* LINE 1 — REGION */}
+                                    <div className="flex items-center gap-1 leading-tight">
+                                        <span className="text-amber-400">●</span>
+                                        <span className="font-medium uppercase tracking-wide">
+                                            {item.region}
                                         </span>
                                     </div>
+
+                                    {/* LINE 2 — FIXED HEIGHT CONTEXT */}
+                                    <div className="
+    ml-4 text-[10px] text-gray-500
+    truncate whitespace-nowrap overflow-hidden
+  ">
+                                        {item.category} · first activity · 72h
+                                    </div>
                                 </li>
+
                             ))}
                         </ul>
                     ) : (
@@ -320,7 +251,7 @@ export default function NewAndEscalatingPanel({
 
             {/* FOOTER */}
             <div className="pt-2 border-t border-gray-800 text-[10px] text-gray-600">
-                Monitoring {filteredEvents.length} events · auto-updating
+                {/* Monitoring {filteredEvents.length} events · last {HOURS_BASELINE}h */}
             </div>
         </section>
     )

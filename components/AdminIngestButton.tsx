@@ -1,8 +1,11 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 
 export default function IngestButton() {
+    const router = useRouter()
+
     const [open, setOpen] = useState(false)
     const [password, setPassword] = useState("")
     const [loading, setLoading] = useState(false)
@@ -27,6 +30,13 @@ export default function IngestButton() {
 
             const data = await res.json()
             setResult(data.inserted)
+
+            // 🔄 REFRESH PAGE AFTER SUCCESS
+            setTimeout(() => {
+                setOpen(false)
+                router.refresh()
+            }, 800)
+
         } catch (err) {
             setError("Invalid password or ingest failed")
         } finally {
