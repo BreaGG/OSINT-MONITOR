@@ -9,29 +9,46 @@ export default function IngestButton() {
     const [open, setOpen] = useState(false)
     const [password, setPassword] = useState("")
     const [loading, setLoading] = useState(false)
-    const [result, setResult] = useState<number | null>(null)
+    const [eventsResult, setEventsResult] = useState<number | null>(null)
+    const [socialResult, setSocialResult] = useState<number | null>(null)
     const [error, setError] = useState<string | null>(null)
 
     async function runIngest() {
         setLoading(true)
         setError(null)
-        setResult(null)
+        setEventsResult(null)
+        setSocialResult(null)
 
         try {
-            const res = await fetch("/api/ingest", {
+            /* ===================== EVENTS INGEST ===================== */
+            const eventsRes = await fetch("/api/ingest", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ password }),
             })
 
-            if (!res.ok) {
-                throw new Error("Unauthorized")
+            if (!eventsRes.ok) {
+                throw new Error("Events ingest failed")
             }
 
-            const data = await res.json()
-            setResult(data.inserted)
+            const eventsData = await eventsRes.json()
+            setEventsResult(eventsData.inserted ?? 0)
 
-            // 🔄 REFRESH PAGE AFTER SUCCESS
+            /* ===================== SOCIAL INGEST ===================== */
+            const socialRes = await fetch("/api/social/ingest", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ password }),
+            })
+
+            if (!socialRes.ok) {
+                throw new Error("Social ingest failed")
+            }
+
+            const socialData = await socialRes.json()
+            setSocialResult(socialData.inserted ?? 0)
+
+            /* ===================== REFRESH UI ===================== */
             setTimeout(() => {
                 setOpen(false)
                 router.refresh()
@@ -51,7 +68,7 @@ export default function IngestButton() {
             <button
                 onClick={() => setOpen(true)}
                 className="px-2 py-1 text-xs border border-gray-700 rounded hover:border-gray-500"
-                title="Manual ingest"
+                title="Manual ingest (events + social)"
             >
                 Refresh
             </button>
@@ -60,6 +77,7 @@ export default function IngestButton() {
             {open && (
                 <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center">
                     <div className="bg-black border border-gray-800 rounded-lg p-4 w-80 space-y-3">
+
                         <div className="text-sm font-medium">
                             Manual ingest
                         </div>
@@ -74,13 +92,18 @@ export default function IngestButton() {
 
                         {loading && (
                             <div className="text-xs text-gray-400">
-                                Ingesting feeds…
+                                Ingesting events & social signals…
                             </div>
                         )}
 
-                        {result !== null && (
-                            <div className="text-xs text-green-400">
-                                ✔ {result} new events ingested
+                        {(eventsResult !== null || socialResult !== null) && (
+                            <div className="text-xs text-green-400 space-y-1">
+                                {eventsResult !== null && (
+                                    <div>✔ {eventsResult} events ingested</div>
+                                )}
+                                {socialResult !== null && (
+                                    <div>✔ {socialResult} social signals ingested</div>
+                                )}
                             </div>
                         )}
 
