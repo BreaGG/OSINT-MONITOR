@@ -379,47 +379,79 @@ export default function MapboxMap({
 
       map.on("click", "events-layer", e => {
         const p = e.features?.[0]?.properties as any
-        if (!p) return
 
-        // 👉 SOLO ACCIÓN, NADA VISUAL
-        onSelectSatelliteFocus?.({
-          lat: e.lngLat.lat,
-          lon: e.lngLat.lng,
-          region: p.country ?? "Selected area",
-          label: p.title,
+        if (onSelectSatelliteFocus) {
+          onSelectSatelliteFocus({
+            lat: e.lngLat.lat,
+            lon: e.lngLat.lng,
+            region: p.country ?? "Selected area",
+            label: p.title,
+          })
+        }
+
+        new mapboxgl.Popup({
+          closeButton: false,
+          closeOnClick: true,
+          offset: {
+            top: [0, 12],
+            bottom: [0, -12],
+            left: [12, 0],
+            right: [-12, 0],
+          },
         })
-      })
-      map.on("mouseenter", "events-layer", e => {
-        map.getCanvas().style.cursor = "pointer"
-        if (!e.features?.length) return
 
-        const p = e.features[0].properties as any
-
-        popupRef.current!
           .setLngLat(e.lngLat)
           .setHTML(
             popup(`
-        <div style="font-size:12px;line-height:1.3">
-          <div style="font-weight:600;font-size:13px">
-            ${p.title}
-          </div>
-          <div style="font-size:11px;color:#9ca3af">
-            ${p.country}
-          </div>
-          <div style="font-size:11px;color:${p.color};margin-top:4px">
-            ${categoryColors[p.category as CategoryKey].label}
-          </div>
+    <div style="font-size:12px;line-height:1.3">
+
+      <!-- HEADER -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+        <div style="font-weight:600;font-size:13px;max-width:200px">
+          ${p.title}
         </div>
-      `)
+        <div style="font-size:11px;color:#9ca3af;white-space:nowrap">
+          ${p.country}
+        </div>
+      </div>
+
+      <!-- CATEGORY -->
+      <div style="font-size:11px;color:${p.color};margin-bottom:6px">
+        ${categoryColors[p.category as CategoryKey].label}
+      </div>
+
+      <div style="height:1px;background:#e5e7eb;opacity:0.25;margin:6px 0"></div>
+
+      <!-- LINK -->
+<a
+  href="/event/${encodeURIComponent(p.id)}"
+  style="
+    display:block;
+    padding:4px 6px;
+    font-size:11px;
+    color:#ffffff;
+    text-decoration:none;
+    border-radius:4px;
+  "
+  onmouseover="
+    this.style.background='rgba(255,255,255,0.06)';
+    this.style.textDecoration='underline';
+  "
+  onmouseout="
+    this.style.background='transparent';
+    this.style.textDecoration='none';
+  "
+>
+  View details →
+</a>
+
+
+    </div>
+  `)
           )
+
           .addTo(map)
       })
-      map.on("mouseleave", "events-layer", () => {
-        map.getCanvas().style.cursor = ""
-        popupRef.current?.remove()
-      })
-
-
 
       /* ===================== HOT ZONES ===================== */
 
@@ -512,61 +544,63 @@ export default function MapboxMap({
 
       map.on("click", "capitals-layer", e => {
         const p = e.features?.[0]?.properties as any
-        if (!p) return
 
-        onSelectSatelliteFocus?.({
-          lat: e.lngLat.lat,
-          lon: e.lngLat.lng,
-          region: p.country ?? p.name,
-          label: p.name,
+        new mapboxgl.Popup({
+          closeButton: false,
+          closeOnClick: true,
+          offset: {
+            top: [0, 12],
+            bottom: [0, -12],
+            left: [12, 0],
+            right: [-12, 0],
+          },
         })
-      })
 
-      map.on("mouseenter", "capitals-layer", e => {
-        map.getCanvas().style.cursor = "pointer"
-        const p = e.features?.[0]?.properties as any
-        if (!p) return
-
-        popupRef.current!
           .setLngLat(e.lngLat)
           .setHTML(
             popup(`
-        <div style="font-size:12px;line-height:1.3">
+    <div style="font-size:12px;line-height:1.3">
 
-          <!-- HEADER -->
-          <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-            <div style="font-weight:600;font-size:14px">
-              ${p.name}
-            </div>
-            <div style="font-size:11px;color:#9ca3af">
-              ${p.status}
-            </div>
-          </div>
-
-          <!-- SUMMARY -->
-          <div style="font-size:11px;color:#d1d5db;margin-bottom:6px">
-            ${p.summary}
-          </div>
-
-          <div style="height:1px;background:#e5e7eb;opacity:0.25;margin:6px 0"></div>
-
-          <!-- ENTITIES -->
-          <div style="font-size:11px">
-            <span style="color:#9ca3af">Key entities</span><br/>
-            ${p.entities}
-          </div>
-
+      <!-- HEADER -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+        <div style="font-weight:600;font-size:14px">
+          ${p.name}
         </div>
-      `)
+        <div style="font-size:11px;color:#9ca3af;white-space:nowrap">
+          ${p.status}
+        </div>
+      </div>
+
+      <!-- SUMMARY -->
+      <div style="font-size:11px;color:#d1d5db;margin-bottom:6px">
+        ${p.summary}
+      </div>
+
+      <div style="height:1px;background:#e5e7eb;opacity:0.25;margin:6px 0"></div>
+
+      <!-- ENTITIES -->
+      <div style="font-size:11px;margin-bottom:6px">
+        <span style="color:#9ca3af">Key entities</span><br/>
+        ${p.entities}
+      </div>
+
+      <div style="height:1px;background:#e5e7eb;opacity:0.25;margin:6px 0"></div>
+
+      <!-- HEADLINES -->
+      <div style="font-size:11px">
+        <div style="color:#9ca3af;margin-bottom:2px">
+          Related headlines
+        </div>
+        <ul style="margin:0;padding-left:14px">
+          ${relatedHeadlines(events, p.country)}
+        </ul>
+      </div>
+
+    </div>
+  `)
           )
           .addTo(map)
       })
-
-      map.on("mouseleave", "capitals-layer", () => {
-        map.getCanvas().style.cursor = ""
-        popupRef.current?.remove()
-      })
-
 
       /* ===================== MILITARY BASES ===================== */
 
@@ -609,13 +643,19 @@ export default function MapboxMap({
       })
 
 
-      map.on("click", "military-bases-layer", () => { })
-      map.on("mouseenter", "military-bases-layer", e => {
-        map.getCanvas().style.cursor = "pointer"
+      map.on("click", "military-bases-layer", e => {
         const b = e.features?.[0]?.properties as any
-        if (!b) return
 
-        popupRef.current!
+        new mapboxgl.Popup({
+          closeButton: false,
+          closeOnClick: true,
+          offset: {
+            top: [0, 12],
+            bottom: [0, -12],
+            left: [12, 0],
+            right: [-12, 0],
+          },
+        })
           .setLngLat(e.lngLat)
           .setHTML(
             popup(`
@@ -656,13 +696,6 @@ export default function MapboxMap({
           )
           .addTo(map)
       })
-
-
-      map.on("mouseleave", "military-bases-layer", () => {
-        map.getCanvas().style.cursor = ""
-        popupRef.current?.remove()
-      })
-
 
       /* ===================== CHOKEPOINTS ===================== */
 
@@ -717,51 +750,55 @@ export default function MapboxMap({
 
       map.on("click", "chokepoints-layer", e => {
         const p = e.features?.[0]?.properties as any
-        if (!p) return
 
-        onSelectSatelliteFocus?.({
-          lat: e.lngLat.lat,
-          lon: e.lngLat.lng,
-          region: p.name,
-          label: `Chokepoint · ${p.name}`,
+        new mapboxgl.Popup({
+          closeButton: false,
+          closeOnClick: true,
+          offset: {
+            top: [0, 12],
+            bottom: [0, -12],
+            left: [12, 0],
+            right: [-12, 0],
+          },
         })
-      })
 
-      map.on("mouseenter", "chokepoints-layer", e => {
-        map.getCanvas().style.cursor = "pointer"
-        const p = e.features?.[0]?.properties as any
-        if (!p) return
-
-        popupRef.current!
           .setLngLat(e.lngLat)
           .setHTML(
             popup(`
-        <div style="font-size:12px;line-height:1.3">
+    <div style="font-size:12px;line-height:1.3">
 
-          <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-            <div style="font-weight:600;font-size:14px">
-              ${p.name}
-            </div>
-            <div style="font-size:11px;color:#9ca3af">
-              ${p.status}
-            </div>
-          </div>
-
-          <div style="font-size:11px;color:#d1d5db">
-            ${p.summary}
-          </div>
-
+      <!-- HEADER -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+        <div style="font-weight:600;font-size:14px">
+          ${p.name}
         </div>
-      `)
+        <div style="font-size:11px;color:#9ca3af;white-space:nowrap">
+          ${p.status}
+        </div>
+      </div>
+
+      <!-- SUMMARY -->
+      <div style="font-size:11px;color:#d1d5db;margin-bottom:6px">
+        ${p.summary}
+      </div>
+
+      <div style="height:1px;background:#e5e7eb;opacity:0.25;margin:6px 0"></div>
+
+      <!-- HEADLINES -->
+      <div style="font-size:11px">
+        <div style="color:#9ca3af;margin-bottom:2px">
+          Related headlines
+        </div>
+        <ul style="margin:0;padding-left:14px">
+          ${relatedHeadlines(events, p.country)}
+        </ul>
+      </div>
+
+    </div>
+  `)
           )
           .addTo(map)
       })
-
-      map.on("mouseleave", "chokepoints-layer", () => {
-        map.getCanvas().style.cursor = ""
-        popupRef.current?.remove()
-      })
-
 
 
       /* ===================== CONFLICTS ===================== */
@@ -803,88 +840,79 @@ export default function MapboxMap({
 
       map.on("click", "conflicts-layer", e => {
         const c = e.features?.[0]?.properties as any
-        if (!c) return
 
-        onSelectSatelliteFocus?.({
-          lat: e.lngLat.lat,
-          lon: e.lngLat.lng,
-          region: c.name,
-          label: `Conflict · ${c.name}`,
+        new mapboxgl.Popup({
+          closeButton: false,
+          closeOnClick: true,
+          offset: {
+            top: [0, 12],
+            bottom: [0, -12],
+            left: [12, 0],
+            right: [-12, 0],
+          },
         })
-      })
-      map.on("mouseenter", "conflicts-layer", e => {
-        map.getCanvas().style.cursor = "pointer"
-        const c = e.features?.[0]?.properties as any
-        if (!c) return
 
-        popupRef.current!
           .setLngLat(e.lngLat)
           .setHTML(
             popup(`
-        <div style="font-size:12px;line-height:1.3">
+    <div style="font-size:12px;line-height:1.3">
 
-          <!-- HEADER -->
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
-            <div style="font-weight:600;font-size:14px">
-              ${c.name}
-            </div>
-            <div style="font-size:11px;color:#9ca3af">
-              ${c.startDate}
-            </div>
-          </div>
+      <!-- HEADER -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+        <div style="font-weight:600;font-size:14px">
+          ${c.name}
+        </div>
+        <div style="font-size:11px;color:#9ca3af">
+          ${c.startDate}
+        </div>
+      </div>
 
-          <div style="color:#fca5a5;font-size:11px;margin-bottom:6px">
-            ${c.level} intensity
-          </div>
+      <div style="color:#fca5a5;font-size:11px;margin-bottom:6px">
+        ${c.level} intensity
+      </div>
 
-          <div style="height:1px;background:#e5e7eb;opacity:0.25;margin:6px 0"></div>
+      <div style="height:1px;background:#e5e7eb;opacity:0.25;margin:6px 0"></div>
 
-          <!-- KEY METRICS -->
-          <div style="margin-bottom:6px">
+      <!-- KEY METRICS -->
+      <div style="margin-bottom:6px">
 
-            <div style="display:flex;justify-content:space-between">
-              <span style="color:#9ca3af">Casualties</span>
-              <span>${c.casualties}</span>
-            </div>
+        <div style="display:flex;justify-content:space-between">
+          <span style="color:#9ca3af">Casualties</span>
+          <span>${c.casualties}</span>
+        </div>
 
-            <div style="display:flex;justify-content:space-between">
-              <span style="color:#9ca3af">Displaced</span>
-              <span>${c.displaced}</span>
-            </div>
+        <div style="display:flex;justify-content:space-between">
+          <span style="color:#9ca3af">Displaced</span>
+          <span>${c.displaced}</span>
+        </div>
 
-          </div>
+      </div>
 
-          <div style="height:1px;background:#e5e7eb;opacity:0.25;margin:6px 0"></div>
+      <div style="height:1px;background:#e5e7eb;opacity:0.25;margin:6px 0"></div>
 
-          <!-- DESCRIPTION -->
-          <div style="color:#d1d5db;font-size:11px;margin-bottom:6px">
-            ${c.description}
-          </div>
+      <!-- DESCRIPTION -->
+      <div style="color:#d1d5db;font-size:11px;margin-bottom:6px">
+        ${c.description}
+      </div>
 
-          <div style="height:1px;background:#e5e7eb;opacity:0.25;margin:6px 0"></div>
+      <div style="height:1px;background:#e5e7eb;opacity:0.25;margin:6px 0"></div>
 
-          <!-- BELLIGERENTS -->
-          <div style="font-size:11px">
-            <span style="color:#9ca3af">Belligerents</span><br/>
-            ${String(c.belligerents)
+      <!-- BELLIGERENTS -->
+      <div style="font-size:11px">
+        <span style="color:#9ca3af">Belligerents</span><br/>
+        ${String(c.belligerents)
                 .split(",")
                 .map(b => b.trim())
                 .join(" · ")}
-          </div>
+      </div>
 
-        </div>
-      `)
+    </div>
+  `)
           )
+
+
           .addTo(map)
       })
-
-
-      map.on("mouseleave", "conflicts-layer", () => {
-        map.getCanvas().style.cursor = ""
-        popupRef.current?.remove()
-      })
-
-
       if (map.getLayer("event-highlight-layer")) {
         map.moveLayer("event-highlight-layer")
       }
@@ -990,8 +1018,8 @@ export default function MapboxMap({
               }))
             }
             className={`block px-2 py-1 rounded border ${value
-              ? "bg-black/80 text-gray-200 border-gray-700"
-              : "bg-black/40 text-gray-500 border-gray-800"
+                ? "bg-black/80 text-gray-200 border-gray-700"
+                : "bg-black/40 text-gray-500 border-gray-800"
               }`}
           >
             {key.toUpperCase()}
@@ -1024,8 +1052,8 @@ export default function MapboxMap({
               key={v}
               onClick={() => setTimeWindow(v)}
               className={`px-3 py-1 text-xs rounded ${timeWindow === v
-                ? "bg-black text-gray-200 border border-gray-600"
-                : "text-gray-500 hover:text-gray-300"
+                  ? "bg-black text-gray-200 border border-gray-600"
+                  : "text-gray-500 hover:text-gray-300"
                 }`}
             >
               {v.toUpperCase()}

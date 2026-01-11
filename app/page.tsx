@@ -14,6 +14,7 @@ import FocusTimeline from "@/components/FocusTimeline"
 import { categoryColors } from "@/lib/categoryColors"
 import AdminIngestButton from "@/components/AdminIngestButton"
 import VisualPanel from "@/components/VisualPanel"
+import type { SatelliteFocus } from "@/components/SatelliteView"
 
 const Map = dynamic(() => import("@/components/Map"), {
   ssr: false,
@@ -26,6 +27,9 @@ type Preset = "all" | "conflicts" | "strategic"
 export default function Home() {
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
+  const [satelliteFocus, setSatelliteFocus] =
+  useState<SatelliteFocus | undefined>(undefined)
+
 
   /* ===== analytical focus ===== */
   const [focusRegion, setFocusRegion] = useState<string | null>(null)
@@ -241,14 +245,14 @@ export default function Home() {
           {/* MAP COLUMN */}
           <section className="flex flex-col min-h-0 gap-3">
             {/* MAP */}
-            <MapboxMap events={filteredEvents} />
+            <MapboxMap events={filteredEvents} onSelectSatelliteFocus={setSatelliteFocus}/>
 
             {/* BOTTOM PANEL */}
             <div className="hidden lg:grid grid-cols-[2fr_1fr] gap-3 h-[420px]">
 
               {/* LEFT: VISUAL PANEL (STREAM | CAMERAS) */}
               <div className="rounded-lg overflow-hidden">
-                <VisualPanel />
+                <VisualPanel satelliteFocus={satelliteFocus}/>
               </div>
 
               {/* RIGHT: SIGNALS */}
