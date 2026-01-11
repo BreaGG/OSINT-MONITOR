@@ -15,6 +15,8 @@ import { categoryColors } from "@/lib/categoryColors"
 import AdminIngestButton from "@/components/AdminIngestButton"
 import VisualPanel from "@/components/VisualPanel"
 import type { SatelliteFocus } from "@/components/SatelliteView"
+import { buildGlobalState } from "@/lib/gse"
+import { adaptEventsToGSE } from "@/lib/eventToGSE"
 
 const Map = dynamic(() => import("@/components/Map"), {
   ssr: false,
@@ -52,6 +54,7 @@ export default function Home() {
         setLoading(false)
       })
   }, [])
+
 
   /* ===================== PRESET LOGIC ===================== */
 
@@ -102,7 +105,6 @@ export default function Home() {
   }, [filteredEvents, focusRegion])
 
   /* ===================== AUX DATA ===================== */
-
   const countries = Array.from(
     new Set(
       events
@@ -124,118 +126,141 @@ export default function Home() {
     return new Date().toLocaleTimeString()
   }, [])
 
+  /* ===================== GLOBAL STATE ===================== */
+
+  const globalState = useMemo(() => {
+  if (events.length === 0) return null
+
+  const gseEvents = adaptEventsToGSE(events)
+  return buildGlobalState(gseEvents)
+}, [events])
+
+
   /* ===================== RENDER ===================== */
 
   return (
     <main className="p-4 lg:p-6 max-w-[1600px] mx-auto h-screen flex flex-col">
 
-      {/* HEADER */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-0 gap-3">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-2 gap-3">
+      {/* ===================== HEADER ===================== */}
+      <div className="flex flex-col gap-2 mb-2">
+
+        {/* TOP LINE */}
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+
+          {/* TITLE + META */}
           <div className="flex gap-3 items-center flex-wrap">
             <div className="flex flex-col leading-tight">
               <h1 className="text-lg font-semibold lg:text-2xl lg:font-bold">
                 Global Intelligence Monitor
               </h1>
               <span className="text-[11px] text-gray-400 tracking-wide">
-                Open Source Intelligence - <span className="text-[11px] text-gray-400">
-              Updated {lastUpdated} · Daily update at 02:00 UTC
-            </span>
-              </span> 
+                Open Source Intelligence · Updated {lastUpdated}
+              </span>
             </div>
+
+            {/* SYSTEM STATUS (FROM GSE) */}
+            {globalState && (
+              <span
+                className={`
+            text-[11px] px-2 py-0.5 rounded border
+            ${globalState.status === "stable" && "border-green-500/40 text-green-400"}
+            ${globalState.status === "regional_escalation" && "border-yellow-500/40 text-yellow-400"}
+            ${globalState.status === "multi_region_escalation" && "border-orange-500/40 text-orange-400"}
+            ${globalState.status === "critical" && "border-red-500/40 text-red-400"}
+          `}
+              >
+                SYSTEM: {globalState.status.replaceAll("_", " ").toUpperCase()}
+              </span>
+            )}
 
             {/* FOCUS INDICATOR */}
             {focusRegion && (
               <span
                 onClick={() => setFocusRegion(null)}
                 className="
-          ml-2 text-[11px] text-gray-300 cursor-pointer
-          border border-gray-700 px-2 py-0.5 rounded
-          hover:bg-black/40 transition
-        "
+            ml-1 text-[11px] text-gray-300 cursor-pointer
+            border border-gray-700 px-2 py-0.5 rounded
+            hover:bg-black/40 transition
+          "
               >
                 Focus: {focusRegion} ×
               </span>
             )}
           </div>
-        </div>
 
+          {/* FILTERS (DESKTOP) */}
+          <div className="hidden lg:flex items-center gap-4">
 
-        {/* FILTERS (desktop) */}
-        <div className="hidden lg:flex items-center gap-4">
+            {/* PRESETS */}
+            <div className="flex items-center gap-1 text-xs text-gray-400">
+              {(["all", "conflicts", "strategic"] as Preset[]).map(p => (
+                <button
+                  key={p}
+                  onClick={() => {
+                    setPreset(p)
+                    setFocusRegion(null)
+                  }}
+                  className={`px-2 py-1 rounded border ${preset === p
+                      ? "border-gray-500 text-gray-200"
+                      : "border-gray-800 hover:border-gray-600"
+                    }`}
+                >
+                  {p.toUpperCase()}
+                </button>
+              ))}
+            </div>
 
-          {/* PRESETS */}
-          <div className="flex items-center gap-1 text-xs text-gray-400">
-            {(["all", "conflicts", "strategic"] as Preset[]).map(p => (
-              <button
-                key={p}
-                onClick={() => {
-                  setPreset(p)
-                  setFocusRegion(null)
-                }}
-                className={`px-2 py-1 rounded border ${preset === p
-                  ? "border-gray-500 text-gray-200"
-                  : "border-gray-800 hover:border-gray-600"
-                  }`}
-              >
-                {p.toUpperCase()}
-              </button>
-            ))}
-          </div>
-
-          {/* CATEGORY */}
-          <select
-            value={category}
-            onChange={e => {
-              setPreset("all")
-              setFocusRegion(null)
-              setCategory(e.target.value)
-            }}
-            className="bg-black text-white border border-gray-700 rounded px-3 py-2 text-sm"
-          >
-            <option value="all">All categories</option>
-
-            {categories.map(c => (
-              <option key={c} value={c}>
-                {categoryColors[c as keyof typeof categoryColors]?.label ?? c}
-              </option>
-            ))}
-          </select>
-
-
-          {/* COUNTRY */}
-          <select
-            value={country}
-            onChange={e => {
-              setPreset("all")
-              setFocusRegion(null)
-              setCountry(e.target.value)
-            }}
-            className="bg-black text-white border border-gray-700 rounded px-3 py-2 text-sm"
-          >
-            <option value="all">All countries</option>
-            {countries.map(c => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-
-          {/* SEARCH */}
-          <div className="flex items-center gap-3">
-            <input
-              type="text"
-              placeholder="Search headline…"
-              value={search}
+            {/* CATEGORY */}
+            <select
+              value={category}
               onChange={e => {
                 setPreset("all")
                 setFocusRegion(null)
-                setSearch(e.target.value)
+                setCategory(e.target.value)
               }}
-              className="bg-black text-white border border-gray-700 rounded px-3 py-2 text-sm w-56"
-            />
-            {/* ADMIN INGEST */}
-            <AdminIngestButton />
+              className="bg-black text-white border border-gray-700 rounded px-3 py-2 text-sm"
+            >
+              <option value="all">All categories</option>
+              {categories.map(c => (
+                <option key={c} value={c}>
+                  {categoryColors[c as keyof typeof categoryColors]?.label ?? c}
+                </option>
+              ))}
+            </select>
+
+            {/* COUNTRY */}
+            <select
+              value={country}
+              onChange={e => {
+                setPreset("all")
+                setFocusRegion(null)
+                setCountry(e.target.value)
+              }}
+              className="bg-black text-white border border-gray-700 rounded px-3 py-2 text-sm"
+            >
+              <option value="all">All countries</option>
+              {countries.map(c => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+
+            {/* SEARCH + ADMIN */}
+            <div className="flex items-center gap-3">
+              <input
+                type="text"
+                placeholder="Search headline…"
+                value={search}
+                onChange={e => {
+                  setPreset("all")
+                  setFocusRegion(null)
+                  setSearch(e.target.value)
+                }}
+                className="bg-black text-white border border-gray-700 rounded px-3 py-2 text-sm w-56"
+              />
+              <AdminIngestButton />
+            </div>
           </div>
         </div>
       </div>
