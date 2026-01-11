@@ -35,6 +35,14 @@ type CategoryKey = keyof typeof categoryColors
 
 /* ===================== HELPERS ===================== */
 
+type HotZoneLevel = "watch" | "active" | "critical"
+
+function classifyHotZone(intensity: number): HotZoneLevel {
+  if (intensity >= 3) return "critical"
+  if (intensity >= 2) return "active"
+  return "watch"
+}
+
 function parseDBTimestamp(ts: string): number {
   // "2026-01-10 19:49:01"
   const [date, time] = ts.split(" ")
@@ -102,7 +110,11 @@ function updateTimeFilteredLayers(
         events.filter(e => isWithinTimeWindow(e, windowMs))
       ).map(z => ({
         type: "Feature",
-        properties: { count: z.count },
+        properties: {
+          count: z.count,
+          intensity: z.intensity,
+          level: z.level,
+        },
         geometry: {
           type: "Point",
           coordinates: [z.lon, z.lat],
@@ -181,9 +193,12 @@ type HotZone = {
   lon: number
   count: number
   intensity: number
+  level: "watch" | "active" | "critical"
 }
 
+
 /* ===================== HELPERS ===================== */
+const MIN_INTENSITY = 1.2
 
 // Distancia real en km (Haversine)
 function distanceKm(
@@ -244,13 +259,19 @@ export function computeHotZones(events: Event[]): HotZone[] {
         lon: e.lon,
         count: 1,
         intensity: w,
+        level: classifyHotZone(w),
       })
     }
   })
 
   return zones
-    .filter(z => z.intensity >= MIN_WEIGHT)
+    .filter(z => z.intensity >= MIN_INTENSITY)
+    .map(z => ({
+      ...z,
+      level: classifyHotZone(z.intensity),
+    }))
     .sort((a, b) => b.intensity - a.intensity)
+
 }
 
 /* ===================== COMPONENT ===================== */
@@ -266,6 +287,15 @@ export default function MapboxMap({
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [timeWindow, setTimeWindow] = useState<TimeWindow>("24h")
   const popupRef = useRef<mapboxgl.Popup | null>(null)
+  const visibleEvents = events.filter(e =>
+    isWithinTimeWindow(e, TIME_WINDOWS[timeWindow])
+  )
+
+  const visibleHotZones = computeHotZones(visibleEvents)
+
+  const eventCount = visibleEvents.length
+  const hotZoneCount = visibleHotZones.length
+
 
   const [layers, setLayers] = useState({
     events: true,
@@ -472,7 +502,11 @@ export default function MapboxMap({
           type: "FeatureCollection",
           features: computeHotZones(events).map(z => ({
             type: "Feature",
-            properties: { count: z.count },
+            properties: {
+              count: z.count,
+              intensity: z.intensity,
+              level: z.level,
+            },
             geometry: {
               type: "Point",
               coordinates: [z.lon, z.lat],
@@ -489,18 +523,42 @@ export default function MapboxMap({
           "circle-radius": [
             "interpolate",
             ["linear"],
-            ["get", "count"],
-            3,
-            40,
-            10,
-            120,
+            ["get", "intensity"],
+            1.2, 40,
+            3.5, 120,
           ],
-          "circle-color": "#991b1b",
+          "circle-color": [
+            "match",
+            ["get", "level"],
+            "critical", "#dc2626",
+            "active", "#ef4444",
+            "watch", "#fca5a5",
+            "#fca5a5",
+          ],
           "circle-opacity": 0.12,
           "circle-stroke-width": 1,
           "circle-stroke-color": "#991b1b",
         },
       })
+
+      map.addLayer({
+        id: "hotzones-critical-halo",
+        type: "circle",
+        source: "hot-zones",
+        filter: ["==", ["get", "level"], "critical"],
+        paint: {
+          "circle-radius": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            2, 60,
+            5, 180,
+          ],
+          "circle-color": "#dc2626",
+          "circle-opacity": 0.08,
+        },
+      })
+
 
       updateTimeFilteredLayers(map, events, timeWindow)
 
@@ -1061,16 +1119,27 @@ export default function MapboxMap({
         </button>
       </div>
 
-      {/* BOTTOM CENTER — TIME WINDOW */}
-      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20">
+      {/* BOTTOM CENTER — TIME WINDOW + COUNTERS */}
+      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-1">
+        {/* COUNTERS */}
+        <div className="text-[11px] text-gray-400 bg-black/70 border border-gray-800 rounded px-2 py-0.5">
+          <span className="text-red-400 font-medium">
+            {hotZoneCount} hot zones
+          </span>
+          <span className="mx-2 text-gray-600">|</span>
+          <span>
+            {eventCount} events
+          </span>
+        </div>
+        {/* TIME WINDOW */}
         <div className="flex gap-1 bg-black/70 border border-gray-800 rounded px-1 py-1">
           {(["6h", "24h", "72h"] as TimeWindow[]).map(v => (
             <button
               key={v}
               onClick={() => setTimeWindow(v)}
               className={`px-3 py-1 text-xs rounded ${timeWindow === v
-                ? "bg-black text-gray-200 border border-gray-600"
-                : "text-gray-500 hover:text-gray-300"
+                  ? "bg-black text-gray-200 border border-gray-600"
+                  : "text-gray-500 hover:text-gray-300"
                 }`}
             >
               {v.toUpperCase()}
