@@ -78,7 +78,7 @@ export default function Stream() {
             {/* HEADER */}
             <div className="flex items-center gap-2">
                 <span className="uppercase tracking-wide text-gray-400">
-                    Live
+                    LIVE SIGNAL
                 </span>
 
                 <div className="flex items-center gap-1">

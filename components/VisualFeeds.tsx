@@ -1,12 +1,29 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { visualSources } from "@/lib/visualSources"
 
+const STORAGE_KEY = "osint.visual.activeId"
+
 export default function VisualFeeds() {
-    const [activeId, setActiveId] = useState(
-        visualSources[0]?.id ?? ""
-    )
+    const [activeId, setActiveId] = useState<string>("")
+
+    // LOAD persisted value
+    useEffect(() => {
+        const stored = localStorage.getItem(STORAGE_KEY)
+        if (stored && visualSources.some(v => v.id === stored)) {
+            setActiveId(stored)
+        } else {
+            setActiveId(visualSources[0]?.id ?? "")
+        }
+    }, [])
+
+    // SAVE on change
+    useEffect(() => {
+        if (activeId) {
+            localStorage.setItem(STORAGE_KEY, activeId)
+        }
+    }, [activeId])
 
     const active = visualSources.find(v => v.id === activeId)
 

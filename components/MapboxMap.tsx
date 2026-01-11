@@ -19,9 +19,33 @@ type Props = {
   hoveredEventId?: string | null
 }
 
+type TimeWindow = "6h" | "24h" | "72h"
+
+const TIME_WINDOWS: Record<TimeWindow, number> = {
+  "6h": 6 * 60 * 60 * 1000,
+  "24h": 24 * 60 * 60 * 1000,
+  "72h": 72 * 60 * 60 * 1000,
+}
+
+
 type CategoryKey = keyof typeof categoryColors
 
 /* ===================== HELPERS ===================== */
+
+function isWithinTimeWindow(
+  event: Event,
+  windowMs: number
+): boolean {
+  const ts =
+    (event as any).publishedAt ||
+    (event as any).published_at ||
+    (event as any).createdAt ||
+    (event as any).created_at
+
+  if (!ts) return true
+
+  return Date.now() - new Date(ts).getTime() <= windowMs
+}
 
 function hasCoordinates(
   e: Event
@@ -169,6 +193,7 @@ export default function MapboxMap({ events, hoveredEventId }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const [ready, setReady] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [timeWindow, setTimeWindow] = useState<TimeWindow>("24h")
 
   const [layers, setLayers] = useState({
     events: true,
@@ -178,6 +203,49 @@ export default function MapboxMap({ events, hoveredEventId }: Props) {
     conflicts: true,
     militaryBases: true,
   })
+
+  useEffect(() => {
+    if (!ready || !mapRef.current) return
+
+    const map = mapRef.current
+    const source = map.getSource("events") as mapboxgl.GeoJSONSource
+    if (!source) return
+
+    const windowMs = TIME_WINDOWS[timeWindow]
+
+    source.setData({
+      type: "FeatureCollection",
+      features: events
+        .filter(hasCoordinates)
+        .filter(e => isWithinTimeWindow(e, windowMs))
+        .map(e => ({
+          type: "Feature",
+          properties: {
+            id: e.id,
+            title: e.title,
+            category: e.category,
+            color: categoryColors[e.category].color,
+          },
+          geometry: {
+            type: "Point",
+            coordinates: [e.lon, e.lat],
+          },
+        })),
+    })
+  }, [timeWindow, events, ready])
+
+
+  useEffect(() => {
+    const stored = localStorage.getItem("osint.map.timeWindow")
+    if (stored === "6h" || stored === "24h" || stored === "72h") {
+      setTimeWindow(stored)
+    }
+  }, [])
+
+  useEffect(() => {
+    localStorage.setItem("osint.map.timeWindow", timeWindow)
+  }, [timeWindow])
+
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -233,6 +301,7 @@ export default function MapboxMap({ events, hoveredEventId }: Props) {
 
     map.on("load", () => {
       /* ===================== EVENTS ===================== */
+      const windowMs = TIME_WINDOWS[timeWindow]
 
       map.addSource("events", {
         type: "geojson",
@@ -240,6 +309,7 @@ export default function MapboxMap({ events, hoveredEventId }: Props) {
           type: "FeatureCollection",
           features: events
             .filter(hasCoordinates)
+            .filter(e => isWithinTimeWindow(e, windowMs))
             .map(e => ({
               type: "Feature",
               properties: {
@@ -256,6 +326,7 @@ export default function MapboxMap({ events, hoveredEventId }: Props) {
             })),
         } as GeoJSON.FeatureCollection,
       })
+
 
       map.addSource("event-highlight", {
         type: "geojson",
@@ -905,12 +976,13 @@ export default function MapboxMap({ events, hoveredEventId }: Props) {
     <section
       className={`
       ${isFullscreen
-          ? "fixed inset-0 z-[999] bg-black rounded-none"
-          : "relative rounded-xl border border-gray-800"}
+          ? "fixed inset-0 z-[999] bg-black"
+          : "relative rounded-xl border border-gray-800"
+        }
       overflow-hidden
     `}
     >
-      {/* LAYER TOGGLES */}
+      {/* TOP LEFT — LAYERS */}
       <div className="absolute top-2 left-2 z-10 space-y-1 text-xs">
         {Object.entries(layers).map(([key, value]) => (
           <button
@@ -931,27 +1003,46 @@ export default function MapboxMap({ events, hoveredEventId }: Props) {
         ))}
       </div>
 
-      {/* FULLSCREEN BUTTON */}
-      <button
-        onClick={() => setIsFullscreen(v => !v)}
-        className="
-        absolute top-2 right-2 z-20
-        bg-black/80 border border-gray-700
-        text-gray-200 text-xs
-        px-3 py-1.5
-        hover:bg-black
-        transition
-      "
-      >
-        {isFullscreen ? "EXIT MAP" : "FULL MAP"}
-      </button>
+      {/* TOP RIGHT — FULLSCREEN */}
+      <div className="absolute top-2 right-2 z-20">
+        <button
+          onClick={() => setIsFullscreen(v => !v)}
+          className="
+          px-3 py-1.5
+          rounded border
+          bg-black/80 border-gray-700
+          text-gray-200 text-xs
+          hover:bg-black
+          transition
+        "
+        >
+          {isFullscreen ? "EXIT MAP" : "FULL MAP"}
+        </button>
+      </div>
 
-      {/* MAP CONTAINER */}
+      {/* BOTTOM CENTER — TIME WINDOW */}
+      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20">
+        <div className="flex gap-1 bg-black/70 border border-gray-800 rounded px-1 py-1">
+          {(["6h", "24h", "72h"] as TimeWindow[]).map(v => (
+            <button
+              key={v}
+              onClick={() => setTimeWindow(v)}
+              className={`px-3 py-1 text-xs rounded ${timeWindow === v
+                  ? "bg-black text-gray-200 border border-gray-600"
+                  : "text-gray-500 hover:text-gray-300"
+                }`}
+            >
+              {v.toUpperCase()}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* MAP */}
       <div
         ref={containerRef}
         className={isFullscreen ? "h-full w-full" : "h-[420px] w-full"}
       />
     </section>
   )
-
 }
