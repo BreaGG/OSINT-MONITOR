@@ -35,20 +35,89 @@ type CategoryKey = keyof typeof categoryColors
 
 /* ===================== HELPERS ===================== */
 
-function isWithinTimeWindow(
-  event: Event,
-  windowMs: number
-): boolean {
-  const ts =
-    (event as any).publishedAt ||
-    (event as any).published_at ||
-    (event as any).createdAt ||
-    (event as any).created_at
+function parseDBTimestamp(ts: string): number {
+  // "2026-01-10 19:49:01"
+  const [date, time] = ts.split(" ")
+  const [y, m, d] = date.split("-").map(Number)
+  const [hh, mm, ss] = time.split(":").map(Number)
 
-  if (!ts) return true
-
-  return Date.now() - new Date(ts).getTime() <= windowMs
+  return new Date(y, m - 1, d, hh, mm, ss).getTime()
 }
+
+
+function getEventTimestamp(e: Event): number | null {
+  const ts =
+    (e as any).publishedAt ||
+    (e as any).published_at ||
+    (e as any).createdAt ||
+    (e as any).created_at
+
+  if (!ts) return null
+
+  if (typeof ts === "string" && ts.includes(" ")) {
+    return parseDBTimestamp(ts)
+  }
+
+  const d = new Date(ts)
+  return isNaN(d.getTime()) ? null : d.getTime()
+}
+
+function updateTimeFilteredLayers(
+  map: mapboxgl.Map,
+  events: Event[],
+  timeWindow: TimeWindow
+) {
+  const windowMs = TIME_WINDOWS[timeWindow]
+
+  // EVENTS
+  const eventSource = map.getSource("events") as mapboxgl.GeoJSONSource
+  if (eventSource) {
+    eventSource.setData({
+      type: "FeatureCollection",
+      features: events
+        .filter(hasCoordinates)
+        .filter(e => isWithinTimeWindow(e, windowMs))
+        .map(e => ({
+          type: "Feature",
+          properties: {
+            id: e.id,
+            title: e.title,
+            category: e.category,
+            color: categoryColors[e.category].color,
+          },
+          geometry: {
+            type: "Point",
+            coordinates: [e.lon, e.lat],
+          },
+        })),
+    })
+  }
+
+  // HOT ZONES
+  const hotSource = map.getSource("hot-zones") as mapboxgl.GeoJSONSource
+  if (hotSource) {
+    hotSource.setData({
+      type: "FeatureCollection",
+      features: computeHotZones(
+        events.filter(e => isWithinTimeWindow(e, windowMs))
+      ).map(z => ({
+        type: "Feature",
+        properties: { count: z.count },
+        geometry: {
+          type: "Point",
+          coordinates: [z.lon, z.lat],
+        },
+      })),
+    })
+  }
+}
+
+function isWithinTimeWindow(e: Event, windowMs: number) {
+  const ts = getEventTimestamp(e)
+  if (!ts) return windowMs >= TIME_WINDOWS["24h"]
+  return Date.now() - ts <= windowMs
+}
+
 
 function hasCoordinates(
   e: Event
@@ -137,15 +206,10 @@ function distanceKm(
 }
 
 function eventWeight(e: Event) {
-  const ts =
-    (e as any).publishedAt ||
-    (e as any).published_at ||
-    (e as any).createdAt ||
-    (e as any).created_at
+  const ts = getEventTimestamp(e)
+  if (!ts) return 0.5   // 👈 clave
 
-  if (!ts) return 1
-
-  const hoursAgo = (Date.now() - new Date(ts).getTime()) / 36e5
+  const hoursAgo = (Date.now() - ts) / 36e5
 
   if (hoursAgo < 6) return 2
   if (hoursAgo < 24) return 1.5
@@ -211,36 +275,15 @@ export default function MapboxMap({
     conflicts: true,
     militaryBases: true,
   })
-
   useEffect(() => {
-    if (!ready || !mapRef.current) return
+    if (!mapRef.current) return
 
-    const map = mapRef.current
-    const source = map.getSource("events") as mapboxgl.GeoJSONSource
-    if (!source) return
-
-    const windowMs = TIME_WINDOWS[timeWindow]
-
-    source.setData({
-      type: "FeatureCollection",
-      features: events
-        .filter(hasCoordinates)
-        .filter(e => isWithinTimeWindow(e, windowMs))
-        .map(e => ({
-          type: "Feature",
-          properties: {
-            id: e.id,
-            title: e.title,
-            category: e.category,
-            color: categoryColors[e.category].color,
-          },
-          geometry: {
-            type: "Point",
-            coordinates: [e.lon, e.lat],
-          },
-        })),
-    })
-  }, [timeWindow, events, ready])
+    updateTimeFilteredLayers(
+      mapRef.current,
+      events,
+      timeWindow
+    )
+  }, [timeWindow, events])
 
 
   useEffect(() => {
@@ -296,8 +339,8 @@ export default function MapboxMap({
     const map = new mapboxgl.Map({
       container: containerRef.current,
       style: "mapbox://styles/mapbox/dark-v11",
-      center: [0, 20],
-      zoom: 1.6,
+      center: [30, 38],
+      zoom: 2.4,
       minZoom: 1.2,
       maxZoom: 6,
       projection: { name: "mercator" },
@@ -316,7 +359,6 @@ export default function MapboxMap({
       })
 
       /* ===================== EVENTS ===================== */
-      const windowMs = TIME_WINDOWS[timeWindow]
 
       map.addSource("events", {
         type: "geojson",
@@ -324,7 +366,6 @@ export default function MapboxMap({
           type: "FeatureCollection",
           features: events
             .filter(hasCoordinates)
-            .filter(e => isWithinTimeWindow(e, windowMs))
             .map(e => ({
               type: "Feature",
               properties: {
@@ -333,14 +374,16 @@ export default function MapboxMap({
                 country: e.country,
                 category: e.category as CategoryKey,
                 color: categoryColors[e.category as CategoryKey].color,
+                ts: getEventTimestamp(e), // 👈 CLAVE
               },
               geometry: {
                 type: "Point",
                 coordinates: [e.lon, e.lat],
               },
             })),
-        } as GeoJSON.FeatureCollection,
+        },
       })
+
 
 
       map.addSource("event-highlight", {
@@ -458,6 +501,8 @@ export default function MapboxMap({
           "circle-stroke-color": "#991b1b",
         },
       })
+
+      updateTimeFilteredLayers(map, events, timeWindow)
 
       /* ===================== CAPITALS ===================== */
 
@@ -889,7 +934,7 @@ export default function MapboxMap({
         map.moveLayer("event-highlight-layer")
       }
 
-      map.on("idle", () => setReady(true))
+      setReady(true)
     })
 
     mapRef.current = map
