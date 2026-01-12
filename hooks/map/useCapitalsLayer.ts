@@ -1,16 +1,16 @@
-import { useMemo } from "react";
-import mapboxgl from "mapbox-gl";
-import { strategicPoints } from "@/lib/strategicPoints";
-import { renderCapitalPopup } from "@/components/map/popups";
-import { useMapLayer } from "./useMapLayer";
-import type { SatelliteFocus } from "@/components/SatelliteView";
+import { useMemo } from "react"
+import mapboxgl from "mapbox-gl"
+import { strategicPoints } from "@/lib/strategicPoints"
+import { renderCapitalPopup } from "@/components/map/popups"
+import { useMapLayer } from "./useMapLayer"
+import type { SatelliteFocus } from "@/components/SatelliteView"
 
 type UseCapitalsLayerProps = {
-  map: mapboxgl.Map | null;
-  visible: boolean;
-  popupRef: React.MutableRefObject<mapboxgl.Popup | null>;
-  onSelectSatelliteFocus?: (focus: SatelliteFocus) => void;
-};
+  map: mapboxgl.Map | null
+  visible: boolean
+  popupRef: React.MutableRefObject<mapboxgl.Popup | null>
+  onSelectSatelliteFocus?: (focus: SatelliteFocus) => void
+}
 
 export function useCapitalsLayer({
   map,
@@ -18,6 +18,8 @@ export function useCapitalsLayer({
   popupRef,
   onSelectSatelliteFocus,
 }: UseCapitalsLayerProps) {
+
+  /* ===================== GEOJSON ===================== */
   const capitalsGeoJSON = useMemo(
     () => ({
       type: "FeatureCollection" as const,
@@ -36,28 +38,29 @@ export function useCapitalsLayer({
       })),
     }),
     []
-  );
+  )
 
+  /* ===================== EVENTS ===================== */
   const eventHandlers = useMemo(
     () => ({
       "capitals-layer": {
         onClick: (e: mapboxgl.MapLayerMouseEvent) => {
-          const p = e.features?.[0]?.properties;
-          if (!p) return;
+          const p = e.features?.[0]?.properties
+          if (!p) return
 
           onSelectSatelliteFocus?.({
             lat: e.lngLat.lat,
             lon: e.lngLat.lng,
             region: p.country ?? p.name,
             label: p.name,
-          });
+          })
         },
         onMouseEnter: (e: mapboxgl.MapLayerMouseEvent) => {
-          if (!map) return;
-          map.getCanvas().style.cursor = "pointer";
+          if (!map) return
+          map.getCanvas().style.cursor = "pointer"
 
-          const p = e.features?.[0]?.properties;
-          if (!p || !popupRef.current) return;
+          const p = e.features?.[0]?.properties
+          if (!p || !popupRef.current) return
 
           popupRef.current
             .setLngLat(e.lngLat)
@@ -69,18 +72,19 @@ export function useCapitalsLayer({
                 entities: p.entities,
               })
             )
-            .addTo(map);
+            .addTo(map)
         },
         onMouseLeave: () => {
-          if (!map) return;
-          map.getCanvas().style.cursor = "";
-          popupRef.current?.remove();
+          if (!map) return
+          map.getCanvas().style.cursor = ""
+          popupRef.current?.remove()
         },
       },
     }),
     [map, onSelectSatelliteFocus, popupRef]
-  );
+  )
 
+  /* ===================== MAP LAYER ===================== */
   return useMapLayer({
     map,
     sourceId: "capitals",
@@ -89,26 +93,38 @@ export function useCapitalsLayer({
       data: capitalsGeoJSON,
     },
     layers: [
+      /* === CAPITAL POINT === */
       {
         id: "capitals-layer",
         type: "circle",
         source: "capitals",
         paint: {
-          "circle-radius": 6,
-          "circle-color": "#365314",
-          "circle-stroke-width": 1,
-          "circle-stroke-color": "#ffffff",
+          /* 🔴 TAMAÑO CAPITAL */
+          "circle-radius": 10, // ← aquí ajustas tamaño
+
+          /* COLOR TÁCTICO */
+          "circle-color": "#22c55e", // verde command
+
+          /* OPACIDAD */
+          "circle-opacity": 0.9,
+
+          /* HALO OSCURO (HUD) */
+          "circle-stroke-width": 2,
+          "circle-stroke-color": "#020617",
         },
       },
+
+      /* === LABEL === */
       {
         id: "capitals-labels",
         type: "symbol",
         source: "capitals",
         layout: {
           "text-field": ["get", "name"],
-          "text-size": 10,
-          "text-offset": [0, 1.3],
+          "text-size": 11,
+          "text-offset": [0, 1.4],
           "text-anchor": "top",
+          "text-allow-overlap": true,
         },
         paint: {
           "text-color": "#e5e7eb",
@@ -119,5 +135,5 @@ export function useCapitalsLayer({
     ],
     eventHandlers,
     visible,
-  });
+  })
 }

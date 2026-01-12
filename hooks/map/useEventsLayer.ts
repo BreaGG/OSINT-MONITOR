@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import mapboxgl from "mapbox-gl";
 import { Event } from "@/lib/types";
 import { categoryColors } from "@/lib/categoryColors";
@@ -22,7 +22,7 @@ export function useEventsLayer({
   popupRef,
   onSelectSatelliteFocus,
 }: UseEventsLayerProps) {
-  // Preparar datos GeoJSON
+  /* ===================== GEOJSON ===================== */
   const eventsGeoJSON = useMemo(
     () => ({
       type: "FeatureCollection" as const,
@@ -34,7 +34,7 @@ export function useEventsLayer({
           country: e.country,
           category: e.category,
           color:
-            categoryColors[e.category as keyof typeof categoryColors]?.color ||
+            categoryColors[e.category as keyof typeof categoryColors]?.color ??
             "#9ca3af",
         },
         geometry: {
@@ -46,7 +46,7 @@ export function useEventsLayer({
     [events]
   );
 
-  // Event handlers
+  /* ===================== EVENTS ===================== */
   const eventHandlers = useMemo(
     () => ({
       "events-layer": {
@@ -89,7 +89,36 @@ export function useEventsLayer({
     [map, onSelectSatelliteFocus, popupRef]
   );
 
-  // Usar el hook
+  /* ===================== PULSE ANIMATION ===================== */
+  useEffect(() => {
+    if (!map || !map.getLayer("events-layer")) return;
+
+    let pulse = 0;
+    let direction = 1;
+    let rafId: number;
+
+    const animate = () => {
+      pulse += direction * 0.03;
+
+      if (pulse >= 1) direction = -1;
+      if (pulse <= 0) direction = 1;
+
+      /* 🔥 AQUÍ AJUSTAS EL TAMAÑO BASE + PULSO 🔥 */
+      map.setPaintProperty("events-layer", "circle-radius", 16 + pulse * 16);
+      // ↑ 10 = tamaño base
+      // ↑ 4  = cuánto crece al pulsar
+
+      map.setPaintProperty("events-layer", "circle-opacity", 0.6 + pulse * 0.4);
+
+      rafId = requestAnimationFrame(animate);
+    };
+
+    animate();
+
+    return () => cancelAnimationFrame(rafId);
+  }, [map]);
+
+  /* ===================== MAP LAYER ===================== */
   return useMapLayer({
     map,
     sourceId: "events",
@@ -103,11 +132,20 @@ export function useEventsLayer({
         type: "circle",
         source: "events",
         paint: {
-          "circle-radius": 4,
+          /* 🔴 TAMAÑO BASE (si no quieres animación) */
+          "circle-radius": 16, // ← tamaño inicial
+
+          /* COLOR */
           "circle-color": ["get", "color"],
+
+          /* GLOW */
+          "circle-blur": 0.9,
+
+          /* OPACIDAD */
           "circle-opacity": 0.85,
-          "circle-stroke-width": 1,
-          "circle-stroke-color": "#ffffff",
+
+          /* ❌ SIN BORDE */
+          "circle-stroke-width": 0,
         },
       },
     ],
