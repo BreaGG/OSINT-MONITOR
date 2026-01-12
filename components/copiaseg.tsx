@@ -35,20 +35,101 @@ type CategoryKey = keyof typeof categoryColors
 
 /* ===================== HELPERS ===================== */
 
-function isWithinTimeWindow(
-  event: Event,
-  windowMs: number
-): boolean {
-  const ts =
-    (event as any).publishedAt ||
-    (event as any).published_at ||
-    (event as any).createdAt ||
-    (event as any).created_at
+type HotZoneLevel = "watch" | "active" | "critical"
 
-  if (!ts) return true
-
-  return Date.now() - new Date(ts).getTime() <= windowMs
+function classifyHotZone(intensity: number): HotZoneLevel {
+  if (intensity >= 3) return "critical"
+  if (intensity >= 2) return "active"
+  return "watch"
 }
+
+function parseDBTimestamp(ts: string): number {
+  // "2026-01-10 19:49:01"
+  const [date, time] = ts.split(" ")
+  const [y, m, d] = date.split("-").map(Number)
+  const [hh, mm, ss] = time.split(":").map(Number)
+
+  return new Date(y, m - 1, d, hh, mm, ss).getTime()
+}
+
+
+function getEventTimestamp(e: Event): number | null {
+  const ts =
+    (e as any).publishedAt ||
+    (e as any).published_at ||
+    (e as any).createdAt ||
+    (e as any).created_at
+
+  if (!ts) return null
+
+  if (typeof ts === "string" && ts.includes(" ")) {
+    return parseDBTimestamp(ts)
+  }
+
+  const d = new Date(ts)
+  return isNaN(d.getTime()) ? null : d.getTime()
+}
+
+function updateTimeFilteredLayers(
+  map: mapboxgl.Map,
+  events: Event[],
+  timeWindow: TimeWindow
+) {
+  const windowMs = TIME_WINDOWS[timeWindow]
+
+  // EVENTS
+  const eventSource = map.getSource("events") as mapboxgl.GeoJSONSource
+  if (eventSource) {
+    eventSource.setData({
+      type: "FeatureCollection",
+      features: events
+        .filter(hasCoordinates)
+        .filter(e => isWithinTimeWindow(e, windowMs))
+        .map(e => ({
+          type: "Feature",
+          properties: {
+            id: e.id,
+            title: e.title,
+            category: e.category,
+            color: categoryColors[e.category].color,
+          },
+          geometry: {
+            type: "Point",
+            coordinates: [e.lon, e.lat],
+          },
+        })),
+    })
+  }
+
+  // HOT ZONES
+  const hotSource = map.getSource("hot-zones") as mapboxgl.GeoJSONSource
+  if (hotSource) {
+    hotSource.setData({
+      type: "FeatureCollection",
+      features: computeHotZones(
+        events.filter(e => isWithinTimeWindow(e, windowMs))
+      ).map(z => ({
+        type: "Feature",
+        properties: {
+          count: z.count,
+          intensity: z.intensity,
+          level: z.level,
+        },
+        geometry: {
+          type: "Point",
+          coordinates: [z.lon, z.lat],
+        },
+      })),
+    })
+  }
+}
+
+function isWithinTimeWindow(e: Event, windowMs: number) {
+  const ts = getEventTimestamp(e)
+  if (!ts) return windowMs >= TIME_WINDOWS["24h"]
+  return Date.now() - ts <= windowMs
+}
+
 
 function hasCoordinates(
   e: Event
@@ -112,9 +193,12 @@ type HotZone = {
   lon: number
   count: number
   intensity: number
+  level: "watch" | "active" | "critical"
 }
 
+
 /* ===================== HELPERS ===================== */
+const MIN_INTENSITY = 1.2
 
 // Distancia real en km (Haversine)
 function distanceKm(
@@ -137,15 +221,10 @@ function distanceKm(
 }
 
 function eventWeight(e: Event) {
-  const ts =
-    (e as any).publishedAt ||
-    (e as any).published_at ||
-    (e as any).createdAt ||
-    (e as any).created_at
+  const ts = getEventTimestamp(e)
+  if (!ts) return 0.5   // 👈 clave
 
-  if (!ts) return 1
-
-  const hoursAgo = (Date.now() - new Date(ts).getTime()) / 36e5
+  const hoursAgo = (Date.now() - ts) / 36e5
 
   if (hoursAgo < 6) return 2
   if (hoursAgo < 24) return 1.5
@@ -180,13 +259,19 @@ export function computeHotZones(events: Event[]): HotZone[] {
         lon: e.lon,
         count: 1,
         intensity: w,
+        level: classifyHotZone(w),
       })
     }
   })
 
   return zones
-    .filter(z => z.intensity >= MIN_WEIGHT)
+    .filter(z => z.intensity >= MIN_INTENSITY)
+    .map(z => ({
+      ...z,
+      level: classifyHotZone(z.intensity),
+    }))
     .sort((a, b) => b.intensity - a.intensity)
+
 }
 
 /* ===================== COMPONENT ===================== */
@@ -202,6 +287,15 @@ export default function MapboxMap({
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [timeWindow, setTimeWindow] = useState<TimeWindow>("24h")
   const popupRef = useRef<mapboxgl.Popup | null>(null)
+  const visibleEvents = events.filter(e =>
+    isWithinTimeWindow(e, TIME_WINDOWS[timeWindow])
+  )
+
+  const visibleHotZones = computeHotZones(visibleEvents)
+
+  const eventCount = visibleEvents.length
+  const hotZoneCount = visibleHotZones.length
+
 
   const [layers, setLayers] = useState({
     events: true,
@@ -211,36 +305,15 @@ export default function MapboxMap({
     conflicts: true,
     militaryBases: true,
   })
-
   useEffect(() => {
-    if (!ready || !mapRef.current) return
+    if (!mapRef.current) return
 
-    const map = mapRef.current
-    const source = map.getSource("events") as mapboxgl.GeoJSONSource
-    if (!source) return
-
-    const windowMs = TIME_WINDOWS[timeWindow]
-
-    source.setData({
-      type: "FeatureCollection",
-      features: events
-        .filter(hasCoordinates)
-        .filter(e => isWithinTimeWindow(e, windowMs))
-        .map(e => ({
-          type: "Feature",
-          properties: {
-            id: e.id,
-            title: e.title,
-            category: e.category,
-            color: categoryColors[e.category].color,
-          },
-          geometry: {
-            type: "Point",
-            coordinates: [e.lon, e.lat],
-          },
-        })),
-    })
-  }, [timeWindow, events, ready])
+    updateTimeFilteredLayers(
+      mapRef.current,
+      events,
+      timeWindow
+    )
+  }, [timeWindow, events])
 
 
   useEffect(() => {
@@ -296,8 +369,8 @@ export default function MapboxMap({
     const map = new mapboxgl.Map({
       container: containerRef.current,
       style: "mapbox://styles/mapbox/dark-v11",
-      center: [0, 20],
-      zoom: 1.6,
+      center: [30, 38],
+      zoom: 2.4,
       minZoom: 1.2,
       maxZoom: 6,
       projection: { name: "mercator" },
@@ -316,7 +389,6 @@ export default function MapboxMap({
       })
 
       /* ===================== EVENTS ===================== */
-      const windowMs = TIME_WINDOWS[timeWindow]
 
       map.addSource("events", {
         type: "geojson",
@@ -324,7 +396,6 @@ export default function MapboxMap({
           type: "FeatureCollection",
           features: events
             .filter(hasCoordinates)
-            .filter(e => isWithinTimeWindow(e, windowMs))
             .map(e => ({
               type: "Feature",
               properties: {
@@ -333,14 +404,16 @@ export default function MapboxMap({
                 country: e.country,
                 category: e.category as CategoryKey,
                 color: categoryColors[e.category as CategoryKey].color,
+                ts: getEventTimestamp(e), // 👈 CLAVE
               },
               geometry: {
                 type: "Point",
                 coordinates: [e.lon, e.lat],
               },
             })),
-        } as GeoJSON.FeatureCollection,
+        },
       })
+
 
 
       map.addSource("event-highlight", {
@@ -379,79 +452,47 @@ export default function MapboxMap({
 
       map.on("click", "events-layer", e => {
         const p = e.features?.[0]?.properties as any
+        if (!p) return
 
-        if (onSelectSatelliteFocus) {
-          onSelectSatelliteFocus({
-            lat: e.lngLat.lat,
-            lon: e.lngLat.lng,
-            region: p.country ?? "Selected area",
-            label: p.title,
-          })
-        }
-
-        new mapboxgl.Popup({
-          closeButton: false,
-          closeOnClick: true,
-          offset: {
-            top: [0, 12],
-            bottom: [0, -12],
-            left: [12, 0],
-            right: [-12, 0],
-          },
+        // 👉 SOLO ACCIÓN, NADA VISUAL
+        onSelectSatelliteFocus?.({
+          lat: e.lngLat.lat,
+          lon: e.lngLat.lng,
+          region: p.country ?? "Selected area",
+          label: p.title,
         })
+      })
+      map.on("mouseenter", "events-layer", e => {
+        map.getCanvas().style.cursor = "pointer"
+        if (!e.features?.length) return
 
+        const p = e.features[0].properties as any
+
+        popupRef.current!
           .setLngLat(e.lngLat)
           .setHTML(
             popup(`
-    <div style="font-size:12px;line-height:1.3">
-
-      <!-- HEADER -->
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
-        <div style="font-weight:600;font-size:13px;max-width:200px">
-          ${p.title}
+        <div style="font-size:12px;line-height:1.3">
+          <div style="font-weight:600;font-size:13px">
+            ${p.title}
+          </div>
+          <div style="font-size:11px;color:#9ca3af">
+            ${p.country}
+          </div>
+          <div style="font-size:11px;color:${p.color};margin-top:4px">
+            ${categoryColors[p.category as CategoryKey].label}
+          </div>
         </div>
-        <div style="font-size:11px;color:#9ca3af;white-space:nowrap">
-          ${p.country}
-        </div>
-      </div>
-
-      <!-- CATEGORY -->
-      <div style="font-size:11px;color:${p.color};margin-bottom:6px">
-        ${categoryColors[p.category as CategoryKey].label}
-      </div>
-
-      <div style="height:1px;background:#e5e7eb;opacity:0.25;margin:6px 0"></div>
-
-      <!-- LINK -->
-<a
-  href="/event/${encodeURIComponent(p.id)}"
-  style="
-    display:block;
-    padding:4px 6px;
-    font-size:11px;
-    color:#ffffff;
-    text-decoration:none;
-    border-radius:4px;
-  "
-  onmouseover="
-    this.style.background='rgba(255,255,255,0.06)';
-    this.style.textDecoration='underline';
-  "
-  onmouseout="
-    this.style.background='transparent';
-    this.style.textDecoration='none';
-  "
->
-  View details →
-</a>
-
-
-    </div>
-  `)
+      `)
           )
-
           .addTo(map)
       })
+      map.on("mouseleave", "events-layer", () => {
+        map.getCanvas().style.cursor = ""
+        popupRef.current?.remove()
+      })
+
+
 
       /* ===================== HOT ZONES ===================== */
 
@@ -461,7 +502,11 @@ export default function MapboxMap({
           type: "FeatureCollection",
           features: computeHotZones(events).map(z => ({
             type: "Feature",
-            properties: { count: z.count },
+            properties: {
+              count: z.count,
+              intensity: z.intensity,
+              level: z.level,
+            },
             geometry: {
               type: "Point",
               coordinates: [z.lon, z.lat],
@@ -478,18 +523,44 @@ export default function MapboxMap({
           "circle-radius": [
             "interpolate",
             ["linear"],
-            ["get", "count"],
-            3,
-            40,
-            10,
-            120,
+            ["get", "intensity"],
+            1.2, 40,
+            3.5, 120,
           ],
-          "circle-color": "#991b1b",
+          "circle-color": [
+            "match",
+            ["get", "level"],
+            "critical", "#dc2626",
+            "active", "#ef4444",
+            "watch", "#fca5a5",
+            "#fca5a5",
+          ],
           "circle-opacity": 0.12,
           "circle-stroke-width": 1,
           "circle-stroke-color": "#991b1b",
         },
       })
+
+      map.addLayer({
+        id: "hotzones-critical-halo",
+        type: "circle",
+        source: "hot-zones",
+        filter: ["==", ["get", "level"], "critical"],
+        paint: {
+          "circle-radius": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            2, 60,
+            5, 180,
+          ],
+          "circle-color": "#dc2626",
+          "circle-opacity": 0.08,
+        },
+      })
+
+
+      updateTimeFilteredLayers(map, events, timeWindow)
 
       /* ===================== CAPITALS ===================== */
 
@@ -544,63 +615,61 @@ export default function MapboxMap({
 
       map.on("click", "capitals-layer", e => {
         const p = e.features?.[0]?.properties as any
+        if (!p) return
 
-        new mapboxgl.Popup({
-          closeButton: false,
-          closeOnClick: true,
-          offset: {
-            top: [0, 12],
-            bottom: [0, -12],
-            left: [12, 0],
-            right: [-12, 0],
-          },
+        onSelectSatelliteFocus?.({
+          lat: e.lngLat.lat,
+          lon: e.lngLat.lng,
+          region: p.country ?? p.name,
+          label: p.name,
         })
+      })
 
+      map.on("mouseenter", "capitals-layer", e => {
+        map.getCanvas().style.cursor = "pointer"
+        const p = e.features?.[0]?.properties as any
+        if (!p) return
+
+        popupRef.current!
           .setLngLat(e.lngLat)
           .setHTML(
             popup(`
-    <div style="font-size:12px;line-height:1.3">
+        <div style="font-size:12px;line-height:1.3">
 
-      <!-- HEADER -->
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
-        <div style="font-weight:600;font-size:14px">
-          ${p.name}
+          <!-- HEADER -->
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+            <div style="font-weight:600;font-size:14px">
+              ${p.name}
+            </div>
+            <div style="font-size:11px;color:#9ca3af">
+              ${p.status}
+            </div>
+          </div>
+
+          <!-- SUMMARY -->
+          <div style="font-size:11px;color:#d1d5db;margin-bottom:6px">
+            ${p.summary}
+          </div>
+
+          <div style="height:1px;background:#e5e7eb;opacity:0.25;margin:6px 0"></div>
+
+          <!-- ENTITIES -->
+          <div style="font-size:11px">
+            <span style="color:#9ca3af">Key entities</span><br/>
+            ${p.entities}
+          </div>
+
         </div>
-        <div style="font-size:11px;color:#9ca3af;white-space:nowrap">
-          ${p.status}
-        </div>
-      </div>
-
-      <!-- SUMMARY -->
-      <div style="font-size:11px;color:#d1d5db;margin-bottom:6px">
-        ${p.summary}
-      </div>
-
-      <div style="height:1px;background:#e5e7eb;opacity:0.25;margin:6px 0"></div>
-
-      <!-- ENTITIES -->
-      <div style="font-size:11px;margin-bottom:6px">
-        <span style="color:#9ca3af">Key entities</span><br/>
-        ${p.entities}
-      </div>
-
-      <div style="height:1px;background:#e5e7eb;opacity:0.25;margin:6px 0"></div>
-
-      <!-- HEADLINES -->
-      <div style="font-size:11px">
-        <div style="color:#9ca3af;margin-bottom:2px">
-          Related headlines
-        </div>
-        <ul style="margin:0;padding-left:14px">
-          ${relatedHeadlines(events, p.country)}
-        </ul>
-      </div>
-
-    </div>
-  `)
+      `)
           )
           .addTo(map)
       })
+
+      map.on("mouseleave", "capitals-layer", () => {
+        map.getCanvas().style.cursor = ""
+        popupRef.current?.remove()
+      })
+
 
       /* ===================== MILITARY BASES ===================== */
 
@@ -643,19 +712,13 @@ export default function MapboxMap({
       })
 
 
-      map.on("click", "military-bases-layer", e => {
+      map.on("click", "military-bases-layer", () => { })
+      map.on("mouseenter", "military-bases-layer", e => {
+        map.getCanvas().style.cursor = "pointer"
         const b = e.features?.[0]?.properties as any
+        if (!b) return
 
-        new mapboxgl.Popup({
-          closeButton: false,
-          closeOnClick: true,
-          offset: {
-            top: [0, 12],
-            bottom: [0, -12],
-            left: [12, 0],
-            right: [-12, 0],
-          },
-        })
+        popupRef.current!
           .setLngLat(e.lngLat)
           .setHTML(
             popup(`
@@ -696,6 +759,13 @@ export default function MapboxMap({
           )
           .addTo(map)
       })
+
+
+      map.on("mouseleave", "military-bases-layer", () => {
+        map.getCanvas().style.cursor = ""
+        popupRef.current?.remove()
+      })
+
 
       /* ===================== CHOKEPOINTS ===================== */
 
@@ -750,55 +820,51 @@ export default function MapboxMap({
 
       map.on("click", "chokepoints-layer", e => {
         const p = e.features?.[0]?.properties as any
+        if (!p) return
 
-        new mapboxgl.Popup({
-          closeButton: false,
-          closeOnClick: true,
-          offset: {
-            top: [0, 12],
-            bottom: [0, -12],
-            left: [12, 0],
-            right: [-12, 0],
-          },
+        onSelectSatelliteFocus?.({
+          lat: e.lngLat.lat,
+          lon: e.lngLat.lng,
+          region: p.name,
+          label: `Chokepoint · ${p.name}`,
         })
+      })
 
+      map.on("mouseenter", "chokepoints-layer", e => {
+        map.getCanvas().style.cursor = "pointer"
+        const p = e.features?.[0]?.properties as any
+        if (!p) return
+
+        popupRef.current!
           .setLngLat(e.lngLat)
           .setHTML(
             popup(`
-    <div style="font-size:12px;line-height:1.3">
+        <div style="font-size:12px;line-height:1.3">
 
-      <!-- HEADER -->
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
-        <div style="font-weight:600;font-size:14px">
-          ${p.name}
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+            <div style="font-weight:600;font-size:14px">
+              ${p.name}
+            </div>
+            <div style="font-size:11px;color:#9ca3af">
+              ${p.status}
+            </div>
+          </div>
+
+          <div style="font-size:11px;color:#d1d5db">
+            ${p.summary}
+          </div>
+
         </div>
-        <div style="font-size:11px;color:#9ca3af;white-space:nowrap">
-          ${p.status}
-        </div>
-      </div>
-
-      <!-- SUMMARY -->
-      <div style="font-size:11px;color:#d1d5db;margin-bottom:6px">
-        ${p.summary}
-      </div>
-
-      <div style="height:1px;background:#e5e7eb;opacity:0.25;margin:6px 0"></div>
-
-      <!-- HEADLINES -->
-      <div style="font-size:11px">
-        <div style="color:#9ca3af;margin-bottom:2px">
-          Related headlines
-        </div>
-        <ul style="margin:0;padding-left:14px">
-          ${relatedHeadlines(events, p.country)}
-        </ul>
-      </div>
-
-    </div>
-  `)
+      `)
           )
           .addTo(map)
       })
+
+      map.on("mouseleave", "chokepoints-layer", () => {
+        map.getCanvas().style.cursor = ""
+        popupRef.current?.remove()
+      })
+
 
 
       /* ===================== CONFLICTS ===================== */
@@ -840,84 +906,93 @@ export default function MapboxMap({
 
       map.on("click", "conflicts-layer", e => {
         const c = e.features?.[0]?.properties as any
+        if (!c) return
 
-        new mapboxgl.Popup({
-          closeButton: false,
-          closeOnClick: true,
-          offset: {
-            top: [0, 12],
-            bottom: [0, -12],
-            left: [12, 0],
-            right: [-12, 0],
-          },
+        onSelectSatelliteFocus?.({
+          lat: e.lngLat.lat,
+          lon: e.lngLat.lng,
+          region: c.name,
+          label: `Conflict · ${c.name}`,
         })
+      })
+      map.on("mouseenter", "conflicts-layer", e => {
+        map.getCanvas().style.cursor = "pointer"
+        const c = e.features?.[0]?.properties as any
+        if (!c) return
 
+        popupRef.current!
           .setLngLat(e.lngLat)
           .setHTML(
             popup(`
-    <div style="font-size:12px;line-height:1.3">
+        <div style="font-size:12px;line-height:1.3">
 
-      <!-- HEADER -->
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
-        <div style="font-weight:600;font-size:14px">
-          ${c.name}
-        </div>
-        <div style="font-size:11px;color:#9ca3af">
-          ${c.startDate}
-        </div>
-      </div>
+          <!-- HEADER -->
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+            <div style="font-weight:600;font-size:14px">
+              ${c.name}
+            </div>
+            <div style="font-size:11px;color:#9ca3af">
+              ${c.startDate}
+            </div>
+          </div>
 
-      <div style="color:#fca5a5;font-size:11px;margin-bottom:6px">
-        ${c.level} intensity
-      </div>
+          <div style="color:#fca5a5;font-size:11px;margin-bottom:6px">
+            ${c.level} intensity
+          </div>
 
-      <div style="height:1px;background:#e5e7eb;opacity:0.25;margin:6px 0"></div>
+          <div style="height:1px;background:#e5e7eb;opacity:0.25;margin:6px 0"></div>
 
-      <!-- KEY METRICS -->
-      <div style="margin-bottom:6px">
+          <!-- KEY METRICS -->
+          <div style="margin-bottom:6px">
 
-        <div style="display:flex;justify-content:space-between">
-          <span style="color:#9ca3af">Casualties</span>
-          <span>${c.casualties}</span>
-        </div>
+            <div style="display:flex;justify-content:space-between">
+              <span style="color:#9ca3af">Casualties</span>
+              <span>${c.casualties}</span>
+            </div>
 
-        <div style="display:flex;justify-content:space-between">
-          <span style="color:#9ca3af">Displaced</span>
-          <span>${c.displaced}</span>
-        </div>
+            <div style="display:flex;justify-content:space-between">
+              <span style="color:#9ca3af">Displaced</span>
+              <span>${c.displaced}</span>
+            </div>
 
-      </div>
+          </div>
 
-      <div style="height:1px;background:#e5e7eb;opacity:0.25;margin:6px 0"></div>
+          <div style="height:1px;background:#e5e7eb;opacity:0.25;margin:6px 0"></div>
 
-      <!-- DESCRIPTION -->
-      <div style="color:#d1d5db;font-size:11px;margin-bottom:6px">
-        ${c.description}
-      </div>
+          <!-- DESCRIPTION -->
+          <div style="color:#d1d5db;font-size:11px;margin-bottom:6px">
+            ${c.description}
+          </div>
 
-      <div style="height:1px;background:#e5e7eb;opacity:0.25;margin:6px 0"></div>
+          <div style="height:1px;background:#e5e7eb;opacity:0.25;margin:6px 0"></div>
 
-      <!-- BELLIGERENTS -->
-      <div style="font-size:11px">
-        <span style="color:#9ca3af">Belligerents</span><br/>
-        ${String(c.belligerents)
+          <!-- BELLIGERENTS -->
+          <div style="font-size:11px">
+            <span style="color:#9ca3af">Belligerents</span><br/>
+            ${String(c.belligerents)
                 .split(",")
                 .map(b => b.trim())
                 .join(" · ")}
-      </div>
+          </div>
 
-    </div>
-  `)
+        </div>
+      `)
           )
-
-
           .addTo(map)
       })
+
+
+      map.on("mouseleave", "conflicts-layer", () => {
+        map.getCanvas().style.cursor = ""
+        popupRef.current?.remove()
+      })
+
+
       if (map.getLayer("event-highlight-layer")) {
         map.moveLayer("event-highlight-layer")
       }
 
-      map.on("idle", () => setReady(true))
+      setReady(true)
     })
 
     mapRef.current = map
@@ -1018,8 +1093,8 @@ export default function MapboxMap({
               }))
             }
             className={`block px-2 py-1 rounded border ${value
-                ? "bg-black/80 text-gray-200 border-gray-700"
-                : "bg-black/40 text-gray-500 border-gray-800"
+              ? "bg-black/80 text-gray-200 border-gray-700"
+              : "bg-black/40 text-gray-500 border-gray-800"
               }`}
           >
             {key.toUpperCase()}
@@ -1044,8 +1119,19 @@ export default function MapboxMap({
         </button>
       </div>
 
-      {/* BOTTOM CENTER — TIME WINDOW */}
-      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20">
+      {/* BOTTOM CENTER — TIME WINDOW + COUNTERS */}
+      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-1">
+        {/* COUNTERS */}
+        <div className="text-[11px] text-gray-400 bg-black/70 border border-gray-800 rounded px-2 py-0.5">
+          <span className="text-red-400 font-medium">
+            {hotZoneCount} hot zones
+          </span>
+          <span className="mx-2 text-gray-600">|</span>
+          <span>
+            {eventCount} events
+          </span>
+        </div>
+        {/* TIME WINDOW */}
         <div className="flex gap-1 bg-black/70 border border-gray-800 rounded px-1 py-1">
           {(["6h", "24h", "72h"] as TimeWindow[]).map(v => (
             <button

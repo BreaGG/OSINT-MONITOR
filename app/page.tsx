@@ -1,10 +1,8 @@
 "use client"
 
 import { useEffect, useState, useMemo } from "react"
-import dynamic from "next/dynamic"
 import EventList from "@/components/EventList"
 import { Event } from "@/lib/types"
-import Stream from "@/components/Stream"
 import MarketSnapshot from "@/components/MarketSnapshot"
 import MapLegend from "@/components/MapLegend"
 import LegendInsights from "@/components/LegendInsights"
@@ -19,10 +17,6 @@ import { buildGlobalState } from "@/lib/gse"
 import { adaptEventsToGSE } from "@/lib/eventToGSE"
 import GlobalStateIndicator from "@/components/GlobalStateIndicator"
 
-const Map = dynamic(() => import("@/components/Map"), {
-  ssr: false,
-})
-
 /* ===================== PRESETS ===================== */
 
 type Preset = "all" | "conflicts" | "strategic"
@@ -32,7 +26,6 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [satelliteFocus, setSatelliteFocus] =
     useState<SatelliteFocus | undefined>(undefined)
-
 
   /* ===== analytical focus ===== */
   const [focusRegion, setFocusRegion] = useState<string | null>(null)
@@ -55,7 +48,6 @@ export default function Home() {
         setLoading(false)
       })
   }, [])
-
 
   /* ===================== PRESET LOGIC ===================== */
 
@@ -122,7 +114,6 @@ export default function Home() {
     )
   ).sort()
 
-
   const lastUpdated = useMemo(() => {
     return new Date().toLocaleTimeString()
   }, [])
@@ -135,7 +126,6 @@ export default function Home() {
     const gseEvents = adaptEventsToGSE(events)
     return buildGlobalState(gseEvents)
   }, [events])
-
 
   /* ===================== RENDER ===================== */
 
