@@ -32,7 +32,7 @@ export function useChokepointsLayer({
               ? "#ef4444"   // rojo táctico
               : p.status === "elevated"
               ? "#facc15"   // ámbar
-              : "#38bdf8",  // verde
+              : "#38bdf8",  // azul
         },
         geometry: {
           type: "Point" as const,
@@ -95,41 +95,75 @@ export function useChokepointsLayer({
       data: chokepointsGeoJSON,
     },
     layers: [
-      /* === ROMBO TÁCTICO === */
+      /* === ROMBO TÁCTICO ESTILO OTAN === */
       {
         id: "chokepoints-layer",
         type: "symbol",
         source: "chokepoints",
         layout: {
+          // 💎 SÍMBOLO ROMBO
           "text-field": "◆",
-          "text-size": 42,                 // ← AQUÍ AJUSTAS EL TAMAÑO DEL ROMBO
+          
+          // ⚙️ TAMAÑO DEL ROMBO (ajusta entre 30-50)
+          "text-size": 36,
+          
+          // 👁️ SIEMPRE VISIBLE
           "text-allow-overlap": true,
+          "text-ignore-placement": true,
+          
+          // 📍 CENTRADO
           "text-anchor": "center",
+          
+          // 🔠 SIN FUENTE ESPECIAL (usa default)
         },
         paint: {
+          // 🎨 COLOR SEGÚN STATUS (rojo/ámbar/azul)
           "text-color": ["get", "color"],
-          "text-halo-color": "#020617",    // halo oscuro HUD
-          "text-halo-width": 1,
-          "text-opacity": 0.95,
+          
+          // 🖤 HALO NEGRO PARA CONTRASTE
+          "text-halo-color": "#000000",
+          "text-halo-width": 0,
+          "text-halo-blur": 0,
+          
+          // 🔆 OPACIDAD
+          "text-opacity": 1,
         },
       },
 
-      /* === LABEL === */
+      /* === LABEL ESTILO OTAN === */
       {
         id: "chokepoints-labels",
         type: "symbol",
         source: "chokepoints",
         layout: {
+          // 📝 TEXTO
           "text-field": ["get", "name"],
-          "text-size": 11,
-          "text-offset": [0, 1.5],
+          
+          // ⚙️ TAMAÑO (ajusta entre 10-14)
+          "text-size": 12,
+          
+          // 📍 POSICIÓN (debajo del rombo)
+          "text-offset": [0, 1.8],
           "text-anchor": "top",
-          "text-allow-overlap": true,
+          
+          // 🔠 FUENTE EN NEGRITA
+          "text-font": ["DIN Pro Bold", "Arial Unicode MS Bold"],
+          
+          // 👁️ EVITAR SOLAPAMIENTO
+          "text-allow-overlap": false,
+          "text-ignore-placement": false,
         },
         paint: {
-          "text-color": "#cbd5f5",
-          "text-halo-color": "#020617",
-          "text-halo-width": 1,
+          // 🎨 MISMO COLOR QUE EL ROMBO (según status)
+          "text-color": ["get", "color"],
+          
+          // 🖤 HALO NEGRO PARA CONTRASTE
+          "text-halo-color": "#000000",
+          "text-halo-width": 0,
+          "text-halo-blur": 0,
+          
+          // 🔆 OPACIDAD
+          "text-opacity": 1,
         },
       },
     ],

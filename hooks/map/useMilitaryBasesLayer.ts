@@ -74,34 +74,35 @@ export function useMilitaryBasesLayer({
       data: militaryBasesGeoJSON,
     },
     layers: [
+      /* === ESTRELLA MILITAR ESTILO OTAN === */
       {
         id: "military-bases-layer",
         type: "symbol",
         source: "military-bases",
         layout: {
+          // ⭐ SÍMBOLO ESTRELLA
           "text-field": "★",
 
-          /* 🔴 TAMAÑO SEGÚN ZOOM */
-          "text-size": [
-            "interpolate",
-            ["linear"],
-            ["zoom"],
-            1.5, 28,
-            3,   36,
-            5,   44,
-          ],
+          // ⚙️ TAMAÑO (ajustable entre 24-36)
+          "text-size": 28,
 
+          // 📍 CENTRADO
           "text-anchor": "center",
+          
+          // 👁️ SIEMPRE VISIBLE
           "text-allow-overlap": true,
+          "text-ignore-placement": true,
         },
         paint: {
-          /* 🟦 AZUL COMANDO CLARO */
-          "text-color": "#a855f7",
-
-          /* HALO OSCURO TÁCTICO */
-          "text-halo-color": "#020617",
-          "text-halo-width": 1,
-
+          // 🟣 COLOR MILITAR MORADO/PÚRPURA (ajustable)
+          "text-color": "#a855f7",  // Púrpura comando
+          
+          // 🖤 HALO NEGRO PARA CONTRASTE NÍTIDO
+          "text-halo-color": "#000000",
+          "text-halo-width": 0,
+          "text-halo-blur": 0,  // Sin blur = nítido
+          
+          // 🔆 OPACIDAD
           "text-opacity": 1,
         },
       },

@@ -15,53 +15,68 @@ export default function MapLegend() {
         Legend
       </div>
 
-      {/* EVENT CATEGORIES */}
+      {/* EVENT CATEGORIES - ESTILO OTAN */}
       {Object.entries(categoryColors).map(([key, value]) => (
         <div
           key={key}
           className="flex items-center justify-between gap-2"
         >
-          <span>{value.label}</span>
-          <span
-            className="w-2.5 h-2.5 rounded-full"
-            style={{ backgroundColor: value.color }}
-          />
+          <span className="text-gray-300">{value.label}</span>
+          <div className="relative flex items-center justify-center w-5 h-5">
+            {/* Halo translúcido */}
+            <span
+              className="absolute w-4 h-4 rounded-full opacity-40"
+              style={{ backgroundColor: value.color }}
+            />
+            {/* Punto central nítido */}
+            <span
+              className="absolute w-2 h-2 rounded-full"
+              style={{ backgroundColor: value.color }}
+            />
+          </div>
         </div>
       ))}
 
-      {/* STRATEGIC / SPECIAL — CONTINUATION */}
+      {/* STRATEGIC / SPECIAL (sin separador) */}
+      
       <div className="flex items-center justify-between gap-2">
-        <span>Strategic capital</span>
-        <span
-          className="w-2.5 h-2.5 rounded-sm"
-          style={{ backgroundColor: "#365314" }}
-        />
+        <span className="text-gray-300">Strategic capital</span>
+        <div className="relative flex items-center justify-center w-5 h-5">
+          <span
+            className="absolute w-2.5 h-2.5 rounded-full"
+            style={{ backgroundColor: "#22c55e" }}
+          />
+        </div>
       </div>
 
       <div className="flex items-center justify-between gap-2">
-        <span>Chokepoint</span>
-        <span
-          className="w-2.5 h-2.5 rotate-45"
-          style={{ backgroundColor: "#334155" }}
-        />
+        <span className="text-gray-300">Chokepoint</span>
+        <div className="relative flex items-center justify-center w-5 h-5">
+          <span className="absolute text-2xl leading-none" style={{ color: "#38bdf8" }}>◆</span>
+        </div>
       </div>
       
       <div className="flex items-center justify-between gap-2">
-        <span>Military base</span>
-        <span className="text-purple-400 text-sm leading-none">★</span>
+        <span className="text-gray-300">Military base</span>
+        <div className="relative flex items-center justify-center w-5 h-5">
+          <span className="absolute text-purple-400 text-lg leading-none">★</span>
+        </div>
       </div>
 
       <div className="flex items-center justify-between gap-2">
-        <span>Active conflict</span>
-        <span
-          className="px-1.5 py-0.5 rounded text-[10px] font-semibold tracking-wide"
-          style={{
-            backgroundColor: "#7f1d1d",
-            color: "#fecaca",
-          }}
-        >
-          CONFLICT
-        </span>
+        <span className="text-gray-300">Active conflict</span>
+        <div className="relative flex items-center justify-center w-5 h-5">
+          <span
+            className="absolute px-2 py-0.5 rounded text-[9px] font-bold tracking-wider border-2"
+            style={{
+              backgroundColor: "rgba(127, 29, 29, 0.75)",
+              borderColor: "#dc2626",
+              color: "#ffffff",
+            }}
+          >
+            WAR
+          </span>
+        </div>
       </div>
 
       {/* TRAFFIC SECTION (solo en fullscreen) */}
@@ -75,14 +90,16 @@ export default function MapLegend() {
 
           {/* AIRCRAFT */}
           <div className="flex items-center justify-between gap-2">
-            <span>Aircraft</span>
-            <span className="text-yellow-400 text-[24px] text-base leading-none -mt-2">✈</span>
+            <span className="text-gray-300">Aircraft</span>
+            <div className="relative flex items-center justify-center w-5 h-5">
+              <span className="absolute text-yellow-400 text-2xl leading-none">✈</span>
+            </div>
           </div>
 
           {/* VESSELS */}
           <div className="space-y-1 mt-1">
             <div className="flex items-center justify-between gap-2">
-              <span>Commercial vessel</span>
+              <span className="text-gray-300">Commercial vessel</span>
               <div className="flex items-center gap-0.5">
                 <span 
                   className="w-2 h-2 rounded-full border border-white"
@@ -92,7 +109,7 @@ export default function MapLegend() {
               </div>
             </div>
             <div className="flex items-center justify-between gap-2">
-              <span>Military vessel</span>
+              <span className="text-gray-300">Military vessel</span>
               <div className="flex items-center gap-0.5">
                 <span 
                   className="w-2 h-2 rounded-full border border-white"
@@ -102,7 +119,7 @@ export default function MapLegend() {
               </div>
             </div>
             <div className="flex items-center justify-between gap-2">
-              <span>Cruise ship</span>
+              <span className="text-gray-300">Cruise ship</span>
               <div className="flex items-center gap-0.5">
                 <span 
                   className="w-2.5 h-2.5 rounded-full border border-white"

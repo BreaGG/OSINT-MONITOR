@@ -93,43 +93,63 @@ export function useCapitalsLayer({
       data: capitalsGeoJSON,
     },
     layers: [
-      /* === CAPITAL POINT === */
+      /* === PUNTO CAPITAL ESTILO OTAN === */
       {
         id: "capitals-layer",
         type: "circle",
         source: "capitals",
         paint: {
-          /* 🔴 TAMAÑO CAPITAL */
-          "circle-radius": 10, // ← aquí ajustas tamaño
-
-          /* COLOR TÁCTICO */
-          "circle-color": "#22c55e", // verde command
-
-          /* OPACIDAD */
-          "circle-opacity": 0.9,
-
-          /* HALO OSCURO (HUD) */
-          "circle-stroke-width": 2,
-          "circle-stroke-color": "#020617",
+          // ⚙️ TAMAÑO DEL PUNTO (ajusta entre 6-12)
+          "circle-radius": 8,
+          
+          // 🎨 COLOR VERDE COMANDO OTAN
+          "circle-color": "#22c55e",
+          
+          // 💎 NÍTIDO (sin blur)
+          "circle-blur": 0,
+          
+          // 🔆 OPACIDAD
+          "circle-opacity": 1,
+          
+          // ❌ SIN BORDE (estilo limpio OTAN)
+          "circle-stroke-width": 0,
         },
       },
 
-      /* === LABEL === */
+      /* === LABEL ESTILO OTAN === */
       {
         id: "capitals-labels",
         type: "symbol",
         source: "capitals",
         layout: {
+          // 📝 TEXTO
           "text-field": ["get", "name"],
-          "text-size": 11,
-          "text-offset": [0, 1.4],
+          
+          // ⚙️ TAMAÑO (ajusta entre 10-14)
+          "text-size": 12,
+          
+          // 📍 POSICIÓN (debajo del punto)
+          "text-offset": [0, 1.2],
           "text-anchor": "top",
-          "text-allow-overlap": true,
+          
+          // 🔠 FUENTE EN NEGRITA
+          "text-font": ["DIN Pro Bold", "Arial Unicode MS Bold"],
+          
+          // 👁️ SIEMPRE VISIBLE
+          "text-allow-overlap": false,
+          "text-ignore-placement": false,
         },
         paint: {
-          "text-color": "#e5e7eb",
-          "text-halo-color": "#020617",
-          "text-halo-width": 1,
+          // 🎨 MISMO COLOR QUE EL PUNTO (verde comando)
+          "text-color": "#22c55e",
+          
+          // 🖤 HALO NEGRO PARA CONTRASTE
+          "text-halo-color": "#000000",
+          "text-halo-width": 0,
+          "text-halo-blur": 0,
+          
+          // 🔆 OPACIDAD
+          "text-opacity": 1,
         },
       },
     ],

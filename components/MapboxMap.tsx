@@ -21,6 +21,7 @@ import { useMilitaryBasesLayer } from "@/hooks/map/useMilitaryBasesLayer"
 import { useTrafficLayer } from "@/hooks/map/useTrafficLayer"
 import { useConnectionsLayer } from "@/hooks/map/useConnectionsLayer"
 import { useHeatmapLayer } from "@/hooks/map/useHeatmapLayer"
+import { useDayNightLayer } from "@/hooks/map/useDayNightLayer"
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
 
@@ -49,9 +50,17 @@ export default function MapboxMap({
 
   const [ready, setReady] = useState(false)
   const [timeWindow, setTimeWindow] = useState<TimeWindow>("24h")
-  const [mapStyle, setMapStyle] = useState<"dark" | "satellite" | "terrain" | "navigation">(
-    isFullscreenPage ? "navigation" : "dark"
-  )
+  // Siempre usar dark por defecto
+  const mapStyle = "dark"
+  // Day/Night toggle - iniciar desactivado
+  const [showDayNight, setShowDayNight] = useState(false)
+
+  // Activar day/night en fullscreen después del mount
+  useEffect(() => {
+    if (isFullscreenPage && ready) {
+      setShowDayNight(true)
+    }
+  }, [isFullscreenPage, ready])
 
   const [layers, setLayers] = useState({
     events: true,
@@ -60,16 +69,12 @@ export default function MapboxMap({
     chokepoints: true,
     conflicts: true,
     militaryBases: true,
-    aircraft: false,
+    aircraft: false,  // Desactivado por defecto
     vessels: false,
   })
 
-  // Activar aircraft automáticamente en fullscreen
-  useEffect(() => {
-    if (isFullscreenPage) {
-      setLayers(prev => ({ ...prev, aircraft: true }))
-    }
-  }, [isFullscreenPage])
+  // NO activar aircraft automáticamente en fullscreen
+  // El usuario debe activarlo manualmente si lo desea
 
   // Filtered data by time window
   const visibleEvents = useMemo(() => {
@@ -128,19 +133,20 @@ export default function MapboxMap({
     visible: showConnections,
   })
 
-  // Events layer
+  // HotZones layer (PRIMERO para que esté DEBAJO)
+  const { hotZones } = useHotZonesLayer({
+    map: ready ? mapRef.current : null,
+    events: visibleEvents,
+    visible: layers.hotzones && !heatmapMode, // Ocultar hotzones cuando heatmap está activo
+  })
+
+  // Events layer (DESPUÉS para que esté ENCIMA de hotzones)
   useEventsLayer({
     map: ready ? mapRef.current : null,
     events: visibleEvents,
     visible: layers.events,
     popupRef,
     onSelectSatelliteFocus,
-  })
-
-  const { hotZones } = useHotZonesLayer({
-    map: ready ? mapRef.current : null,
-    events: visibleEvents,
-    visible: layers.hotzones && !heatmapMode, // Ocultar hotzones cuando heatmap está activo
   })
 
   useCapitalsLayer({
@@ -185,6 +191,12 @@ export default function MapboxMap({
     popupRef,
   })
 
+  // Day/Night layer (solo visible en fullscreen por defecto)
+  useDayNightLayer({
+    map: ready ? mapRef.current : null,
+    visible: showDayNight,
+  })
+
   /* ===================== PERSISTENCE ===================== */
 
   useEffect(() => {
@@ -215,21 +227,13 @@ export default function MapboxMap({
 
   /* ===================== MAP INITIALIZATION ===================== */
 
-  // Estilos disponibles
-  const mapStyles = {
-    dark: "mapbox://styles/mapbox/dark-v11",
-    satellite: "mapbox://styles/mapbox/satellite-streets-v12",
-    terrain: "mapbox://styles/mapbox/outdoors-v12",
-    navigation: "mapbox://styles/mapbox/navigation-night-v1",
-  }
-
   useEffect(() => {
     if (mapRef.current || !containerRef.current) return
 
     try {
       const map = new mapboxgl.Map({
         container: containerRef.current,
-        style: mapStyles[mapStyle],
+        style: "mapbox://styles/mapbox/dark-v11", // Siempre dark
         center: MAP_CONFIG.INITIAL_CENTER,
         zoom: MAP_CONFIG.INITIAL_ZOOM,
         minZoom: MAP_CONFIG.MIN_ZOOM,
@@ -263,7 +267,7 @@ export default function MapboxMap({
     } catch (error) {
       console.error("Failed to initialize map:", error)
     }
-  }, [mapStyle])
+  }, []) // Sin dependencia de mapStyle
 
   /* ===================== HOVER HIGHLIGHT ===================== */
 
@@ -384,23 +388,38 @@ export default function MapboxMap({
         </div>
       )}
 
-      {/* MAP STYLE SELECTOR - Bottom Left (solo en fullscreen) */}
+      {/* DAY/NIGHT TOGGLE (solo en fullscreen) */}
       {isFullscreenPage && (
         <div className="absolute bottom-3 left-2 z-20">
-          <div className="grid grid-cols-2 gap-1 bg-black/90 border border-gray-800 rounded p-1.5">
-            {(["dark", "satellite", "terrain", "navigation"] as const).map(style => (
-              <button
-                key={style}
-                onClick={() => setMapStyle(style)}
-                className={`px-3 py-1.5 text-[10px] font-medium rounded transition-all ${
-                  mapStyle === style
-                    ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/50"
-                    : "text-gray-500 hover:text-gray-300 hover:bg-gray-800/50 border border-transparent"
-                }`}
-              >
-                {style.toUpperCase()}
-              </button>
-            ))}
+          <div className="bg-black/90 border border-gray-800 rounded p-2 w-[160px]">
+            <button
+              onClick={() => setShowDayNight(!showDayNight)}
+              className={`w-full px-3 py-1.5 text-[10px] font-medium rounded transition-all ${
+                showDayNight
+                  ? "bg-amber-500/20 text-amber-300 border border-amber-500/50"
+                  : "text-gray-500 hover:text-gray-300 hover:bg-gray-800/50 border border-transparent"
+              }`}
+            >
+              {showDayNight ? "☀️" : "🌙"} DAY/NIGHT
+            </button>
+            
+            {/* Info visual siempre visible */}
+            <div className="mt-2 pt-2 border-t border-gray-800 text-[9px] space-y-1">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: "#0a0a2e", opacity: 0.5 }} />
+                <span className="text-gray-400">Night zone</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-[2px]" style={{ 
+                  background: "repeating-linear-gradient(to right, #fbbf24 0, #fbbf24 2px, transparent 2px, transparent 4px)",
+                  opacity: 0.6
+                }} />
+                <span className="text-gray-400">Terminator</span>
+              </div>
+              <div className="text-gray-600 text-[8px] mt-1">
+                Updates every 5min
+              </div>
+            </div>
           </div>
         </div>
       )}

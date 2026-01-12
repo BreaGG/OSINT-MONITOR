@@ -89,36 +89,73 @@ export function useEventsLayer({
     [map, onSelectSatelliteFocus, popupRef]
   );
 
-  /* ===================== PULSE ANIMATION ===================== */
+  /* ===================== PULSE ANIMATION - ESTILO OTAN ===================== */
   useEffect(() => {
-    if (!map || !map.getLayer("events-layer")) return;
+    if (!map || !visible) return;
 
+    // Esperar a que la capa exista
+    const checkLayer = setInterval(() => {
+      if (map.getLayer("events-halo")) {
+        clearInterval(checkLayer);
+        startAnimation();
+      }
+    }, 100);
+
+    let rafId: number;
     let pulse = 0;
     let direction = 1;
-    let rafId: number;
 
-    const animate = () => {
-      pulse += direction * 0.03;
+    const startAnimation = () => {
+      const animate = () => {
+        if (!map.getLayer("events-halo")) {
+          cancelAnimationFrame(rafId);
+          return;
+        }
 
-      if (pulse >= 1) direction = -1;
-      if (pulse <= 0) direction = 1;
+        // ⚙️ VELOCIDAD DE ANIMACIÓN (mayor = más rápido)
+        pulse += direction * 0.01; // Ajusta entre 0.01 (lento) y 0.05 (rápido)
 
-      /* 🔥 AQUÍ AJUSTAS EL TAMAÑO BASE + PULSO 🔥 */
-      map.setPaintProperty("events-layer", "circle-radius", 16 + pulse * 16);
-      // ↑ 10 = tamaño base
-      // ↑ 4  = cuánto crece al pulsar
+        if (pulse >= 1) direction = -1;
+        if (pulse <= 0) direction = 1;
 
-      map.setPaintProperty("events-layer", "circle-opacity", 0.6 + pulse * 0.4);
+        try {
+          // 🔵 TAMAÑO DEL HALO
+          const baseRadius = 10;      // Tamaño inicial del halo
+          const pulseAmount = 15;     // Cuánto crece (ajusta entre 10-50)
+          map.setPaintProperty(
+            "events-halo",
+            "circle-radius",
+            baseRadius + pulse * pulseAmount
+          );
 
-      rafId = requestAnimationFrame(animate);
+          // 💧 OPACIDAD DEL HALO
+          const startOpacity = 0.4;   // Opacidad inicial (0-1)
+          const fadeAmount = 0.35;    // Cuánto se desvanece
+          map.setPaintProperty(
+            "events-halo",
+            "circle-opacity",
+            startOpacity - pulse * fadeAmount
+          );
+        } catch (error) {
+          // Silenciar errores si la capa no existe
+        }
+
+        rafId = requestAnimationFrame(animate);
+      };
+
+      animate();
     };
 
-    animate();
-
-    return () => cancelAnimationFrame(rafId);
-  }, [map]);
+    return () => {
+      clearInterval(checkLayer);
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+      }
+    };
+  }, [map, visible]);
 
   /* ===================== MAP LAYER ===================== */
+  // Añadir capas SIN beforeId para que estén por encima de hotzones
   return useMapLayer({
     map,
     sourceId: "events",
@@ -127,26 +164,31 @@ export function useEventsLayer({
       data: eventsGeoJSON,
     },
     layers: [
+      // CAPA 1: Halo pulsante NÍTIDO
+      {
+        id: "events-halo",
+        type: "circle",
+        source: "events",
+        paint: {
+          "circle-radius": 10,        // ⚙️ Tamaño inicial (debe coincidir con baseRadius)
+          "circle-color": ["get", "color"],
+          "circle-opacity": 0.4,      // ⚙️ Opacidad inicial (debe coincidir con startOpacity)
+          "circle-blur": 0,           // NÍTIDO (0 = sin blur)
+        },
+        // SIN beforeId para que esté por encima de hotzones
+      },
+      // CAPA 2: Punto central NÍTIDO
       {
         id: "events-layer",
         type: "circle",
         source: "events",
         paint: {
-          /* 🔴 TAMAÑO BASE (si no quieres animación) */
-          "circle-radius": 16, // ← tamaño inicial
-
-          /* COLOR */
+          "circle-radius": 10,        // ⚙️ TAMAÑO DEL PUNTO CENTRAL (ajusta entre 5-12)
           "circle-color": ["get", "color"],
-
-          /* GLOW */
-          "circle-blur": 0.9,
-
-          /* OPACIDAD */
-          "circle-opacity": 0.85,
-
-          /* ❌ SIN BORDE */
-          "circle-stroke-width": 0,
+          "circle-opacity": 1,        // Siempre visible al 100%
+          "circle-blur": 0,           // NÍTIDO (0 = sin blur)
         },
+        // SIN beforeId para que esté por encima de hotzones
       },
     ],
     eventHandlers,
