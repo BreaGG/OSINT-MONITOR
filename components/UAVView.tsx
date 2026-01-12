@@ -238,7 +238,7 @@ export default function UAVView({
     /* ===================== RENDER ===================== */
 
     return (
-        <div className="flex flex-col h-full bg-black">
+        <div className="flex flex-col h-full">
             {/* DEPLOY BAR */}
             <div className="px-2 py-1 border-b border-gray-800 flex gap-1 text-[11px]">
                 <input

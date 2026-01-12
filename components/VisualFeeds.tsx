@@ -28,7 +28,7 @@ export default function VisualFeeds() {
     const active = visualSources.find(v => v.id === activeId)
 
     return (
-        <div className="flex flex-col h-full bg-black">
+        <div className="flex flex-col h-full">
             {/* SELECTOR */}
             <div className="px-3 py-2">
                 <select

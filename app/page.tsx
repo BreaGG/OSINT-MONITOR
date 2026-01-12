@@ -160,7 +160,7 @@ export default function Home() {
                 className="
             ml-1 text-[11px] text-gray-300 cursor-pointer
             border border-gray-700 px-2 py-0.5 rounded
-            hover:bg-black/40 transition
+            hover:  transition
           "
               >
                 Focus: {focusRegion} ×
@@ -271,10 +271,10 @@ export default function Home() {
               </div>
 
               {/* RIGHT: SIGNALS */}
-              <div className="rounded-lg bg-black/40 flex flex-col gap-3 p-3 h-full">
+              <div className="rounded-lg   flex flex-col gap-3 p-3 h-full">
 
                 {/* TOP: NEW & ESCALATING */}
-                <div className="rounded-lg bg-black/40 flex flex-col">
+                <div className="rounded-lg   flex flex-col">
                   <NewAndEscalatingPanel
                     events={filteredEvents}
                     preset={preset}
@@ -283,7 +283,7 @@ export default function Home() {
                 </div>
 
                 {/* BOTTOM: FOCUS TIMELINE */}
-                <div className="rounded-lg bg-black/40 flex flex-col h-full min-h-0 overflow-hidden">
+                <div className="rounded-lg   flex flex-col h-full min-h-0 overflow-hidden">
                   <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
                     <FocusTimeline
                       events={filteredEvents}

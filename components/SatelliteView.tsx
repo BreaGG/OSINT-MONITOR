@@ -108,7 +108,7 @@ export default function SatelliteView({ focus }: Props) {
     )
 
     return (
-        <div className="flex flex-col h-full bg-black">
+        <div className="flex flex-col h-full">
             {/* IMAGE */}
             <div className="relative aspect-video bg-black rounded overflow-hidden">
                 <img

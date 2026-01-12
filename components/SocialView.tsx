@@ -94,7 +94,7 @@ export default function SocialView({ focus }: { focus?: SatelliteFocus }) {
   /* ===================== RENDER ===================== */
 
   return (
-    <div className="flex flex-col h-full max-h-full min-h-0 bg-black">
+    <div className="flex flex-col h-full max-h-full min-h-0">
 
       {/* HEADER */}
       <div className="border-b border-gray-800 p-2 text-[11px] flex justify-between shrink-0">
@@ -188,7 +188,7 @@ export default function SocialView({ focus }: { focus?: SatelliteFocus }) {
           <div className="
     shrink-0
     border-t border-gray-800
-    bg-black/90 backdrop-blur
+    backdrop-blur
     px-3 py-2
     flex items-center justify-between
     text-[11px] text-gray-500

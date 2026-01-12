@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, useMemo } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import mapboxgl from "mapbox-gl"
 import "mapbox-gl/dist/mapbox-gl.css"
@@ -19,6 +19,8 @@ import { useChokepointsLayer } from "@/hooks/map/useChokepointsLayer"
 import { useConflictsLayer } from "@/hooks/map/useConflictsLayer"
 import { useMilitaryBasesLayer } from "@/hooks/map/useMilitaryBasesLayer"
 import { useTrafficLayer } from "@/hooks/map/useTrafficLayer"
+import { useConnectionsLayer } from "@/hooks/map/useConnectionsLayer"
+import { useHeatmapLayer } from "@/hooks/map/useHeatmapLayer"
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
 
@@ -26,12 +28,16 @@ type Props = {
   events: Event[]
   hoveredEventId?: string | null
   onSelectSatelliteFocus?: (focus: SatelliteFocus) => void
+  heatmapMode?: boolean
+  showConnections?: boolean
 }
 
 export default function MapboxMap({
   events,
   hoveredEventId,
   onSelectSatelliteFocus,
+  heatmapMode = false,
+  showConnections = false,
 }: Props) {
   const router = useRouter()
   const pathname = usePathname()
@@ -43,6 +49,9 @@ export default function MapboxMap({
 
   const [ready, setReady] = useState(false)
   const [timeWindow, setTimeWindow] = useState<TimeWindow>("24h")
+  const [mapStyle, setMapStyle] = useState<"dark" | "satellite" | "terrain" | "navigation">(
+    isFullscreenPage ? "navigation" : "dark"
+  )
 
   const [layers, setLayers] = useState({
     events: true,
@@ -63,13 +72,63 @@ export default function MapboxMap({
   }, [isFullscreenPage])
 
   // Filtered data by time window
-  const visibleEvents = events.filter(e =>
-    isWithinTimeWindow(e, TIME_WINDOWS[timeWindow])
-  )
+  const visibleEvents = useMemo(() => {
+    if (events.length === 0) return []
+
+    const now = Date.now()
+    const timeWindowMs = {
+      "6h": 6 * 60 * 60 * 1000,
+      "24h": 24 * 60 * 60 * 1000,
+      "72h": 72 * 60 * 60 * 1000,
+    }
+    
+    const cutoffTime = now - timeWindowMs[timeWindow]
+    
+    // Filtrar por ventana de tiempo usando timestamp
+    const filtered = events.filter(e => {
+      const eventTime = e.timestamp || new Date(e.date).getTime()
+      return eventTime >= cutoffTime && eventTime <= now
+    })
+    
+    // Si todos los eventos pasan el filtro (son muy recientes), aplicar límite por cantidad
+    if (filtered.length === events.length) {
+      // Ordenar por timestamp (más reciente primero)
+      const sorted = [...filtered].sort((a, b) => {
+        const timeA = a.timestamp || new Date(a.date).getTime()
+        const timeB = b.timestamp || new Date(b.date).getTime()
+        return timeB - timeA
+      })
+      
+      // Límites por ventana
+      const limits = {
+        "6h": Math.max(Math.floor(events.length * 0.3), 20),  // 30% mínimo 20
+        "24h": Math.max(Math.floor(events.length * 0.6), 40), // 60% mínimo 40
+        "72h": events.length                                   // 100%
+      }
+      
+      return sorted.slice(0, limits[timeWindow])
+    }
+    
+    return filtered
+  }, [events, timeWindow])
 
   /* ===================== CUSTOM LAYER HOOKS ===================== */
 
-  // Solo llamar hooks cuando el mapa está listo
+  // Heatmap layer
+  useHeatmapLayer({
+    map: ready ? mapRef.current : null,
+    events: visibleEvents,
+    visible: heatmapMode,
+  })
+
+  // Connections layer
+  useConnectionsLayer({
+    map: ready ? mapRef.current : null,
+    events: visibleEvents,
+    visible: showConnections,
+  })
+
+  // Events layer
   useEventsLayer({
     map: ready ? mapRef.current : null,
     events: visibleEvents,
@@ -81,7 +140,7 @@ export default function MapboxMap({
   const { hotZones } = useHotZonesLayer({
     map: ready ? mapRef.current : null,
     events: visibleEvents,
-    visible: layers.hotzones,
+    visible: layers.hotzones && !heatmapMode, // Ocultar hotzones cuando heatmap está activo
   })
 
   useCapitalsLayer({
@@ -156,13 +215,21 @@ export default function MapboxMap({
 
   /* ===================== MAP INITIALIZATION ===================== */
 
+  // Estilos disponibles
+  const mapStyles = {
+    dark: "mapbox://styles/mapbox/dark-v11",
+    satellite: "mapbox://styles/mapbox/satellite-streets-v12",
+    terrain: "mapbox://styles/mapbox/outdoors-v12",
+    navigation: "mapbox://styles/mapbox/navigation-night-v1",
+  }
+
   useEffect(() => {
     if (mapRef.current || !containerRef.current) return
 
     try {
       const map = new mapboxgl.Map({
         container: containerRef.current,
-        style: "mapbox://styles/mapbox/dark-v11",
+        style: mapStyles[mapStyle],
         center: MAP_CONFIG.INITIAL_CENTER,
         zoom: MAP_CONFIG.INITIAL_ZOOM,
         minZoom: MAP_CONFIG.MIN_ZOOM,
@@ -196,7 +263,7 @@ export default function MapboxMap({
     } catch (error) {
       console.error("Failed to initialize map:", error)
     }
-  }, [])
+  }, [mapStyle])
 
   /* ===================== HOVER HIGHLIGHT ===================== */
 
@@ -312,19 +379,42 @@ export default function MapboxMap({
             onClick={() => router.push("/map")}
             className="px-3 py-1.5 rounded border bg-black/80 border-gray-700 text-gray-200 text-xs hover:bg-black transition"
           >
-            FULL MAP (F)
+            MISSION CONTROL (F)
           </button>
         </div>
       )}
 
+      {/* MAP STYLE SELECTOR - Bottom Left (solo en fullscreen) */}
+      {isFullscreenPage && (
+        <div className="absolute bottom-3 left-2 z-20">
+          <div className="grid grid-cols-2 gap-1 bg-black/90 border border-gray-800 rounded p-1.5">
+            {(["dark", "satellite", "terrain", "navigation"] as const).map(style => (
+              <button
+                key={style}
+                onClick={() => setMapStyle(style)}
+                className={`px-3 py-1.5 text-[10px] font-medium rounded transition-all ${
+                  mapStyle === style
+                    ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/50"
+                    : "text-gray-500 hover:text-gray-300 hover:bg-gray-800/50 border border-transparent"
+                }`}
+              >
+                {style.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* TIME WINDOW + COUNTERS */}
-      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-1">
-        <div className="text-[11px] text-gray-400 bg-black/70 border border-gray-800 rounded px-2 py-0.5">
+      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2">
+        {/* Stats bar */}
+        <div className="text-[11px] text-gray-400 bg-black/90 border border-gray-800 rounded px-3 py-1.5">
           <span className="text-red-400 font-medium">
             {hotZones.length} hot zones
           </span>
           <span className="mx-2 text-gray-600">|</span>
-          <span>{visibleEvents.length} events</span>
+          <span className="text-blue-400 font-medium">{visibleEvents.length}</span>
+          <span className="text-gray-500"> / {events.length} events</span>
           
           {/* Traffic counters (solo en fullscreen) */}
           {isFullscreenPage && (
@@ -348,20 +438,25 @@ export default function MapboxMap({
             </>
           )}
         </div>
-        <div className="flex gap-1 bg-black/70 border border-gray-800 rounded px-1 py-1">
-          {(["6h", "24h", "72h"] as TimeWindow[]).map(v => (
-            <button
-              key={v}
-              onClick={() => setTimeWindow(v)}
-              className={`px-3 py-1 text-xs rounded transition-colors ${
-                timeWindow === v
-                  ? "bg-black text-gray-200 border border-gray-600"
-                  : "text-gray-500 hover:text-gray-300"
-              }`}
-            >
-              {v.toUpperCase()}
-            </button>
-          ))}
+        
+        {/* Time window selector */}
+        <div className="flex gap-1.5 bg-black/90 border border-gray-800 rounded p-1">
+          {(["6h", "24h", "72h"] as TimeWindow[]).map(v => {
+            const isActive = timeWindow === v
+            return (
+              <button
+                key={v}
+                onClick={() => setTimeWindow(v)}
+                className={`px-4 py-1.5 text-xs font-medium rounded transition-all ${
+                  isActive
+                    ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 shadow-lg shadow-cyan-500/20"
+                    : "text-gray-500 hover:text-gray-300 hover:bg-gray-800/50"
+                }`}
+              >
+                {isActive && "● "}{v.toUpperCase()}
+              </button>
+            )
+          })}
         </div>
       </div>
     </section>

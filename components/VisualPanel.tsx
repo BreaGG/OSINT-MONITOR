@@ -62,7 +62,7 @@ export default function VisualPanel({ satelliteFocus }: Props) {
     }
 
     return (
-        <section className="flex flex-col h-full bg-black/40 rounded-lg overflow-hidden">
+        <section className="flex flex-col h-full overflow-hidden">
             {/* ===================== MODE SELECTOR ===================== */}
             <div className="flex items-center gap-2 px-3 py-1.5 border-b border-gray-800 text-[11px]">
                 <span className="text-gray-500 tracking-wide">VIEW</span>

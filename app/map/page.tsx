@@ -6,20 +6,68 @@ import MapboxMap from "@/components/MapboxMap"
 import MapLegend from "@/components/MapLegend"
 import LegendInsights from "@/components/LegendInsights"
 import FocusTimeline from "@/components/FocusTimeline"
+import VisualPanel from "@/components/VisualPanel"
+import EventList from "@/components/EventList"
+import NewAndEscalatingPanel from "@/components/NewAndEscalatingPanel"
+import ReplayControls from "@/components/ReplayControls"
 import { Event } from "@/lib/types"
 import { buildGlobalState } from "@/lib/gse"
 import { adaptEventsToGSE } from "@/lib/eventToGSE"
 import GlobalStateIndicator from "@/components/GlobalStateIndicator"
+import type { SatelliteFocus } from "@/components/SatelliteView"
+
+type FloatingWindow = 'timeline' | 'visual' | 'events' | 'escalating'
+type Preset = "all" | "conflicts" | "strategic"
+
+interface WindowState {
+    visible: boolean
+    position: { x: number; y: number } | null
+}
+
+/* ===================== COUNTRY MAPPING ===================== */
+const ACRONYM_TO_COUNTRY: Record<string, string> = {
+    "USA": "United States",
+    "UK": "United Kingdom",
+    "RUS": "Russian Federation",
+    "ROK": "South Korea",
+    "DPRK": "North Korea",
+    "EU": "European Union",
+    "UAE": "United Arab Emirates",
+}
 
 export default function FullscreenMapPage() {
     const router = useRouter()
     const [events, setEvents] = useState<Event[]>([])
     const [loading, setLoading] = useState(true)
     const [focusRegion, setFocusRegion] = useState<string | null>(null)
-    const [timelineVisible, setTimelineVisible] = useState(true)
-    const [timelinePosition, setTimelinePosition] = useState<{ x: number; y: number } | null>(null)
-    const [isDragging, setIsDragging] = useState(false)
-    const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
+    const [satelliteFocus, setSatelliteFocus] = useState<SatelliteFocus | undefined>(undefined)
+    const [preset, setPreset] = useState<Preset>("all")
+    const [heatmapMode, setHeatmapMode] = useState(false)
+    const [showConnections, setShowConnections] = useState(false)
+    const [replayMode, setReplayMode] = useState(false)
+    const [replayTime, setReplayTime] = useState<number | null>(null)
+
+    // Estado de ventanas flotantes
+    const [windows, setWindows] = useState<Record<FloatingWindow, WindowState>>({
+        timeline: { visible: true, position: null },
+        visual: { visible: false, position: null },
+        events: { visible: false, position: null },
+        escalating: { visible: false, position: null }
+    })
+
+    const [dragging, setDragging] = useState<{
+        window: FloatingWindow | null
+        startX: number
+        startY: number
+    }>({ window: null, startX: 0, startY: 0 })
+
+    /* ===================== REGION HANDLER ===================== */
+
+    const handleSelectRegion = (region: string) => {
+        // Convertir acrónimo a nombre completo si existe
+        const fullName = ACRONYM_TO_COUNTRY[region] || region
+        setFocusRegion(fullName)
+    }
 
     /* ===================== DATA ===================== */
 
@@ -44,38 +92,51 @@ export default function FullscreenMapPage() {
         return () => window.removeEventListener("keydown", onKey)
     }, [router])
 
-    /* ===================== DRAGGABLE TIMELINE ===================== */
+    /* ===================== DRAGGABLE WINDOWS ===================== */
 
-    const handleMouseDown = (e: React.MouseEvent) => {
-        if ((e.target as HTMLElement).closest('.timeline-content')) return
+    const handleMouseDown = (windowType: FloatingWindow, e: React.MouseEvent) => {
+        if ((e.target as HTMLElement).closest('.window-content')) return
 
-        // Si no hay posición personalizada, calcular la posición actual basada en bottom/right
-        const currentPosition = timelinePosition || {
-            x: window.innerWidth - 352, // 336px width + 16px margin
-            y: window.innerHeight - 304  // 288px height + 16px margin
-        }
+        const currentPosition = windows[windowType].position || getDefaultPosition(windowType)
 
-        setIsDragging(true)
-        setDragStart({
-            x: e.clientX - currentPosition.x,
-            y: e.clientY - currentPosition.y
+        setDragging({
+            window: windowType,
+            startX: e.clientX - currentPosition.x,
+            startY: e.clientY - currentPosition.y
         })
+    }
+
+    const getDefaultPosition = (windowType: FloatingWindow): { x: number; y: number } => {
+        const positions = {
+            timeline: { x: window.innerWidth - 352, y: window.innerHeight - 332 },
+            visual: { x: 16, y: 100 },
+            events: { x: window.innerWidth - 452, y: 100 },
+            escalating: { x: window.innerWidth / 2 - 200, y: 100 }
+        }
+        return positions[windowType]
     }
 
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
-            if (!isDragging) return
-            setTimelinePosition({
-                x: e.clientX - dragStart.x,
-                y: e.clientY - dragStart.y
-            })
+            if (!dragging.window) return
+
+            setWindows(prev => ({
+                ...prev,
+                [dragging.window!]: {
+                    ...prev[dragging.window!],
+                    position: {
+                        x: e.clientX - dragging.startX,
+                        y: e.clientY - dragging.startY
+                    }
+                }
+            }))
         }
 
         const handleMouseUp = () => {
-            setIsDragging(false)
+            setDragging({ window: null, startX: 0, startY: 0 })
         }
 
-        if (isDragging) {
+        if (dragging.window) {
             document.addEventListener('mousemove', handleMouseMove)
             document.addEventListener('mouseup', handleMouseUp)
         }
@@ -84,7 +145,30 @@ export default function FullscreenMapPage() {
             document.removeEventListener('mousemove', handleMouseMove)
             document.removeEventListener('mouseup', handleMouseUp)
         }
-    }, [isDragging, dragStart])
+    }, [dragging])
+
+    const toggleWindow = (windowType: FloatingWindow) => {
+        setWindows(prev => ({
+            ...prev,
+            [windowType]: {
+                ...prev[windowType],
+                visible: !prev[windowType].visible
+            }
+        }))
+    }
+
+    const toggleAllWindows = () => {
+        const allVisible = Object.values(windows).every(w => w.visible)
+        
+        setWindows(prev => ({
+            timeline: { ...prev.timeline, visible: !allVisible },
+            visual: { ...prev.visual, visible: !allVisible },
+            events: { ...prev.events, visible: !allVisible },
+            escalating: { ...prev.escalating, visible: !allVisible }
+        }))
+    }
+
+    const allWindowsVisible = Object.values(windows).every(w => w.visible)
 
     /* ===================== GLOBAL STATE ===================== */
 
@@ -101,12 +185,96 @@ export default function FullscreenMapPage() {
     /* ===================== FILTERED EVENTS ===================== */
 
     const filteredEvents = useMemo(() => {
-        if (!focusRegion) return events
+        let filtered = events
 
-        return events.filter(
-            e => e.country === focusRegion || focusRegion === "Global"
+        // Filtrar por región si está seleccionada
+        if (focusRegion) {
+            filtered = filtered.filter(
+                e => e.country === focusRegion || focusRegion === "Global"
+            )
+        }
+
+        // Filtrar por replay time si está activo
+        if (replayMode && replayTime !== null) {
+            filtered = filtered.filter(e => {
+                const eventTime = e.timestamp || new Date(e.date).getTime()
+                return eventTime <= replayTime
+            })
+        }
+
+        return filtered
+    }, [events, focusRegion, replayMode, replayTime])
+
+    // Calcular timestamps para replay
+    const { minTimestamp, maxTimestamp } = useMemo(() => {
+        if (events.length === 0) {
+            return { minTimestamp: Date.now() - 72 * 60 * 60 * 1000, maxTimestamp: Date.now() }
+        }
+
+        const timestamps = events.map(e => e.timestamp || new Date(e.date).getTime())
+        return {
+            minTimestamp: Math.min(...timestamps),
+            maxTimestamp: Math.max(...timestamps)
+        }
+    }, [events])
+
+    /* ===================== RENDER FLOATING WINDOW ===================== */
+
+    const renderFloatingWindow = (
+        windowType: FloatingWindow,
+        title: string,
+        content: React.ReactNode,
+        defaultPosition: { bottom?: string; right?: string; left?: string; top?: string },
+        size: { width: string; height: string }
+    ) => {
+        if (!windows[windowType].visible) return null
+
+        const position = windows[windowType].position
+        const isDraggingThis = dragging.window === windowType
+
+        return (
+            <div
+                className="flex flex-col bg-black/90 backdrop-blur-sm border border-gray-700 rounded-lg shadow-2xl overflow-hidden"
+                style={{
+                    position: 'absolute',
+                    width: size.width,
+                    height: size.height,
+                    ...(position
+                        ? {
+                            left: `${position.x}px`,
+                            top: `${position.y}px`
+                        }
+                        : defaultPosition),
+                    cursor: isDraggingThis ? 'grabbing' : 'grab',
+                    zIndex: isDraggingThis ? 50 : 10
+                }}
+                onMouseDown={(e) => handleMouseDown(windowType, e)}
+            >
+                {/* HEADER */}
+                <div className="flex items-center justify-between px-4 py-2 border-b border-gray-700 bg-black/50 select-none">
+                    <span className="text-xs font-semibold text-gray-300 uppercase tracking-wide">
+                        {title}
+                    </span>
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            toggleWindow(windowType)
+                        }}
+                        className="text-gray-400 hover:text-gray-200 transition"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                {/* CONTENT */}
+                <div className="window-content flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar">
+                    {content}
+                </div>
+            </div>
         )
-    }, [events, focusRegion])
+    }
 
     /* ===================== RENDER ===================== */
 
@@ -140,15 +308,108 @@ export default function FullscreenMapPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
+                    {/* WINDOW TOGGLE BUTTONS */}
+                    <button
+                        onClick={() => toggleWindow('timeline')}
+                        className={`px-3 py-1.5 rounded border text-xs transition ${windows.timeline.visible
+                            ? 'border-blue-500 bg-blue-500/20 text-blue-300'
+                            : 'border-gray-700 text-gray-400 hover:bg-gray-900'
+                            }`}
+                    >
+                        Timeline
+                    </button>
+                    <button
+                        onClick={() => toggleWindow('visual')}
+                        className={`px-3 py-1.5 rounded border text-xs transition ${windows.visual.visible
+                            ? 'border-purple-500 bg-purple-500/20 text-purple-300'
+                            : 'border-gray-700 text-gray-400 hover:bg-gray-900'
+                            }`}
+                    >
+                        Visual
+                    </button>
+                    <button
+                        onClick={() => toggleWindow('events')}
+                        className={`px-3 py-1.5 rounded border text-xs transition ${windows.events.visible
+                            ? 'border-green-500 bg-green-500/20 text-green-300'
+                            : 'border-gray-700 text-gray-400 hover:bg-gray-900'
+                            }`}
+                    >
+                        Events
+                    </button>
+                    <button
+                        onClick={() => toggleWindow('escalating')}
+                        className={`px-3 py-1.5 rounded border text-xs transition ${windows.escalating.visible
+                            ? 'border-red-500 bg-red-500/20 text-red-300'
+                            : 'border-gray-700 text-gray-400 hover:bg-gray-900'
+                            }`}
+                    >
+                        Escalating
+                    </button>
+
+                    <div className="w-px h-6 bg-gray-700 mx-1" />
+
+                    {/* SHOW ALL / HIDE ALL BUTTON */}
+                    <button
+                        onClick={toggleAllWindows}
+                        className={`px-3 py-1.5 rounded border text-xs font-semibold transition ${allWindowsVisible
+                            ? 'border-orange-500 bg-orange-500/20 text-orange-300 hover:bg-orange-500/30'
+                            : 'border-gray-600 bg-gray-800/50 text-gray-300 hover:bg-gray-700'
+                            }`}
+                    >
+                        {allWindowsVisible ? 'Hide All' : 'Show All'}
+                    </button>
+
+                    {/* HEATMAP MODE TOGGLE */}
+                    <button
+                        onClick={() => setHeatmapMode(!heatmapMode)}
+                        className={`px-3 py-1.5 rounded border text-xs font-semibold transition ${heatmapMode
+                            ? 'border-red-500 bg-red-500/20 text-red-300 hover:bg-red-500/30'
+                            : 'border-gray-600 bg-gray-800/50 text-gray-300 hover:bg-gray-700'
+                            }`}
+                        title="Toggle heatmap visualization"
+                    >
+                        Heatmap
+                    </button>
+
+                    {/* CONNECTIONS TOGGLE */}
+                    <button
+                        onClick={() => setShowConnections(!showConnections)}
+                        className={`px-3 py-1.5 rounded border text-xs font-semibold transition ${showConnections
+                            ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500 hover:bg-cyan-500/30'
+                            : 'border-gray-600 bg-gray-800/50 text-gray-300 hover:bg-gray-700'
+                            }`}
+                        title="Show connections between countries"
+                    >
+                        Connections
+                    </button>
+
+                    {/* REPLAY MODE TOGGLE */}
                     <button
                         onClick={() => {
-                            setFocusRegion(null)
-                            if (!timelineVisible) setTimelineVisible(true)
+                            setReplayMode(!replayMode)
+                            if (!replayMode) {
+                                setReplayTime(maxTimestamp) // Empezar en el presente
+                            } else {
+                                setReplayTime(null)
+                            }
                         }}
-                        disabled={!focusRegion && timelineVisible}
+                        className={`px-3 py-1.5 rounded border text-xs font-semibold transition ${replayMode
+                            ? 'bg-purple-500/20 text-purple-300 border-purple-500 hover:bg-purple-500/30'
+                            : 'border-gray-600 bg-gray-800/50 text-gray-300 hover:bg-gray-700'
+                            }`}
+                        title="Replay events over time"
+                    >
+                        Replay
+                    </button>
+
+                    <div className="w-px h-6 bg-gray-700 mx-1" />
+
+                    <button
+                        onClick={() => setFocusRegion(null)}
+                        disabled={!focusRegion}
                         className="px-4 py-2 rounded border border-gray-700 text-gray-200 text-sm hover:bg-gray-900 transition disabled:opacity-40 disabled:cursor-not-allowed"
                     >
-                        {!timelineVisible ? 'Show Timeline' : 'Clear Filters'}
+                        Clear Filters
                     </button>
                     <button
                         onClick={() => router.push("/")}
@@ -177,56 +438,69 @@ export default function FullscreenMapPage() {
                         <>
                             <MapboxMap
                                 events={filteredEvents}
-                                onSelectSatelliteFocus={() => { }}
+                                onSelectSatelliteFocus={(focus) => setSatelliteFocus(focus)}
+                                heatmapMode={heatmapMode}
+                                showConnections={showConnections}
                             />
 
-                            {/* TIMELINE SUPERPUESTO (draggable) */}
-                            {timelineVisible && (
-                                <div
-                                    className="w-[336px] h-72 bg-black/90 backdrop-blur-sm border border-gray-700 rounded-lg shadow-2xl flex flex-col overflow-hidden"
-                                    style={
-                                        timelinePosition
-                                            ? {
-                                                position: 'absolute',
-                                                left: `${timelinePosition.x}px`,
-                                                top: `${timelinePosition.y}px`,
-                                                cursor: isDragging ? 'grabbing' : 'grab'
-                                            }
-                                            : {
-                                                position: 'absolute',
-                                                bottom: '44px',
-                                                right: '44px',
-                                                cursor: isDragging ? 'grabbing' : 'grab'
-                                            }
-                                    }
-                                    onMouseDown={handleMouseDown}
-                                >
-                                    {/* HEADER DRAGGABLE */}
-                                    <div className="flex items-center justify-between px-4 py-2 border-b border-gray-700 bg-black/50">
-                                        <span className="text-xs font-semibold text-gray-300 uppercase tracking-wide">
-                                            Focus Timeline
-                                        </span>
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation()
-                                                setTimelineVisible(false)
-                                            }}
-                                            className="text-gray-400 hover:text-gray-200 transition"
-                                        >
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                            </svg>
-                                        </button>
-                                    </div>
+                            {/* REPLAY CONTROLS */}
+                            <ReplayControls
+                                isActive={replayMode}
+                                onToggle={() => {
+                                    setReplayMode(false)
+                                    setReplayTime(null)
+                                }}
+                                onTimeChange={setReplayTime}
+                                startTime={minTimestamp}
+                                endTime={maxTimestamp}
+                            />
 
-                                    {/* CONTENT CON SCROLL */}
-                                    <div className="timeline-content flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar p-4">
-                                        <FocusTimeline
-                                            events={filteredEvents}
-                                            onSelectRegion={setFocusRegion}
-                                        />
-                                    </div>
-                                </div>
+                            {/* FLOATING WINDOWS */}
+                            {renderFloatingWindow(
+                                'timeline',
+                                'Focus Timeline',
+                                <div className="p-4">
+                                    <FocusTimeline
+                                        events={filteredEvents}
+                                        onSelectRegion={handleSelectRegion}
+                                    />
+                                </div>,
+                                { bottom: '44px', right: '44px' },
+                                { width: '336px', height: '288px' }
+                            )}
+
+                            {renderFloatingWindow(
+                                'visual',
+                                'Visual Intelligence',
+                                <div className="p-4 overflow-hidden h-full">
+                                    <VisualPanel satelliteFocus={satelliteFocus} />
+                                </div>,
+                                { left: '16px', top: '100px' },
+                                { width: '600px', height: '475px' }
+                            )}
+
+                            {renderFloatingWindow(
+                                'events',
+                                'Event Feed',
+                                <div className="p-4">
+                                    <EventList events={filteredEvents} />
+                                </div>,
+                                { right: '16px', top: '100px' },
+                                { width: '450px', height: '600px' }
+                            )}
+
+                            {renderFloatingWindow(
+                                'escalating',
+                                'New & Escalating',
+                                <div className="p-4">
+                                    <NewAndEscalatingPanel
+                                        events={filteredEvents}
+                                        preset={preset}
+                                        onSelectRegion={handleSelectRegion}
+                                    />
+                                </div>,
+                                { left: '50%', top: '100px' },
+                                { width: '400px', height: '260px' }
                             )}
                         </>
                     )}
