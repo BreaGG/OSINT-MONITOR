@@ -21,10 +21,6 @@ export default function EventList({ events, onHover }: Props) {
     return events.slice(start, start + PAGE_SIZE)
   }, [events, page])
 
-  if (events.length === 0) {
-    return <p className="text-gray-500 text-sm">No events available</p>
-  }
-
   /* ===================== GROUP BY COUNTRY ===================== */
 
   const grouped = useMemo(() => {
@@ -42,6 +38,21 @@ export default function EventList({ events, onHover }: Props) {
 
     return map
   }, [paginatedEvents])
+
+  // Check DESPUÉS de todos los hooks
+  if (events.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <div className="flex flex-col items-center gap-3">
+          <svg className="w-12 h-12 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <p className="text-sm text-gray-500">No events match your filters</p>
+          <p className="text-xs text-gray-600">Try adjusting your search or filters</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col">

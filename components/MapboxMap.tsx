@@ -366,6 +366,22 @@ export default function MapboxMap({
             return null
           }
 
+          // Labels limpios por capa
+          const layerLabels: Record<string, string> = {
+            events: "EVENTS",
+            hotzones: "HOTZONES",
+            capitals: "CAPITALS",
+            chokepoints: "CHOKEPOINTS",
+            conflicts: "CONFLICTS",
+            militaryBases: "BASES",
+            hubs: "HUBS",
+            signals: "SIGNALS",
+            aircraft: "AIRCRAFT",
+            vessels: "VESSELS",
+          }
+
+          const label = layerLabels[key] || key.toUpperCase()
+
           return (
             <button
               key={key}
@@ -375,17 +391,15 @@ export default function MapboxMap({
                   [key]: !prev[key as keyof typeof prev],
                 }))
               }
-              className={`block px-2 py-1 rounded border transition-colors ${
-                value
-                  ? "bg-black/80 text-gray-200 border-gray-700"
-                  : "bg-black/40 text-gray-500 border-gray-800 hover:border-gray-700"
-              }`}
+              className={`
+                block px-3 py-1.5 rounded-md border transition-all font-medium tracking-wide
+                ${value
+                  ? "bg-black/90 text-gray-200 border-gray-700 shadow-lg"
+                  : "bg-black/50 text-gray-500 border-gray-800 hover:border-gray-700 hover:text-gray-300"
+                }
+              `}
             >
-              {key === "aircraft" && "✈ AIRCRAFT"}
-              {key === "vessels" && "⚓ VESSELS"}
-              {key === "hubs" && "◉ HUBS"}
-              {key === "signals" && "▲ SIGNALS"}
-              {key !== "aircraft" && key !== "vessels" && key !== "hubs" && key !== "signals" && key.toUpperCase()}
+              {label}
             </button>
           )
         })}

@@ -138,11 +138,11 @@ export const rssSources = [
     url: "https://www.japantimes.co.jp/feed/",
     category: "asia",
   },
-  {
-    name: "Nikkei Asia",
-    url: "https://asia.nikkei.com/rss/feed/nar",
-    category: "asia",
-  },
+  // {
+  //   name: "Nikkei Asia",
+  //   url: "https://asia.nikkei.com/rss/feed/nar",
+  //   category: "asia",
+  // },
   {
     name: "The Diplomat",
     url: "https://thediplomat.com/feed/",
