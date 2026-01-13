@@ -240,14 +240,14 @@ export function useEventsLayer({
         }
 
         // ⚙️ VELOCIDAD DE ANIMACIÓN (mayor = más rápido)
-        pulse += direction * 0.01; // Ajusta entre 0.01 (lento) y 0.05 (rápido)
+        pulse += direction * 0.012; // Ajusta entre 0.01 (lento) y 0.05 (rápido)
 
         if (pulse >= 1) direction = -1;
         if (pulse <= 0) direction = 1;
 
         try {
           // 🔵 TAMAÑO DEL HALO
-          const baseRadius = 10;      // Tamaño inicial del halo
+          const baseRadius = 15;      // Tamaño inicial del halo
           const pulseAmount = 15;     // Cuánto crece (ajusta entre 10-50)
           map.setPaintProperty(
             "events-halo",
@@ -256,8 +256,8 @@ export function useEventsLayer({
           );
 
           // 💧 OPACIDAD DEL HALO
-          const startOpacity = 0.4;   // Opacidad inicial (0-1)
-          const fadeAmount = 0.35;    // Cuánto se desvanece
+          const startOpacity = 0.09;   // Opacidad inicial (0-1)
+          const fadeAmount = 0.05;    // Cuánto se desvanece
           map.setPaintProperty(
             "events-halo",
             "circle-opacity",
@@ -297,9 +297,9 @@ export function useEventsLayer({
         type: "circle",
         source: "events",
         paint: {
-          "circle-radius": 10,        // ⚙️ Tamaño inicial (debe coincidir con baseRadius)
+          "circle-radius": 15,        // ⚙️ Tamaño inicial (debe coincidir con baseRadius)
           "circle-color": ["get", "color"],
-          "circle-opacity": 0.4,      // ⚙️ Opacidad inicial (debe coincidir con startOpacity)
+          "circle-opacity": 0.09,      // ⚙️ Opacidad inicial (debe coincidir con startOpacity)
           "circle-blur": 0,           // NÍTIDO (0 = sin blur)
         },
         // SIN beforeId para que esté por encima de hotzones
