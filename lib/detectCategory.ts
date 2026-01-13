@@ -12,6 +12,7 @@ export function detectCategory(text: string): Category {
   /* ===================== KEYWORDS ===================== */
 
   const CONFLICT = [
+    // General
     "war",
     "armed",
     "attack",
@@ -22,9 +23,6 @@ export function detectCategory(text: string): Category {
     "bomb",
     "explosion",
     "shelling",
-    "military",
-    "troops",
-    "soldiers",
     "killed",
     "casualties",
     "ceasefire",
@@ -33,6 +31,41 @@ export function detectCategory(text: string): Category {
     "defensive",
     "invasion",
     "occupation",
+
+    // Forces & actors
+    "army",
+    "military",
+    "troops",
+    "soldiers",
+    "forces",
+    "security forces",
+    "rebels",
+    "militia",
+
+    // Actions
+    "fight",
+    "fighting",
+    "clash",
+    "clashes",
+    "combat",
+    "skirmish",
+    "raid",
+
+    // Civil impact
+    "civilians",
+    "displaced",
+    "evacuation",
+    "areas secured",
+    "after fighting",
+
+    // Known actors (OSINT-specific)
+    "sdf",
+    "idf",
+    "hamas",
+    "hezbollah",
+    "taliban",
+    "wagner",
+    "syrian army",
   ];
 
   const DISASTER = [
