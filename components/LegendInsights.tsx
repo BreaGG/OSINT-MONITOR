@@ -108,11 +108,14 @@ export default function LegendInsights({ events }: Props) {
 
     const categoryCount: Record<CategoryKey, number> = {
         conflict: 0,
+        terrorism: 0,
+        nuclear: 0,
+        cyber: 0,
         disaster: 0,
-        politics: 0,
         health: 0,
-        sports: 0,
+        climate: 0,
         economy: 0,
+        politics: 0,
     }
 
     recentEvents.forEach(e => categoryCount[e.category]++)

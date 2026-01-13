@@ -79,9 +79,10 @@ export default function MapLegend() {
         </div>
       </div>
 
-      {/* TRAFFIC SECTION (solo en fullscreen) */}
+      {/* FULLSCREEN ONLY SECTIONS */}
       {isFullscreenMap && (
         <>
+          {/* TRAFFIC SECTION */}
           <div className="border-t border-gray-800 pt-2 mt-2" />
           
           <div className="uppercase tracking-wide text-gray-400 text-[11px] mb-1">
@@ -126,6 +127,49 @@ export default function MapLegend() {
                   style={{ backgroundColor: "#8b5cf6" }}
                 />
                 <span className="text-purple-500 text-xs leading-none">▶</span>
+              </div>
+            </div>
+          </div>
+
+          {/* INFRASTRUCTURE SECTION */}
+          <div className="border-t border-gray-800 pt-2 mt-2" />
+          
+          <div className="uppercase tracking-wide text-gray-400 text-[11px] mb-1">
+            Infrastructure
+          </div>
+
+          {/* INTERNET HUBS */}
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-gray-300">Internet hub</span>
+            <div className="relative flex items-center justify-center w-5 h-5">
+              <span className="absolute text-purple-500 text-xl leading-none">◉</span>
+            </div>
+          </div>
+
+          {/* SIGNALS SECTION */}
+          <div className="border-t border-gray-800 pt-2 mt-2" />
+          
+          <div className="uppercase tracking-wide text-gray-400 text-[11px] mb-1">
+            Civil Signals
+          </div>
+
+          <div className="space-y-1">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-gray-300">Conflict signal</span>
+              <div className="relative flex items-center justify-center w-5 h-5">
+                <span className="text-red-500 text-lg leading-none">▲</span>
+              </div>
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-gray-300">Disaster signal</span>
+              <div className="relative flex items-center justify-center w-5 h-5">
+                <span className="text-orange-500 text-lg leading-none">▲</span>
+              </div>
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-gray-300">Social signal</span>
+              <div className="relative flex items-center justify-center w-5 h-5">
+                <span className="text-blue-500 text-lg leading-none">▲</span>
               </div>
             </div>
           </div>
