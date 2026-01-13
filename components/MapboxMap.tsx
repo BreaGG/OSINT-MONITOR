@@ -23,6 +23,7 @@ import { useConnectionsLayer } from "@/hooks/map/useConnectionsLayer"
 import { useHeatmapLayer } from "@/hooks/map/useHeatmapLayer"
 import { useDayNightLayer } from "@/hooks/map/useDayNightLayer"
 import { useHubsLayer } from "@/hooks/map/useHubsLayer"
+import { useSignalsLayer } from "@/hooks/map/useSignalsLayer"
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
 
@@ -58,12 +59,13 @@ export default function MapboxMap({
 
   const [layers, setLayers] = useState({
     events: true,
-    hotzones: true,
+    hotzones: false, // Desactivado por defecto
     capitals: true,
     chokepoints: true,
     conflicts: true,
     militaryBases: true,
     hubs: false, // Desactivado por defecto
+    signals: true, // Activado por defecto
     aircraft: false,  // Desactivado por defecto
     vessels: false,
   })
@@ -177,6 +179,13 @@ export default function MapboxMap({
     visible: layers.hubs && isFullscreenPage, // Solo visible en fullscreen
     popupRef,
     onSelectSatelliteFocus,
+  })
+
+  // Signals layer (solo en fullscreen)
+  useSignalsLayer({
+    map: ready ? mapRef.current : null,
+    visible: layers.signals && isFullscreenPage, // Solo visible en fullscreen
+    popupRef,
   })
 
   // Tráfico en tiempo real (solo si está habilitado)
@@ -352,8 +361,8 @@ export default function MapboxMap({
       {/* LAYER CONTROLS */}
       <div className="absolute top-2 left-2 z-10 space-y-1 text-xs">
         {Object.entries(layers).map(([key, value]) => {
-          // Ocultar controles de tráfico y hubs si no estamos en fullscreen
-          if ((key === "aircraft" || key === "vessels" || key === "hubs") && !isFullscreenPage) {
+          // Ocultar controles de tráfico, hubs y signals si no estamos en fullscreen
+          if ((key === "aircraft" || key === "vessels" || key === "hubs" || key === "signals") && !isFullscreenPage) {
             return null
           }
 
@@ -375,7 +384,8 @@ export default function MapboxMap({
               {key === "aircraft" && "✈ AIRCRAFT"}
               {key === "vessels" && "⚓ VESSELS"}
               {key === "hubs" && "◉ HUBS"}
-              {key !== "aircraft" && key !== "vessels" && key !== "hubs" && key.toUpperCase()}
+              {key === "signals" && "▲ SIGNALS"}
+              {key !== "aircraft" && key !== "vessels" && key !== "hubs" && key !== "signals" && key.toUpperCase()}
             </button>
           )
         })}

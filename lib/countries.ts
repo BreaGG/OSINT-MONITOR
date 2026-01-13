@@ -270,13 +270,88 @@ export const countries: Country[] = [
 
   /* ===================== LATIN AMERICA ===================== */
 
-  {
-    name: "Venezuela",
-    lat: 10.48,
-    lon: -66.9,
-    aliases: {
-      strong: ["Venezuela", "Caracas"],
-      weak: ["Venezuelan government", "Maduro", "Bolivarian"],
-    },
+{
+  name: "Mexico",
+  lat: 19.43,
+  lon: -99.13,
+  aliases: {
+    strong: ["Mexico", "Mexico City", "CDMX"],
+    weak: ["cartel", "drug trafficking", "AMLO", "Mexican government"],
   },
+},
+
+{
+  name: "Colombia",
+  lat: 4.71,
+  lon: -74.07,
+  aliases: {
+    strong: ["Colombia", "Bogotá"],
+    weak: ["FARC", "ELN", "drug trafficking"],
+  },
+},
+
+{
+  name: "Venezuela",
+  lat: 10.65,
+  lon: -71.65, // Maracaibo
+  aliases: {
+    strong: ["Venezuela", "Maracaibo", "Zulia"],
+    weak: ["Maduro", "PDVSA", "oil", "sanctions"],
+  },
+},
+
+{
+  name: "Brazil",
+  lat: -23.55,
+  lon: -46.63, // São Paulo > Brasilia para OSINT
+  aliases: {
+    strong: ["Brazil", "Brasil", "São Paulo"],
+    weak: ["Lula", "Amazon", "deforestation", "organized crime"],
+  },
+},
+
+{
+  name: "Argentina",
+  lat: -34.61,
+  lon: -58.38,
+  aliases: {
+    strong: ["Argentina", "Buenos Aires"],
+    weak: ["economic crisis", "inflation", "IMF"],
+  },
+},
+
+{
+  name: "Chile",
+  lat: -33.45,
+  lon: -70.66,
+  aliases: {
+    strong: ["Chile", "Santiago"],
+    weak: ["protests", "constitutional reform"],
+  },
+},
+
+{
+  name: "Peru",
+  lat: -12.05,
+  lon: -77.04,
+  aliases: {
+    strong: ["Peru", "Lima"],
+    weak: ["political crisis", "coup", "protests"],
+  },
+},
+{
+  name: "Venezuela",
+  lat: 7.0,
+  lon: -66.0,
+  aliases: {
+    strong: ["Venezuela", "Maracaibo", "Zulia"],
+    weak: [
+      "Venezuelan government",
+      "Maduro",
+      "Bolivarian",
+      "PDVSA",
+      "oil infrastructure",
+    ],
+  },
+},
 ];

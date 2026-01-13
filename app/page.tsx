@@ -37,6 +37,14 @@ export default function Home() {
 
   /* ===== presets ===== */
   const [preset, setPreset] = useState<Preset>("all")
+  
+  /* ===== mobile redirect ===== */
+  useEffect(() => {
+    const isMobile = window.innerWidth < 768
+    if (isMobile) {
+      window.location.href = '/map'
+    }
+  }, [])
 
   /* ===================== DATA ===================== */
 

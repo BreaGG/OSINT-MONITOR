@@ -6,7 +6,7 @@ export async function GET() {
     select *
     from social_signals
     order by timestamp desc
-    limit 50
+    limit 300
   `
 
   return NextResponse.json(rows)

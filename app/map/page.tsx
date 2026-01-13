@@ -46,6 +46,19 @@ export default function FullscreenMapPage() {
     const [showConnections, setShowConnections] = useState(false)
     const [replayMode, setReplayMode] = useState(false)
     const [replayTime, setReplayTime] = useState<number | null>(null)
+    
+    // Detección de móvil
+    const [isMobile, setIsMobile] = useState(false)
+    
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 768) // md breakpoint de Tailwind
+        }
+        
+        checkMobile()
+        window.addEventListener('resize', checkMobile)
+        return () => window.removeEventListener('resize', checkMobile)
+    }, [])
 
     // Estado de ventanas flotantes
     const [windows, setWindows] = useState<Record<FloatingWindow, WindowState>>({
@@ -276,7 +289,75 @@ export default function FullscreenMapPage() {
         )
     }
 
-    /* ===================== RENDER ===================== */
+    /* ===================== MOBILE VIEW ===================== */
+    
+    if (isMobile) {
+        return (
+            <main className="h-screen w-screen bg-black overflow-hidden">
+                {/* Mensaje de rotación solo en portrait */}
+                <div className="portrait-only fixed inset-0 bg-black z-50 flex flex-col items-center justify-center gap-4 p-8">
+                    <svg className="w-16 h-16 text-gray-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    <p className="text-lg font-medium text-gray-300 text-center">Please rotate your device</p>
+                    <p className="text-sm text-gray-500 text-center">For the best experience, use landscape mode</p>
+                </div>
+                
+                {/* Contenido del mapa */}
+                <div className="landscape-only h-full w-full">
+                    {loading ? (
+                        <div className="flex items-center justify-center h-full text-gray-400">
+                            Loading map...
+                        </div>
+                    ) : (
+                        <MapboxMap
+                            events={filteredEvents}
+                            onSelectSatelliteFocus={(focus) => setSatelliteFocus(focus)}
+                            heatmapMode={false}
+                            showConnections={false}
+                        />
+                    )}
+                </div>
+                
+                <style jsx global>{`
+                    /* Mostrar/ocultar según orientación */
+                    @media screen and (max-width: 768px) {
+                        /* En landscape: ocultar mensaje, mostrar mapa */
+                        @media (orientation: landscape) {
+                            .portrait-only {
+                                display: none !important;
+                            }
+                            .landscape-only {
+                                display: block !important;
+                            }
+                        }
+                        
+                        /* En portrait: mostrar mensaje, ocultar mapa */
+                        @media (orientation: portrait) {
+                            .portrait-only {
+                                display: flex !important;
+                            }
+                            .landscape-only {
+                                display: none !important;
+                            }
+                        }
+                    }
+                    
+                    /* En desktop: siempre mostrar contenido */
+                    @media screen and (min-width: 769px) {
+                        .portrait-only {
+                            display: none !important;
+                        }
+                        .landscape-only {
+                            display: block !important;
+                        }
+                    }
+                `}</style>
+            </main>
+        )
+    }
+
+    /* ===================== DESKTOP VIEW ===================== */
 
     return (
         <main className="h-screen flex flex-col bg-black">
