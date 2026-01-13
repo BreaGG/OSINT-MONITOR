@@ -454,9 +454,9 @@ export default function MapboxMap({
         </div>
       )}
 
-      {/* DAY/NIGHT TOGGLE (solo en fullscreen) */}
+      {/* DAY/NIGHT TOGGLE (solo en fullscreen y desktop) */}
       {isFullscreenPage && (
-        <div className="absolute bottom-3 left-2 z-20">
+        <div className="absolute bottom-3 left-2 z-20 hidden md:block">
           <div className="bg-black/90 border border-gray-800 rounded p-2 w-[160px]">
             <button
               onClick={() => setShowDayNight(!showDayNight)}

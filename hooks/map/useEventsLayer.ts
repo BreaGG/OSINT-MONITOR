@@ -14,6 +14,153 @@ type UseEventsLayerProps = {
   onSelectSatelliteFocus?: (focus: SatelliteFocus) => void;
 };
 
+/* ===================== COUNTRY COORDINATES ===================== */
+// Coordenadas ajustadas para evitar superposiciones con capitales
+const COUNTRY_COORDS: Record<string, [number, number][]> = {
+  // Venezuela - centro del país (lejos de Caracas)
+  "Venezuela": [
+    [-66.0, 7.0],     // Centro
+    [-64.5, 6.5],     // Este
+    [-67.5, 8.0],     // Oeste
+    [-65.0, 4.5],     // Sur
+  ],
+  
+  // USA - por regiones/estados
+  "United States": [
+    [-95.7, 37.0],    // Centro
+    [-118.2, 34.0],   // California
+    [-87.6, 41.8],    // Illinois
+    [-95.3, 29.7],    // Texas
+    [-112.0, 33.4],   // Arizona
+    [-84.3, 33.7],    // Georgia
+    [-122.3, 47.6],   // Washington
+    [-104.9, 39.7],   // Colorado
+    [-93.2, 44.9],    // Minnesota
+    [-122.6, 45.5],   // Oregon
+    [-71.0, 42.3],    // Massachusetts
+    [-80.1, 25.7],    // Florida
+  ],
+  
+  // Russia - por regiones
+  "Russia": [
+    [37.6, 55.7],     // Moscú región
+    [30.3, 59.9],     // San Petersburgo
+    [82.9, 55.0],     // Novosibirsk
+    [60.6, 56.8],     // Yekaterinburg
+    [92.8, 56.0],     // Krasnoyarsk
+    [131.8, 43.1],    // Vladivostok
+    [104.2, 52.2],    // Irkutsk
+    [49.1, 55.7],     // Kazan
+    [39.7, 47.2],     // Rostov
+    [135.0, 48.4],    // Khabarovsk
+  ],
+  
+  "Russian Federation": [
+    [37.6, 55.7],     // Moscú región
+    [30.3, 59.9],     // San Petersburgo
+    [82.9, 55.0],     // Novosibirsk
+    [60.6, 56.8],     // Yekaterinburg
+    [92.8, 56.0],     // Krasnoyarsk
+    [131.8, 43.1],    // Vladivostok
+    [104.2, 52.2],    // Irkutsk
+    [49.1, 55.7],     // Kazan
+    [39.7, 47.2],     // Rostov
+    [135.0, 48.4],    // Khabarovsk
+  ],
+  
+  // China - por regiones
+  "China": [
+    [116.4, 39.9],    // Beijing
+    [121.4, 31.2],    // Shanghai
+    [113.2, 23.1],    // Guangzhou
+    [114.0, 22.5],    // Shenzhen
+    [104.0, 30.5],    // Chengdu
+    [114.3, 30.5],    // Wuhan
+    [120.1, 30.2],    // Hangzhou
+    [108.9, 34.3],    // Xi'an
+    [126.5, 45.8],    // Harbin
+    [102.8, 24.8],    // Kunming
+  ],
+  
+  // Ukraine
+  "Ukraine": [
+    [30.5, 50.4],     // Kyiv
+    [36.2, 49.9],     // Kharkiv
+    [35.0, 48.4],     // Dnipro
+    [30.7, 46.4],     // Odesa
+    [24.0, 49.8],     // Lviv
+    [35.1, 47.8],     // Zaporizhzhia
+  ],
+  
+  // Syria
+  "Syria": [
+    [36.2, 33.5],     // Damascus
+    [37.1, 36.2],     // Aleppo
+    [36.7, 34.7],     // Homs
+    [36.6, 35.9],     // Idlib
+    [39.0, 35.9],     // Raqqa
+  ],
+  
+  // Israel
+  "Israel": [
+    [35.2, 31.7],     // Jerusalem
+    [34.7, 32.0],     // Tel Aviv
+    [34.9, 32.7],     // Haifa
+    [34.8, 31.2],     // Sur
+  ],
+  
+  // Iran
+  "Iran": [
+    [51.3, 35.6],     // Tehran
+    [51.6, 32.6],     // Isfahan
+    [59.5, 36.2],     // Mashhad
+    [46.2, 38.0],     // Tabriz
+  ],
+  
+  // Turkey
+  "Turkey": [
+    [32.8, 39.9],     // Ankara
+    [28.9, 41.0],     // Istanbul
+    [27.1, 38.4],     // Izmir
+    [37.0, 37.0],     // Sur
+  ],
+}
+
+// Sistema de dispersión para múltiples eventos en el mismo país
+const eventPositionMap = new Map<string, number>()
+
+function getEventCoordinates(event: Event): [number, number] {
+  // Si el evento ya tiene coordenadas específicas, usarlas
+  if (event.lon && event.lat) {
+    return [event.lon, event.lat]
+  }
+  
+  const country = event.country
+  if (!country) return [0, 0]
+  
+  // Obtener ubicaciones disponibles para este país
+  const locations = COUNTRY_COORDS[country]
+  
+  if (!locations || locations.length === 0) {
+    // Si no hay ubicaciones predefinidas, usar coordenadas del evento
+    return [event.lon || 0, event.lat || 0]
+  }
+  
+  // Obtener índice para este país (rotación entre ubicaciones)
+  const currentIndex = eventPositionMap.get(country) || 0
+  const location = locations[currentIndex % locations.length]
+  
+  // Incrementar índice para el próximo evento
+  eventPositionMap.set(country, currentIndex + 1)
+  
+  // Añadir jitter pequeño para evitar superposición exacta
+  const jitter = 0.3 // ~33km
+  return [
+    location[0] + (Math.random() - 0.5) * jitter,
+    location[1] + (Math.random() - 0.5) * jitter,
+  ]
+}
+
 export function useEventsLayer({
   map,
   events,
@@ -22,28 +169,34 @@ export function useEventsLayer({
   onSelectSatelliteFocus,
 }: UseEventsLayerProps) {
   /* ===================== GEOJSON ===================== */
-  const eventsGeoJSON = useMemo(
-    () => ({
+  const eventsGeoJSON = useMemo(() => {
+    // Resetear mapa de posiciones al recalcular
+    eventPositionMap.clear()
+    
+    return {
       type: "FeatureCollection" as const,
-      features: events.filter(hasCoordinates).map((e) => ({
-        type: "Feature" as const,
-        properties: {
-          id: e.id,
-          title: e.title,
-          country: e.country,
-          category: e.category,
-          color:
-            categoryColors[e.category as keyof typeof categoryColors]?.color ??
-            "#9ca3af",
-        },
-        geometry: {
-          type: "Point" as const,
-          coordinates: [e.lon, e.lat],
-        },
-      })),
-    }),
-    [events]
-  );
+      features: events.filter(hasCoordinates).map((e) => {
+        const [lon, lat] = getEventCoordinates(e)
+        
+        return {
+          type: "Feature" as const,
+          properties: {
+            id: e.id,
+            title: e.title,
+            country: e.country,
+            category: e.category,
+            color:
+              categoryColors[e.category as keyof typeof categoryColors]?.color ??
+              "#9ca3af",
+          },
+          geometry: {
+            type: "Point" as const,
+            coordinates: [lon, lat],
+          },
+        }
+      }),
+    }
+  }, [events]);
 
   /* ===================== EVENTS ===================== */
   const eventHandlers = useMemo(
@@ -81,7 +234,7 @@ export function useEventsLayer({
               font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
               min-width: 280px;
               max-width: 320px;
-              background: #000;
+              background: #0f172a;
               border: 1px solid #334155;
               border-radius: 4px;
               overflow: hidden;
@@ -240,14 +393,14 @@ export function useEventsLayer({
         }
 
         // ⚙️ VELOCIDAD DE ANIMACIÓN (mayor = más rápido)
-        pulse += direction * 0.012; // Ajusta entre 0.01 (lento) y 0.05 (rápido)
+        pulse += direction * 0.01; // Ajusta entre 0.01 (lento) y 0.05 (rápido)
 
         if (pulse >= 1) direction = -1;
         if (pulse <= 0) direction = 1;
 
         try {
           // 🔵 TAMAÑO DEL HALO
-          const baseRadius = 15;      // Tamaño inicial del halo
+          const baseRadius = 10;      // Tamaño inicial del halo
           const pulseAmount = 15;     // Cuánto crece (ajusta entre 10-50)
           map.setPaintProperty(
             "events-halo",
@@ -256,8 +409,8 @@ export function useEventsLayer({
           );
 
           // 💧 OPACIDAD DEL HALO
-          const startOpacity = 0.09;   // Opacidad inicial (0-1)
-          const fadeAmount = 0.05;    // Cuánto se desvanece
+          const startOpacity = 0.4;   // Opacidad inicial (0-1)
+          const fadeAmount = 0.35;    // Cuánto se desvanece
           map.setPaintProperty(
             "events-halo",
             "circle-opacity",
@@ -297,9 +450,9 @@ export function useEventsLayer({
         type: "circle",
         source: "events",
         paint: {
-          "circle-radius": 15,        // ⚙️ Tamaño inicial (debe coincidir con baseRadius)
+          "circle-radius": 10,        // ⚙️ Tamaño inicial (debe coincidir con baseRadius)
           "circle-color": ["get", "color"],
-          "circle-opacity": 0.09,      // ⚙️ Opacidad inicial (debe coincidir con startOpacity)
+          "circle-opacity": 0.4,      // ⚙️ Opacidad inicial (debe coincidir con startOpacity)
           "circle-blur": 0,           // NÍTIDO (0 = sin blur)
         },
         // SIN beforeId para que esté por encima de hotzones
