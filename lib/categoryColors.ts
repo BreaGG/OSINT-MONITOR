@@ -1,26 +1,49 @@
 export const categoryColors = {
   conflict: {
-    label: "Conflict",
-    color: "#dc2626", // rojo intenso – prioridad máxima
+    label: "CONFLICT",
+    color: "#ef4444", // Red
+    description: "Armed conflicts, military operations, warfare"
+  },
+  terrorism: {
+    label: "TERRORISM",
+    color: "#dc2626", // Dark Red
+    description: "Terrorist activities, extremism, insurgency"
+  },
+  nuclear: {
+    label: "NUCLEAR",
+    color: "#f97316", // Orange
+    description: "Nuclear threats, WMD, proliferation"
+  },
+  cyber: {
+    label: "CYBER",
+    color: "#8b5cf6", // Purple
+    description: "Cyberattacks, hacking, data breaches"
   },
   disaster: {
-    label: "Disaster",
-    color: "#ea580c", // naranja – emergencia no militar
-  },
-  politics: {
-    label: "Politics",
-    color: "#2563eb", // azul institucional
+    label: "DISASTER",
+    color: "#f59e0b", // Amber
+    description: "Natural disasters, emergencies, accidents"
   },
   health: {
-    label: "Health",
-    color: "#16a34a", // verde sanitario
+    label: "HEALTH",
+    color: "#10b981", // Green
+    description: "Pandemics, outbreaks, public health"
+  },
+  climate: {
+    label: "CLIMATE",
+    color: "#06b6d4", // Cyan
+    description: "Climate change, environmental issues"
   },
   economy: {
-    label: "Economy",
-    color: "#64748b", // slate/steel – macro, sobrio
+    label: "ECONOMY",
+    color: "#3b82f6", // Blue
+    description: "Markets, finance, economic indicators"
   },
-  sports: {
-    label: "Sports",
-    color: "#4b5563", // gris apagado – no prioritario
+  politics: {
+    label: "POLITICS",
+    color: "#6366f1", // Indigo
+    description: "Government, elections, diplomacy"
   },
-} as const
+} as const;
+
+export type CategoryType = keyof typeof categoryColors;

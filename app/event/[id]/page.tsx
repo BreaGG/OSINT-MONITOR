@@ -47,6 +47,36 @@ function intelSummary(event: Event) {
                 event.id
             )
 
+        case "terrorism":
+            return pickVariant(
+                [
+                    `Extremist activity reported in ${country} indicates potential security threats requiring immediate attention.`,
+                    `Counter-terrorism developments in ${country} suggest ongoing efforts to neutralize hostile actors.`,
+                    `Intelligence from ${country} points to possible radicalization or organized militant activity.`,
+                ],
+                event.id
+            )
+
+        case "nuclear":
+            return pickVariant(
+                [
+                    `Nuclear developments in ${country} require close monitoring for proliferation or strategic implications.`,
+                    `WMD-related activity in ${country} may have significant regional or global security ramifications.`,
+                    `Reports from ${country} indicate nuclear capability changes that could alter strategic balance.`,
+                ],
+                event.id
+            )
+
+        case "cyber":
+            return pickVariant(
+                [
+                    `Cyber activity targeting ${country} infrastructure suggests sophisticated threat actors at work.`,
+                    `Digital security developments in ${country} indicate potential vulnerabilities or ongoing attacks.`,
+                    `Cybersecurity incidents in ${country} may have cascading effects on critical systems.`,
+                ],
+                event.id
+            )
+
         case "politics":
             return pickVariant(
                 [
@@ -87,11 +117,12 @@ function intelSummary(event: Event) {
                 event.id
             )
 
-        case "sports":
+        case "climate":
             return pickVariant(
                 [
-                    `Sports-related reporting from ${country} has limited strategic relevance but may reflect public sentiment.`,
-                    `Athletic or sporting developments in ${country} are noted with low strategic impact.`,
+                    `Climate-related developments in ${country} may have long-term environmental or economic consequences.`,
+                    `Environmental conditions in ${country} indicate potential impacts on resource availability or population displacement.`,
+                    `Climate indicators from ${country} suggest evolving risks to infrastructure and societal stability.`,
                 ],
                 event.id
             )
@@ -115,10 +146,10 @@ export default function EventDetail() {
 
     // Detectar de dónde viene el usuario
     const [referrer, setReferrer] = useState<"home" | "map">("home")
-
+    
     // Detectar móvil
     const [isMobile, setIsMobile] = useState(false)
-
+    
     useEffect(() => {
         const checkMobile = () => {
             setIsMobile(window.innerWidth < 768)
@@ -381,6 +412,52 @@ export default function EventDetail() {
                                     {intelSummary(event)}
                                 </p>
                             </div>
+                            
+                            {/* SOURCE LINK */}
+                            <div className="flex flex-col gap-2 w-full">
+                                {/* BACK BUTTON - Solo móvil */}
+                                {isMobile && (
+                                    <button
+                                        onClick={handleBack}
+                                        className="
+                                            inline-flex items-center justify-center gap-2
+                                            px-4 py-2 rounded-lg
+                                            bg-gray-900/50 hover:bg-gray-900
+                                            border border-gray-700/50 hover:border-gray-600
+                                            text-sm text-gray-300 hover:text-white
+                                            transition-all duration-200
+                                            group w-full
+                                        "
+                                    >
+                                        <svg className="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                        </svg>
+                                        <span>Back to {referrer === "map" ? "map" : "monitor"}</span>
+                                    </button>
+                                )}
+                                
+                                {/* SOURCE LINK */}
+                                <a
+                                    href={event.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="
+                                    inline-flex items-center gap-2
+                                    px-4 py-2 rounded-lg
+                                    bg-gray-800/50 hover:bg-gray-800
+                                    border border-gray-700/50 hover:border-gray-600
+                                    text-sm text-gray-300 hover:text-white
+                                    transition-all duration-200
+                                    group w-full justify-center
+                                "
+                                >
+                                    <span>Read full article on {event.source}</span>
+                                    <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                    </svg>
+                                </a>
+                            </div>
+
                         </div>
                     </div>
 
@@ -418,52 +495,6 @@ export default function EventDetail() {
                             </div>
                         </div>
                     )}
-                    {/* SOURCE LINK */}
-                    <div className="flex flex-col gap-2 w-full">
-                        {/* SOURCE LINK */}
-                        <a
-                            href={event.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="
-                                    inline-flex items-center gap-2
-                                    px-4 py-2 rounded-lg
-                                    bg-gray-800/50 hover:bg-gray-800
-                                    border border-gray-700/50 hover:border-gray-600
-                                    text-sm text-gray-300 hover:text-white
-                                    transition-all duration-200
-                                    group w-full justify-center
-                                "
-                        >
-                            <span>Read full article on {event.source}</span>
-                            <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                            </svg>
-                        </a>
-                        {/* BACK BUTTON - Solo móvil */}
-                        {isMobile && (
-                            <button
-                                onClick={() => {
-                                            sessionStorage.setItem("event-origin", "home")
-                                            router.push("/map")
-                                        }}
-                                className="
-                                            inline-flex items-center justify-center gap-2
-                                            px-4 py-2 rounded-lg
-                                            bg-gray-900/50 hover:bg-gray-900
-                                            border border-gray-700/50 hover:border-gray-600
-                                            text-sm text-gray-300 hover:text-white
-                                            transition-all duration-200
-                                            group w-full
-                                        "
-                            >
-                                <svg className="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                                </svg>
-                                <span>MISSION CONTROL</span>
-                            </button>
-                        )}
-                    </div>
 
                     {/* FOOTER */}
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-6 border-t border-gray-800/50">

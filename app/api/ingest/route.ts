@@ -2,7 +2,7 @@ import Parser from "rss-parser"
 import { NextResponse } from "next/server"
 import { rssSources } from "@/lib/rssSources"
 import { resolveCountry } from "@/lib/detectCountry"
-import { detectCategory } from "@/lib/detectCategory"
+import { detectCategory, shouldFilterOut, getRelevanceScore } from "@/lib/detectCategory"
 import { extractImage } from "@/lib/extractImage"
 import { extractArticle } from "@/lib/extractArticle"
 import sql from "@/lib/db"
@@ -11,17 +11,45 @@ import { headers } from "next/headers"
 
 const parser = new Parser()
 
+/* ===================== FILTER STATS ===================== */
+interface IngestStats {
+  processed: number
+  filtered: number
+  inserted: number
+  filterRate: string
+  byCategory: Record<string, number>
+  bySeverity: {
+    critical: number    // score 8-10
+    high: number        // score 6-7
+    medium: number      // score 4-5
+    low: number         // score 1-3
+  }
+}
+
 /* ===================== CORE INGEST LOGIC ===================== */
-/* ⚠️ NO CAMBIAR: lógica original encapsulada */
 
 async function runIngest() {
-  let inserted = 0
+  const stats: IngestStats = {
+    processed: 0,
+    filtered: 0,
+    inserted: 0,
+    filterRate: '0%',
+    byCategory: {},
+    bySeverity: {
+      critical: 0,
+      high: 0,
+      medium: 0,
+      low: 0,
+    }
+  }
 
   for (const source of rssSources) {
     try {
       const feed = await parser.parseURL(source.url)
 
       for (const item of feed.items.slice(0, 50)) {
+        stats.processed++
+        
         const id = `${source.name}-${item.guid || item.link}`
 
         // 🔍 Evitar duplicados (DB, no memoria)
@@ -31,8 +59,38 @@ async function runIngest() {
         if (existing.length > 0) continue
 
         const text = `${item.title ?? ""} ${item.contentSnippet ?? ""}`
+        
+        // ❌ FILTRADO 1: Excluir contenido irrelevante (deportes, entretenimiento)
+        if (shouldFilterOut(text)) {
+          stats.filtered++
+          continue
+        }
+
         const detected = resolveCountry(text)
         const category = detectCategory(text)
+        
+        // 📊 Calcular puntuación de relevancia
+        const relevanceScore = getRelevanceScore(text, category)
+        
+        // ❌ FILTRADO 2: Excluir eventos con relevancia 0
+        if (relevanceScore === 0) {
+          stats.filtered++
+          continue
+        }
+
+        // 📊 Actualizar estadísticas por categoría
+        stats.byCategory[category] = (stats.byCategory[category] || 0) + 1
+        
+        // 📊 Actualizar estadísticas por severidad
+        if (relevanceScore >= 8) {
+          stats.bySeverity.critical++
+        } else if (relevanceScore >= 6) {
+          stats.bySeverity.high++
+        } else if (relevanceScore >= 4) {
+          stats.bySeverity.medium++
+        } else {
+          stats.bySeverity.low++
+        }
 
         let image =
           (item.enclosure && item.enclosure.url) ||
@@ -60,6 +118,7 @@ async function runIngest() {
           url: item.link || "",
           image,
           content,
+          relevanceScore,
         }
 
         await sql`
@@ -82,17 +141,44 @@ async function runIngest() {
           )
         `
 
-        inserted++
+        stats.inserted++
       }
     } catch (error) {
       console.error(`Error ingesting ${source.name}`, error)
     }
   }
 
-  return inserted
+  // Calcular tasa de filtrado
+  if (stats.processed > 0) {
+    stats.filterRate = ((stats.filtered / stats.processed) * 100).toFixed(1) + '%'
+  }
+
+  // Log estadísticas detalladas
+  console.log('═══════════════════════════════════════════')
+  console.log('📊 OSINT INGEST STATISTICS')
+  console.log('═══════════════════════════════════════════')
+  console.log(`📥 Processed:  ${stats.processed}`)
+  console.log(`❌ Filtered:   ${stats.filtered} (${stats.filterRate})`)
+  console.log(`✅ Inserted:   ${stats.inserted}`)
+  console.log('───────────────────────────────────────────')
+  console.log('📑 BY CATEGORY:')
+  Object.entries(stats.byCategory)
+    .sort((a, b) => b[1] - a[1])
+    .forEach(([cat, count]) => {
+      console.log(`   ${cat.padEnd(12)} → ${count}`)
+    })
+  console.log('───────────────────────────────────────────')
+  console.log('🎯 BY SEVERITY:')
+  console.log(`   🔴 CRITICAL  (8-10) → ${stats.bySeverity.critical}`)
+  console.log(`   🟠 HIGH      (6-7)  → ${stats.bySeverity.high}`)
+  console.log(`   🟡 MEDIUM    (4-5)  → ${stats.bySeverity.medium}`)
+  console.log(`   ⚪ LOW       (1-3)  → ${stats.bySeverity.low}`)
+  console.log('═══════════════════════════════════════════')
+
+  return stats
 }
 
-/* ===================== GET (EXISTING, UNCHANGED) ===================== */
+/* ===================== GET (EXISTING, ENHANCED) ===================== */
 /* Uso: cron / scripts / server-to-server */
 
 export async function GET(request: Request) {
@@ -109,11 +195,11 @@ export async function GET(request: Request) {
     return new NextResponse("Unauthorized", { status: 401 })
   }
 
-  const inserted = await runIngest()
+  const stats = await runIngest()
 
   return NextResponse.json({
     status: "ok",
-    inserted,
+    ...stats
   })
 }
 
@@ -127,10 +213,10 @@ export async function POST(request: Request) {
     return new NextResponse("Unauthorized", { status: 401 })
   }
 
-  const inserted = await runIngest()
+  const stats = await runIngest()
 
   return NextResponse.json({
     status: "ok",
-    inserted,
+    ...stats
   })
 }

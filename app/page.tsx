@@ -116,9 +116,7 @@ export default function Home() {
 
   const categories = Array.from(
     new Set(
-      events
-        .map(e => e.category)
-        .filter(c => c && c !== "sports")
+      events.map(e => e.category)
     )
   ).sort()
 
