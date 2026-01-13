@@ -1,7 +1,6 @@
 import { useMemo, useEffect } from "react";
 import mapboxgl from "mapbox-gl";
 import { activeConflicts } from "@/lib/activeConflicts";
-import { renderConflictPopup } from "@/components/map/popups";
 import { useMapLayer } from "./useMapLayer";
 import type { SatelliteFocus } from "@/components/SatelliteView";
 
@@ -47,7 +46,7 @@ export function useConflictsLayer({
     const height = 30;   // Alto en píxeles
 
     // 🎨 COLORES (ajustables)
-    const fillColor = "	rgb(220, 38, 38, 0.25)";  // Relleno granate translúcido 75%
+    const fillColor = "rgb(220, 38, 38, 0.25)";  // Relleno granate translúcido 75%
     const strokeColor = "rgba(127, 29, 29)";                // Borde rojo sólido
     const strokeWidth = 2.5;                      // Grosor del borde
 
@@ -96,19 +95,182 @@ export function useConflictsLayer({
           const c = e.features?.[0]?.properties;
           if (!c || !popupRef.current) return;
 
+          // Determinar colores según nivel de conflicto
+          const level = (c.level || "low") as "high" | "medium" | "low";
+          const levelConfigs = {
+            high: {
+              bg: '#7f1d1d',
+              text: '#ef4444',
+              headerBg: '#dc2626',
+              label: 'HIGH'
+            },
+            medium: {
+              bg: '#78350f',
+              text: '#f97316',
+              headerBg: '#f97316',
+              label: 'MEDIUM'
+            },
+            low: {
+              bg: '#713f12',
+              text: '#fbbf24',
+              headerBg: '#fbbf24',
+              label: 'LOW'
+            }
+          };
+          
+          const levelConfig = levelConfigs[level] || levelConfigs.low;
+
+          const content = `
+            <div style="
+              padding: 0;
+              font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+              min-width: 320px;
+              max-width: 360px;
+              background: #000000;
+              border: 1px solid #334155;
+              border-radius: 4px;
+              overflow: hidden;
+            ">
+              <div style="
+                background: ${levelConfig.headerBg};
+                padding: 10px 12px;
+              ">
+                <div style="
+                  font-size: 11px;
+                  font-weight: 600;
+                  color: rgba(255,255,255,0.9);
+                  text-transform: uppercase;
+                  letter-spacing: 0.5px;
+                  margin-bottom: 2px;
+                ">Active Conflict</div>
+                <div style="
+                  font-size: 15px;
+                  font-weight: 700;
+                  color: #ffffff;
+                  letter-spacing: -0.3px;
+                ">${c.name}</div>
+              </div>
+              
+              <div style="padding: 12px;">
+                <div style="
+                  display: inline-block;
+                  background: ${levelConfig.bg};
+                  color: ${levelConfig.text};
+                  padding: 4px 8px;
+                  border-radius: 3px;
+                  font-size: 10px;
+                  font-weight: 600;
+                  text-transform: uppercase;
+                  letter-spacing: 0.3px;
+                  margin-bottom: 10px;
+                ">${levelConfig.label} INTENSITY</div>
+                
+                ${c.description ? `
+                  <div style="
+                    font-size: 12px;
+                    color: #cbd5e1;
+                    line-height: 1.5;
+                    margin-bottom: 10px;
+                  ">${c.description}</div>
+                ` : ''}
+                
+                <div style="
+                  display: grid;
+                  grid-template-columns: 1fr 1fr;
+                  gap: 8px;
+                  margin-bottom: 10px;
+                ">
+                  ${c.startDate ? `
+                    <div style="
+                      background: #1e293b;
+                      padding: 6px 8px;
+                      border-radius: 3px;
+                    ">
+                      <div style="
+                        font-size: 9px;
+                        color: #64748b;
+                        text-transform: uppercase;
+                        letter-spacing: 0.3px;
+                        margin-bottom: 2px;
+                      ">Start Date</div>
+                      <div style="
+                        font-size: 11px;
+                        font-weight: 600;
+                        color: #cbd5e1;
+                      ">${c.startDate}</div>
+                    </div>
+                  ` : ''}
+                  
+                  ${c.casualties ? `
+                    <div style="
+                      background: #1e293b;
+                      padding: 6px 8px;
+                      border-radius: 3px;
+                    ">
+                      <div style="
+                        font-size: 9px;
+                        color: #64748b;
+                        text-transform: uppercase;
+                        letter-spacing: 0.3px;
+                        margin-bottom: 2px;
+                      ">Casualties</div>
+                      <div style="
+                        font-size: 11px;
+                        font-weight: 600;
+                        color: #ef4444;
+                      ">${c.casualties}</div>
+                    </div>
+                  ` : ''}
+                  
+                  ${c.displaced ? `
+                    <div style="
+                      background: #1e293b;
+                      padding: 6px 8px;
+                      border-radius: 3px;
+                      grid-column: span 2;
+                    ">
+                      <div style="
+                        font-size: 9px;
+                        color: #64748b;
+                        text-transform: uppercase;
+                        letter-spacing: 0.3px;
+                        margin-bottom: 2px;
+                      ">Displaced</div>
+                      <div style="
+                        font-size: 11px;
+                        font-weight: 600;
+                        color: #f59e0b;
+                      ">${c.displaced}</div>
+                    </div>
+                  ` : ''}
+                </div>
+                
+                ${c.belligerents ? `
+                  <div style="
+                    padding-top: 10px;
+                    border-top: 1px solid #1e293b;
+                  ">
+                    <div style="
+                      font-size: 9px;
+                      color: #64748b;
+                      text-transform: uppercase;
+                      letter-spacing: 0.3px;
+                      margin-bottom: 6px;
+                    ">Belligerents</div>
+                    <div style="
+                      font-size: 11px;
+                      color: #94a3b8;
+                      line-height: 1.4;
+                    ">${c.belligerents}</div>
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+          `;
+
           popupRef.current
             .setLngLat(e.lngLat)
-            .setHTML(
-              renderConflictPopup({
-                name: c.name,
-                startDate: c.startDate,
-                level: c.level,
-                casualties: c.casualties,
-                displaced: c.displaced,
-                description: c.description,
-                belligerents: c.belligerents,
-              })
-            )
+            .setHTML(content)
             .addTo(map);
         },
         onMouseLeave: () => {

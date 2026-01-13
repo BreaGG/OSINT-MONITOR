@@ -22,6 +22,7 @@ import { useTrafficLayer } from "@/hooks/map/useTrafficLayer"
 import { useConnectionsLayer } from "@/hooks/map/useConnectionsLayer"
 import { useHeatmapLayer } from "@/hooks/map/useHeatmapLayer"
 import { useDayNightLayer } from "@/hooks/map/useDayNightLayer"
+import { useHubsLayer } from "@/hooks/map/useHubsLayer"
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
 
@@ -52,15 +53,8 @@ export default function MapboxMap({
   const [timeWindow, setTimeWindow] = useState<TimeWindow>("24h")
   // Siempre usar dark por defecto
   const mapStyle = "dark"
-  // Day/Night toggle - iniciar desactivado
+  // Day/Night toggle - DESACTIVADO por defecto
   const [showDayNight, setShowDayNight] = useState(false)
-
-  // Activar day/night en fullscreen después del mount
-  useEffect(() => {
-    if (isFullscreenPage && ready) {
-      setShowDayNight(true)
-    }
-  }, [isFullscreenPage, ready])
 
   const [layers, setLayers] = useState({
     events: true,
@@ -69,6 +63,7 @@ export default function MapboxMap({
     chokepoints: true,
     conflicts: true,
     militaryBases: true,
+    hubs: false, // Desactivado por defecto
     aircraft: false,  // Desactivado por defecto
     vessels: false,
   })
@@ -176,6 +171,14 @@ export default function MapboxMap({
     popupRef,
   })
 
+  // Hubs layer (solo en fullscreen)
+  useHubsLayer({
+    map: ready ? mapRef.current : null,
+    visible: layers.hubs && isFullscreenPage, // Solo visible en fullscreen
+    popupRef,
+    onSelectSatelliteFocus,
+  })
+
   // Tráfico en tiempo real (solo si está habilitado)
   const { loading: aircraftLoading, count: aircraftCount } = useTrafficLayer({
     map: ready ? mapRef.current : null,
@@ -234,15 +237,16 @@ export default function MapboxMap({
       const map = new mapboxgl.Map({
         container: containerRef.current,
         style: "mapbox://styles/mapbox/dark-v11", // Siempre dark
-        center: MAP_CONFIG.INITIAL_CENTER,
-        zoom: MAP_CONFIG.INITIAL_ZOOM,
+        center: isFullscreenPage ? [10, 25] : MAP_CONFIG.INITIAL_CENTER, // Centrado entre USA/Venezuela y Europa/Oriente Medio
+        zoom: isFullscreenPage ? 2.2 : MAP_CONFIG.INITIAL_ZOOM, // Zoom 2.2 (ligero zoom in pero se ve todo)
         minZoom: MAP_CONFIG.MIN_ZOOM,
         maxZoom: MAP_CONFIG.MAX_ZOOM,
         projection: { name: "mercator" },
         attributionControl: false,
       })
 
-      map.addControl(new mapboxgl.NavigationControl(), "bottom-right")
+      // NO añadir controles de navegación de Mapbox
+      // map.addControl(new mapboxgl.NavigationControl(), "bottom-right")
 
       map.on("load", () => {
         popupRef.current = new mapboxgl.Popup({
@@ -267,7 +271,7 @@ export default function MapboxMap({
     } catch (error) {
       console.error("Failed to initialize map:", error)
     }
-  }, []) // Sin dependencia de mapStyle
+  }, [isFullscreenPage]) // Añadir dependencia de isFullscreenPage
 
   /* ===================== HOVER HIGHLIGHT ===================== */
 
@@ -348,8 +352,8 @@ export default function MapboxMap({
       {/* LAYER CONTROLS */}
       <div className="absolute top-2 left-2 z-10 space-y-1 text-xs">
         {Object.entries(layers).map(([key, value]) => {
-          // Ocultar controles de tráfico si no estamos en fullscreen
-          if ((key === "aircraft" || key === "vessels") && !isFullscreenPage) {
+          // Ocultar controles de tráfico y hubs si no estamos en fullscreen
+          if ((key === "aircraft" || key === "vessels" || key === "hubs") && !isFullscreenPage) {
             return null
           }
 
@@ -370,7 +374,8 @@ export default function MapboxMap({
             >
               {key === "aircraft" && "✈ AIRCRAFT"}
               {key === "vessels" && "⚓ VESSELS"}
-              {key !== "aircraft" && key !== "vessels" && key.toUpperCase()}
+              {key === "hubs" && "◉ HUBS"}
+              {key !== "aircraft" && key !== "vessels" && key !== "hubs" && key.toUpperCase()}
             </button>
           )
         })}
@@ -384,6 +389,57 @@ export default function MapboxMap({
             className="px-3 py-1.5 rounded border bg-black/80 border-gray-700 text-gray-200 text-xs hover:bg-black transition"
           >
             MISSION CONTROL (F)
+          </button>
+        </div>
+      )}
+
+      {/* CUSTOM MAP CONTROLS (solo en fullscreen) */}
+      {isFullscreenPage && (
+        <div className="absolute top-2 right-2 z-20 flex flex-col gap-1">
+          {/* Botón centrar mapa */}
+          <button
+            onClick={() => {
+              if (mapRef.current) {
+                mapRef.current.flyTo({
+                  center: [10, 25], // Centrado entre USA/Venezuela y Europa/Oriente Medio
+                  zoom: 2.2,
+                  duration: 1500,
+                })
+              }
+            }}
+            className="w-9 h-9 rounded border bg-black/90 border-gray-700 text-gray-300 hover:text-white hover:border-gray-600 transition flex items-center justify-center"
+            title="Center map"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+            </svg>
+          </button>
+          
+          {/* Botón zoom in */}
+          <button
+            onClick={() => {
+              if (mapRef.current) {
+                mapRef.current.zoomIn({ duration: 300 })
+              }
+            }}
+            className="w-9 h-9 rounded border bg-black/90 border-gray-700 text-gray-300 hover:text-white hover:border-gray-600 transition flex items-center justify-center text-xl font-light"
+            title="Zoom in"
+          >
+            +
+          </button>
+          
+          {/* Botón zoom out */}
+          <button
+            onClick={() => {
+              if (mapRef.current) {
+                mapRef.current.zoomOut({ duration: 300 })
+              }
+            }}
+            className="w-9 h-9 rounded border bg-black/90 border-gray-700 text-gray-300 hover:text-white hover:border-gray-600 transition flex items-center justify-center text-xl font-light"
+            title="Zoom out"
+          >
+            −
           </button>
         </div>
       )}
@@ -406,13 +462,13 @@ export default function MapboxMap({
             {/* Info visual siempre visible */}
             <div className="mt-2 pt-2 border-t border-gray-800 text-[9px] space-y-1">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: "#0a0a2e", opacity: 0.5 }} />
+                <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: "#000000", opacity: 0.25 }} />
                 <span className="text-gray-400">Night zone</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-[2px]" style={{ 
-                  background: "repeating-linear-gradient(to right, #fbbf24 0, #fbbf24 2px, transparent 2px, transparent 4px)",
-                  opacity: 0.6
+                  background: "repeating-linear-gradient(to right, #4b5563 0, #4b5563 3px, transparent 3px, transparent 6px)",
+                  opacity: 0.4
                 }} />
                 <span className="text-gray-400">Terminator</span>
               </div>

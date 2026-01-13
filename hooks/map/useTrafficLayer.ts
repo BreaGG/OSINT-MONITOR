@@ -35,6 +35,10 @@ type UseTrafficLayerProps = {
 /**
  * Hook para mostrar tráfico aéreo o marítimo en tiempo real
  *
+ * Estrategia de actualización:
+ * - API fetch: cada 3 minutos (evitar rate limits)
+ * - Animación: cada 1 segundo (interpolación suave)
+ *
  * Fuentes de datos:
  * - Aircraft: OpenSky Network API (gratuita, sin auth)
  * - Vessels: MarineTraffic / AIS (simulado para demo)
@@ -51,7 +55,7 @@ export function useTrafficLayer({
     Map<string, { lat: number; lon: number; course: number }>
   >(new Map());
 
-  // Fetch data periódicamente
+  // Fetch data periódicamente (cada 3 minutos para evitar rate limits)
   useEffect(() => {
     if (!visible || !map) return;
 
@@ -68,6 +72,11 @@ export function useTrafficLayer({
           const response = await fetch(
             "https://opensky-network.org/api/states/all"
           );
+          
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+          
           const json = await response.json();
 
           const aircraft: Aircraft[] =
@@ -86,30 +95,62 @@ export function useTrafficLayer({
               })) || [];
 
           setData(aircraft);
+          
+          // Actualizar posiciones simuladas con datos frescos de la API
+          setSimulatedPositions((prev) => {
+            const next = new Map(prev);
+            aircraft.forEach((a) => {
+              next.set(a.icao24, {
+                lat: a.latitude!,
+                lon: a.longitude!,
+                course: a.heading ?? 0,
+              });
+            });
+            return next;
+          });
+          
           console.log(`[aircraft] Loaded ${aircraft.length} aircraft`);
         } else {
           // Vessels - datos simulados (la API real requiere auth)
           const vessels: Vessel[] = generateSimulatedVessels();
           setData(vessels);
+          
+          // Inicializar posiciones simuladas
+          setSimulatedPositions((prev) => {
+            const next = new Map(prev);
+            vessels.forEach((v) => {
+              if (!next.has(v.mmsi)) {
+                next.set(v.mmsi, {
+                  lat: v.lat,
+                  lon: v.lon,
+                  course: v.course,
+                });
+              }
+            });
+            return next;
+          });
+          
           console.log(`[vessels] Generated ${vessels.length} vessels`);
         }
       } catch (error) {
         console.error(`Error fetching ${type} data:`, error);
+        // En caso de error, mantener datos anteriores
       } finally {
         setLoading(false);
       }
     };
 
+    // Fetch inicial
     fetchData();
-    const interval = setInterval(
-      fetchData,
-      type === "aircraft" ? 10000 : 30000
-    );
+    
+    // Actualizar desde API cada 3 minutos (180 segundos)
+    // Esto evita rate limits pero mantiene datos actualizados
+    const interval = setInterval(fetchData, 180000);
 
     return () => clearInterval(interval);
   }, [type, visible, map]);
 
-  // Simulación de movimiento en tiempo real
+  // Simulación de movimiento en tiempo real (cada segundo)
   useEffect(() => {
     if (!visible || data.length === 0) return;
 
@@ -126,21 +167,25 @@ export function useTrafficLayer({
               course: v.course,
             };
 
-            // Mover el barco: ~0.0001° por segundo = aprox 11 metros
-            // Un barco a 15 nudos = 27.78 km/h = 0.00463 km/s = 0.0000417°/s
-            const speed = v.speed / 3600; // nudos a km/s
-            const moveDistance = speed * 0.009; // grados por segundo (aproximado)
+            // Calcular movimiento por segundo
+            // 1 nudo = 1.852 km/h = 0.000514 km/s
+            // En grados: ~0.0000046° por segundo por nudo
+            const speedInKnotsPerSecond = v.speed * 0.000514; // km/s
+            const degreesPerSecond = speedInKnotsPerSecond * 0.009; // aprox conversión a grados
 
-            const newLat =
-              current.lat +
-              Math.cos((current.course * Math.PI) / 180) * moveDistance;
-            const newLon =
-              current.lon +
-              Math.sin((current.course * Math.PI) / 180) * moveDistance;
+            // Calcular nuevas coordenadas basadas en el rumbo
+            const courseRad = (current.course * Math.PI) / 180;
+            const newLat = current.lat + Math.cos(courseRad) * degreesPerSecond;
+            const newLon = current.lon + Math.sin(courseRad) * degreesPerSecond;
+
+            // Envolver longitudes (mundo es redondo)
+            let finalLon = newLon;
+            if (finalLon > 180) finalLon -= 360;
+            if (finalLon < -180) finalLon += 360;
 
             next.set(v.mmsi, {
-              lat: newLat,
-              lon: newLon,
+              lat: Math.max(-85, Math.min(85, newLat)), // Limitar a rango válido
+              lon: finalLon,
               course: current.course,
             });
           });
@@ -155,20 +200,25 @@ export function useTrafficLayer({
               course: a.heading,
             };
 
-            // Aviones mucho más rápidos: ~0.001° por segundo
-            const speed = (a.velocity || 250) / 3600; // m/s a km/s
-            const moveDistance = speed * 0.009;
+            // Aviones: velocidad en m/s
+            // Típico: 250 m/s = 900 km/h
+            // En grados: ~0.00225° por segundo a 250 m/s
+            const speedInKmPerSecond = (a.velocity || 250) / 1000; // km/s
+            const degreesPerSecond = speedInKmPerSecond * 0.009;
 
-            const newLat =
-              current.lat +
-              Math.cos((current.course * Math.PI) / 180) * moveDistance;
-            const newLon =
-              current.lon +
-              Math.sin((current.course * Math.PI) / 180) * moveDistance;
+            // Calcular nuevas coordenadas
+            const courseRad = (current.course * Math.PI) / 180;
+            const newLat = current.lat + Math.cos(courseRad) * degreesPerSecond;
+            const newLon = current.lon + Math.sin(courseRad) * degreesPerSecond;
+
+            // Envolver longitudes
+            let finalLon = newLon;
+            if (finalLon > 180) finalLon -= 360;
+            if (finalLon < -180) finalLon += 360;
 
             next.set(a.icao24, {
-              lat: newLat,
-              lon: newLon,
+              lat: Math.max(-85, Math.min(85, newLat)),
+              lon: finalLon,
               course: current.course,
             });
           });
@@ -178,7 +228,7 @@ export function useTrafficLayer({
       });
     };
 
-    // Actualizar posiciones cada segundo
+    // Actualizar posiciones cada segundo para movimiento suave
     const animationInterval = setInterval(animate, 1000);
 
     return () => clearInterval(animationInterval);

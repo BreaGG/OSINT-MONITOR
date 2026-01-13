@@ -1,7 +1,6 @@
 import { useMemo } from "react"
 import mapboxgl from "mapbox-gl"
 import { strategicChokepoints } from "@/lib/strategicChokepoints"
-import { renderChokepointPopup } from "@/components/map/popups"
 import { useMapLayer } from "./useMapLayer"
 import type { SatelliteFocus } from "@/components/SatelliteView"
 
@@ -65,15 +64,147 @@ export function useChokepointsLayer({
           const p = e.features?.[0]?.properties
           if (!p || !popupRef.current) return
 
+          // Determinar colores según status
+          const statusConfig = {
+            critical: {
+              bg: '#7f1d1d',
+              text: '#ef4444',
+              gradient: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+              border: '#991b1b'
+            },
+            elevated: {
+              bg: '#78350f',
+              text: '#facc15',
+              gradient: 'linear-gradient(135deg, #facc15 0%, #eab308 100%)',
+              border: '#92400e'
+            },
+            normal: {
+              bg: '#164e63',
+              text: '#38bdf8',
+              gradient: 'linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)',
+              border: '#155e75'
+            }
+            }[p.status as "critical" | "elevated" | "normal"] || {
+            bg: '#164e63',
+            text: '#38bdf8',
+            gradient: 'linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)',
+            border: '#155e75'
+          };
+
+          const content = `
+            <div style="
+              padding: 0;
+              font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+              min-width: 260px;
+              background: #000000;
+              border: 1px solid #334155;
+              border-radius: 4px;
+              overflow: hidden;
+            ">
+              <!-- Header -->
+              <div style="
+                background: ${statusConfig.gradient};
+                padding: 10px 12px;
+                border-bottom: 1px solid ${statusConfig.border};
+              ">
+                <div style="
+                  font-size: 11px;
+                  font-weight: 600;
+                  color: rgba(255,255,255,0.9);
+                  text-transform: uppercase;
+                  letter-spacing: 0.5px;
+                  margin-bottom: 2px;
+                ">Strategic Chokepoint</div>
+                <div style="
+                  font-size: 15px;
+                  font-weight: 700;
+                  color: #ffffff;
+                  letter-spacing: -0.3px;
+                ">${p.name}</div>
+              </div>
+              
+              <!-- Body -->
+              <div style="padding: 12px;">
+                <!-- Status Badge -->
+                <div style="
+                  display: inline-block;
+                  background: ${statusConfig.bg};
+                  color: ${statusConfig.text};
+                  padding: 4px 8px;
+                  border-radius: 3px;
+                  font-size: 10px;
+                  font-weight: 600;
+                  text-transform: uppercase;
+                  letter-spacing: 0.3px;
+                  margin-bottom: 10px;
+                ">${p.status} threat</div>
+                
+                <!-- Summary -->
+                ${p.summary ? `
+                  <div style="
+                    font-size: 12px;
+                    color: #cbd5e1;
+                    line-height: 1.5;
+                    margin-bottom: 10px;
+                  ">${p.summary}</div>
+                ` : ''}
+                
+                <!-- Metadata -->
+                <div style="
+                  display: flex;
+                  gap: 8px;
+                  padding-top: 10px;
+                  border-top: 1px solid #1e293b;
+                ">
+                  <div style="
+                    flex: 1;
+                    background: #1e293b;
+                    padding: 6px 8px;
+                    border-radius: 3px;
+                  ">
+                    <div style="
+                      font-size: 9px;
+                      color: #64748b;
+                      text-transform: uppercase;
+                      letter-spacing: 0.3px;
+                      margin-bottom: 2px;
+                    ">Type</div>
+                    <div style="
+                      font-size: 11px;
+                      font-weight: 600;
+                      color: ${statusConfig.text};
+                      text-transform: uppercase;
+                    ">Chokepoint</div>
+                  </div>
+                  
+                  <div style="
+                    flex: 1;
+                    background: #1e293b;
+                    padding: 6px 8px;
+                    border-radius: 3px;
+                  ">
+                    <div style="
+                      font-size: 9px;
+                      color: #64748b;
+                      text-transform: uppercase;
+                      letter-spacing: 0.3px;
+                      margin-bottom: 2px;
+                    ">Status</div>
+                    <div style="
+                      font-size: 11px;
+                      font-weight: 600;
+                      color: ${statusConfig.text};
+                      text-transform: uppercase;
+                    ">${p.status}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+
           popupRef.current
             .setLngLat(e.lngLat)
-            .setHTML(
-              renderChokepointPopup({
-                name: p.name,
-                status: p.status,
-                summary: p.summary,
-              })
-            )
+            .setHTML(content)
             .addTo(map)
         },
         onMouseLeave: () => {
