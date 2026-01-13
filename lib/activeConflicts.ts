@@ -96,4 +96,29 @@ export const activeConflicts: ActiveConflict[] = [
     belligerents: ["People's Republic of China", "Taiwan"],
     developments: ["PLA exercises", "Naval patrols", "US regional presence"],
   },
+    {
+    id: "iran",
+    name: "Iran Regional Conflict",
+    level: "HIGH",
+    lat: 32.0,
+    lon: 53.0,
+    startDate: "Ongoing",
+    casualties: "Thousands (regional, indirect)",
+    displaced: "N/A",
+    description:
+      "Iran is engaged in a regional proxy conflict involving Israel, Hezbollah, the Houthis, and indirect confrontations with the United States. Escalations include missile strikes, drone attacks, maritime incidents, and cross-border engagements.",
+    belligerents: [
+      "Islamic Republic of Iran",
+      "Israel",
+      "Hezbollah",
+      "Houthis",
+      "United States (indirect)",
+    ],
+    developments: [
+      "Missile and drone strikes",
+      "Red Sea maritime attacks",
+      "Israel–Hezbollah border clashes",
+      "US–Iran naval incidents",
+    ],
+  },
 ];
