@@ -205,6 +205,7 @@ export function useEventsLayer({
         onClick: (e: mapboxgl.MapLayerMouseEvent) => {
           const p = e.features?.[0]?.properties;
           if (!p) return;
+          sessionStorage.setItem("event-origin", "map");
 
           // Al hacer click, abrir el evento
           window.location.href = `/event/${encodeURIComponent(p.id)}`;
@@ -234,7 +235,7 @@ export function useEventsLayer({
               font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
               min-width: 280px;
               max-width: 320px;
-              background: #0f172a;
+              background: #000;
               border: 1px solid #334155;
               border-radius: 4px;
               overflow: hidden;

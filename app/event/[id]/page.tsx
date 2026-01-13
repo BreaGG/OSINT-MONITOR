@@ -113,6 +113,9 @@ export default function EventDetail() {
         useState<ReturnType<typeof buildGlobalState> | null>(null)
     const [loading, setLoading] = useState(true)
 
+    // Detectar de dónde viene el usuario
+    const [referrer, setReferrer] = useState<"home" | "map">("home")
+
     /* ===== BRIEFING MODE ===== */
     const [briefingMode, setBriefingMode] = useState(false)
 
@@ -124,6 +127,13 @@ export default function EventDetail() {
     useEffect(() => {
         localStorage.setItem("briefingMode", String(briefingMode))
     }, [briefingMode])
+
+    // Detectar origen de navegación
+    useEffect(() => {
+        // Leer de sessionStorage
+        const origin = sessionStorage.getItem("event-origin") || "home"
+        setReferrer(origin as "home" | "map")
+    }, [])
 
     useEffect(() => {
         fetch("/api/events")
@@ -144,6 +154,16 @@ export default function EventDetail() {
             })
     }, [decodedId])
 
+    // Función de navegación de vuelta
+    const handleBack = () => {
+        sessionStorage.removeItem("event-origin")
+        if (referrer === "map") {
+            router.push("/map")
+        } else {
+            router.push("/")
+        }
+    }
+
     if (loading) {
         return (
             <main className="p-6 max-w-3xl mx-auto">
@@ -157,7 +177,7 @@ export default function EventDetail() {
             <main className="p-6 max-w-3xl mx-auto">
                 <p className="text-gray-400">Event not found</p>
                 <button
-                    onClick={() => router.push("/")}
+                    onClick={handleBack}
                     className="mt-4 text-sm underline text-gray-300"
                 >
                     ← Back to monitor
@@ -185,25 +205,48 @@ export default function EventDetail() {
             {/* GLOBAL CONTEXT */}
             {globalState && <GlobalStateBar state={globalState} />}
 
-            {/* BACK + BRIEFING TOGGLE */}
-            <div className="flex items-center justify-between">
+            {/* BACK + GLOBAL ACTIONS */}
+            <div className="flex items-center justify-between gap-4">
+
+                {/* LEFT — BACK */}
                 <button
-                    onClick={() => router.push("/")}
-                    className="text-xs text-gray-400 hover:text-gray-200"
+                    onClick={handleBack}
+                    className="text-xs text-gray-400 hover:text-gray-200 transition"
                 >
-                    ← Back to monitor
+                    ← BACK TO {referrer === "map" ? "MAP" : "MONITOR"}
                 </button>
 
-                <button
-                    onClick={() => setBriefingMode(b => !b)}
-                    className="
-                        text-[11px] px-2 py-1 rounded border
-                        border-gray-700 text-gray-300
-                        hover:border-gray-500
-                    "
-                >
-                    {briefingMode ? "EXIT BRIEFING" : "BRIEFING MODE"}
-                </button>
+                {/* RIGHT — ACTIONS */}
+                <div className="flex items-center gap-2">
+
+                    {/* MISSION CONTROL */}
+                    <button
+                        onClick={() => router.push("/map")}
+                        className="
+        text-[11px] px-2 py-1 rounded border
+        border-blue-800/60 text-blue-300
+        hover:border-blue-600 hover:text-blue-200
+        transition
+      "
+                        title="Return to Mission Control"
+                    >
+                        MISSION CONTROL
+                    </button>
+
+                    {/* BRIEFING MODE */}
+                    <button
+                        onClick={() => setBriefingMode(b => !b)}
+                        className="
+        text-[11px] px-2 py-1 rounded border
+        border-gray-700 text-gray-300
+        hover:border-gray-500
+        transition
+      "
+                    >
+                        {briefingMode ? "EXIT BRIEFING" : "BRIEFING MODE"}
+                    </button>
+
+                </div>
             </div>
 
             {/* ===== TOP GRID ===== */}

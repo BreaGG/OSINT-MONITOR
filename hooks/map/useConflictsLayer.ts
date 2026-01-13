@@ -1,4 +1,4 @@
-import { useMemo, useEffect } from "react";
+import { useMemo } from "react";
 import mapboxgl from "mapbox-gl";
 import { activeConflicts } from "@/lib/activeConflicts";
 import { useMapLayer } from "./useMapLayer";
@@ -11,72 +11,72 @@ type UseConflictsLayerProps = {
   onSelectSatelliteFocus?: (focus: SatelliteFocus) => void;
 };
 
+/* ===================== CONFLICT AREA DEFINITIONS ===================== */
+// Define áreas rectangulares para cada conflicto (bounds: [minLon, minLat, maxLon, maxLat])
+const CONFLICT_AREAS: Record<string, [number, number, number, number]> = {
+  // Sudan Civil War
+  "Sudan Civil War": [21.8, 8.7, 38.6, 22.0], // Todo Sudán
+  
+  // Ukraine War
+  "Ukraine War": [22.0, 44.0, 40.5, 52.5], // Toda Ucrania + frontera Rusia
+  
+  // Gaza Conflict
+  "Gaza Conflict": [34.2, 29.5, 35.9, 33.3], // Israel + Gaza + West Bank
+  
+  // Myanmar Civil War
+  "Myanmar Civil War": [92.0, 10.0, 101.2, 28.5], // Myanmar completo
+  
+  // Taiwan Strait Tensions
+  "Taiwan Strait Tensions": [119.5, 21.5, 122.5, 26.0], // Estrecho de Taiwan
+  
+  // Iran Regional Conflict
+  "Iran Regional Conflict": [44.0, 25.0, 63.0, 40.0], // Irán + zona de influencia regional
+};
+
+// Función para crear polígono rectangular desde bounds
+function createRectanglePolygon(bounds: [number, number, number, number]) {
+  const [minLon, minLat, maxLon, maxLat] = bounds;
+  return [
+    [
+      [minLon, minLat], // Bottom-left
+      [maxLon, minLat], // Bottom-right
+      [maxLon, maxLat], // Top-right
+      [minLon, maxLat], // Top-left
+      [minLon, minLat], // Close polygon
+    ],
+  ];
+}
+
 export function useConflictsLayer({
   map,
   visible,
   popupRef,
   onSelectSatelliteFocus,
 }: UseConflictsLayerProps) {
-  const conflictsGeoJSON = useMemo(
-    () => ({
+  const conflictsGeoJSON = useMemo(() => {
+    return {
       type: "FeatureCollection" as const,
-      features: activeConflicts.map((c) => ({
-        type: "Feature" as const,
-        properties: {
-          ...c,
-          belligerents: Array.isArray(c.belligerents)
-            ? c.belligerents.join(", ")
-            : c.belligerents,
-        },
-        geometry: {
-          type: "Point" as const,
-          coordinates: [c.lon, c.lat],
-        },
-      })),
-    }),
-    []
-  );
-
-  // Crear imagen SVG del rectángulo
-  useEffect(() => {
-    if (!map) return;
-
-    // ⚙️ TAMAÑO DEL RECTÁNGULO (ajustable)
-    const width = 150;   // Ancho en píxeles
-    const height = 30;   // Alto en píxeles
-
-    // 🎨 COLORES (ajustables)
-    const fillColor = "rgb(220, 38, 38, 0.25)";  // Relleno granate translúcido 75%
-    const strokeColor = "rgba(127, 29, 29)";                // Borde rojo sólido
-    const strokeWidth = 2.5;                      // Grosor del borde
-
-    const svg = `
-      <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-        <rect 
-          x="${strokeWidth/2}" 
-          y="${strokeWidth/2}" 
-          width="${width - strokeWidth}" 
-          height="${height - strokeWidth}" 
-          fill="${fillColor}" 
-          stroke="${strokeColor}" 
-          stroke-width="${strokeWidth}"
-          rx="2"
-        />
-      </svg>
-    `;
-
-    const img = new Image(width, height);
-    img.onload = () => {
-      if (!map.hasImage("conflict-box")) {
-        map.addImage("conflict-box", img);
-      }
+      features: activeConflicts
+        .filter((c) => CONFLICT_AREAS[c.name]) // Solo conflictos con área definida
+        .map((c) => ({
+          type: "Feature" as const,
+          properties: {
+            ...c,
+            belligerents: Array.isArray(c.belligerents)
+              ? c.belligerents.join(", ")
+              : c.belligerents,
+          },
+          geometry: {
+            type: "Polygon" as const,
+            coordinates: createRectanglePolygon(CONFLICT_AREAS[c.name]),
+          },
+        })),
     };
-    img.src = "data:image/svg+xml;base64," + btoa(svg);
-  }, [map]);
+  }, []);
 
   const eventHandlers = useMemo(
     () => ({
-      "conflicts-labels": {
+      "conflicts-fill": {
         onClick: (e: mapboxgl.MapLayerMouseEvent) => {
           const c = e.features?.[0]?.properties;
           if (!c) return;
@@ -96,29 +96,29 @@ export function useConflictsLayer({
           if (!c || !popupRef.current) return;
 
           // Determinar colores según nivel de conflicto
-          const level = (c.level || "low") as "high" | "medium" | "low";
+          const level = (c.level || "LOW") as "HIGH" | "MEDIUM" | "LOW";
           const levelConfigs = {
-            high: {
-              bg: '#7f1d1d',
-              text: '#ef4444',
-              headerBg: '#dc2626',
-              label: 'HIGH'
+            HIGH: {
+              bg: "#7f1d1d",
+              text: "#ef4444",
+              headerBg: "#dc2626",
+              label: "HIGH",
             },
-            medium: {
-              bg: '#78350f',
-              text: '#f97316',
-              headerBg: '#f97316',
-              label: 'MEDIUM'
+            MEDIUM: {
+              bg: "#78350f",
+              text: "#f97316",
+              headerBg: "#f97316",
+              label: "MEDIUM",
             },
-            low: {
-              bg: '#713f12',
-              text: '#fbbf24',
-              headerBg: '#fbbf24',
-              label: 'LOW'
-            }
+            LOW: {
+              bg: "#713f12",
+              text: "#fbbf24",
+              headerBg: "#fbbf24",
+              label: "LOW",
+            },
           };
-          
-          const levelConfig = levelConfigs[level] || levelConfigs.low;
+
+          const levelConfig = levelConfigs[level] || levelConfigs.LOW;
 
           const content = `
             <div style="
@@ -142,7 +142,7 @@ export function useConflictsLayer({
                   text-transform: uppercase;
                   letter-spacing: 0.5px;
                   margin-bottom: 2px;
-                ">Active Conflict</div>
+                ">Active Conflict Zone</div>
                 <div style="
                   font-size: 15px;
                   font-weight: 700;
@@ -165,14 +165,18 @@ export function useConflictsLayer({
                   margin-bottom: 10px;
                 ">${levelConfig.label} INTENSITY</div>
                 
-                ${c.description ? `
+                ${
+                  c.description
+                    ? `
                   <div style="
                     font-size: 12px;
                     color: #cbd5e1;
                     line-height: 1.5;
                     margin-bottom: 10px;
                   ">${c.description}</div>
-                ` : ''}
+                `
+                    : ""
+                }
                 
                 <div style="
                   display: grid;
@@ -180,7 +184,9 @@ export function useConflictsLayer({
                   gap: 8px;
                   margin-bottom: 10px;
                 ">
-                  ${c.startDate ? `
+                  ${
+                    c.startDate
+                      ? `
                     <div style="
                       background: #1e293b;
                       padding: 6px 8px;
@@ -199,9 +205,13 @@ export function useConflictsLayer({
                         color: #cbd5e1;
                       ">${c.startDate}</div>
                     </div>
-                  ` : ''}
+                  `
+                      : ""
+                  }
                   
-                  ${c.casualties ? `
+                  ${
+                    c.casualties
+                      ? `
                     <div style="
                       background: #1e293b;
                       padding: 6px 8px;
@@ -220,9 +230,13 @@ export function useConflictsLayer({
                         color: #ef4444;
                       ">${c.casualties}</div>
                     </div>
-                  ` : ''}
+                  `
+                      : ""
+                  }
                   
-                  ${c.displaced ? `
+                  ${
+                    c.displaced
+                      ? `
                     <div style="
                       background: #1e293b;
                       padding: 6px 8px;
@@ -242,10 +256,14 @@ export function useConflictsLayer({
                         color: #f59e0b;
                       ">${c.displaced}</div>
                     </div>
-                  ` : ''}
+                  `
+                      : ""
+                  }
                 </div>
                 
-                ${c.belligerents ? `
+                ${
+                  c.belligerents
+                    ? `
                   <div style="
                     padding-top: 10px;
                     border-top: 1px solid #1e293b;
@@ -263,15 +281,14 @@ export function useConflictsLayer({
                       line-height: 1.4;
                     ">${c.belligerents}</div>
                   </div>
-                ` : ''}
+                `
+                    : ""
+                }
               </div>
             </div>
           `;
 
-          popupRef.current
-            .setLngLat(e.lngLat)
-            .setHTML(content)
-            .addTo(map);
+          popupRef.current.setLngLat(e.lngLat).setHTML(content).addTo(map);
         },
         onMouseLeave: () => {
           if (!map) return;
@@ -291,73 +308,48 @@ export function useConflictsLayer({
       data: conflictsGeoJSON,
     },
     layers: [
-      /* === RECTÁNGULO DE FONDO (ICONO SVG) === */
+      /* === RELLENO DEL POLÍGONO === */
       {
-        id: "conflicts-background",
-        type: "symbol",
+        id: "conflicts-fill",
+        type: "fill",
         source: "conflicts",
-        layout: {
-          // 📦 ICONO DEL RECTÁNGULO
-          "icon-image": "conflict-box",
-          
-          // ⚙️ TAMAÑO DEL ICONO (1 = tamaño original, ajustable)
-          "icon-size": 1,
-          
-          // 📍 CENTRADO
-          "icon-anchor": "center",
-          
-          // 👁️ SIEMPRE VISIBLE
-          "icon-allow-overlap": true,
-          "icon-ignore-placement": true,
-        },
         paint: {
-          // 🔆 OPACIDAD
-          "icon-opacity": 1,
+          // 🎨 Color de relleno semi-transparente
+          "fill-color": [
+            "match",
+            ["get", "level"],
+            "HIGH",
+            "#dc2626", // Rojo intenso
+            "MEDIUM",
+            "#f97316", // Naranja
+            "#fbbf24", // Amarillo (LOW por defecto)
+          ],
+          // 🔆 Opacidad del relleno
+          "fill-opacity": 0.15,
         },
       },
-
-      /* === TEXTO ENCIMA DEL RECTÁNGULO === */
+      /* === BORDE DEL POLÍGONO === */
       {
-        id: "conflicts-labels",
-        type: "symbol",
+        id: "conflicts-outline",
+        type: "line",
         source: "conflicts",
-        layout: {
-          // 📝 TEXTO DEL CONFLICTO
-          "text-field": ["get", "name"],
-          
-          // ⚙️ TAMAÑO DEL TEXTO (ajusta entre 10-13)
-          "text-size": 12,
-          
-          // 📍 CENTRADO
-          "text-anchor": "center",
-          
-          // 🔠 FUENTE EN NEGRITA
-          "text-font": ["DIN Pro Bold", "Arial Unicode MS Bold"],
-          
-          // 👁️ SIEMPRE VISIBLE (encima del rectángulo)
-          "text-allow-overlap": true,
-          "text-ignore-placement": true,
-          
-          // 📏 JUSTIFICACIÓN
-          "text-justify": "center",
-          
-          // 📝 UPPERCASE AUTOMÁTICO
-          "text-transform": "uppercase",
-          
-          // 📏 ESPACIADO ENTRE LETRAS
-          "text-letter-spacing": 0.05,
-        },
         paint: {
-          // ⚪ TEXTO BLANCO (contrasta perfecto con rojo)
-          "text-color": "#ffffff",  // ⚙️ Blanco puro (ajustable)
-          
-          // 🖤 HALO NEGRO FINO (para más contraste)
-          "text-halo-color": "#000000",
-          "text-halo-width": 1,
-          "text-halo-blur": 0,
-          
-          // 🔆 OPACIDAD
-          "text-opacity": 1,
+          // 🎨 Color del borde
+          "line-color": [
+            "match",
+            ["get", "level"],
+            "HIGH",
+            "#dc2626", // Rojo intenso
+            "MEDIUM",
+            "#f97316", // Naranja
+            "#b45309", // Amarillo oscuro (LOW por defecto)
+          ],
+          // 📏 Grosor del borde
+          "line-width": 2,
+          // 🔆 Opacidad del borde
+          "line-opacity": 0.8,
+          // ✨ Patrón de línea (opcional: hacer línea punteada)
+          "line-dasharray": [3, 2], // [longitud guión, longitud espacio]
         },
       },
     ],

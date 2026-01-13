@@ -25,6 +25,11 @@ export default function EventCard({ event }: Props) {
     1000 * 60 * 60 * 2 // 2h
 
   const isEscalating = event.category === "conflict"
+  
+  // Guardar origen cuando se hace click
+  const handleClick = () => {
+    sessionStorage.setItem("event-origin", "home")
+  }
 
   return (
     <article
@@ -71,6 +76,7 @@ export default function EventCard({ event }: Props) {
       <h3 className="font-medium leading-snug text-gray-100">
         <Link
           href={`/event/${encodeURIComponent(event.id)}`}
+          onClick={handleClick}
           className="group-hover:underline"
         >
           {event.title}
