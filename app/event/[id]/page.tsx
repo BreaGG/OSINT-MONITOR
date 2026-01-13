@@ -130,7 +130,6 @@ export default function EventDetail() {
 
     // Detectar origen de navegación
     useEffect(() => {
-        // Leer de sessionStorage
         const origin = sessionStorage.getItem("event-origin") || "home"
         setReferrer(origin as "home" | "map")
     }, [])
@@ -166,22 +165,27 @@ export default function EventDetail() {
 
     if (loading) {
         return (
-            <main className="p-6 max-w-3xl mx-auto">
-                <p className="text-gray-400">Loading event…</p>
+            <main className="min-h-screen bg-gradient-to-b from-black to-gray-950 flex items-center justify-center">
+                <div className="text-center space-y-4">
+                    <div className="w-8 h-8 border-2 border-gray-700 border-t-cyan-500 rounded-full animate-spin mx-auto" />
+                    <p className="text-gray-400">Loading event details…</p>
+                </div>
             </main>
         )
     }
 
     if (!event) {
         return (
-            <main className="p-6 max-w-3xl mx-auto">
-                <p className="text-gray-400">Event not found</p>
-                <button
-                    onClick={handleBack}
-                    className="mt-4 text-sm underline text-gray-300"
-                >
-                    ← Back to monitor
-                </button>
+            <main className="min-h-screen bg-gradient-to-b from-black to-gray-950 flex items-center justify-center">
+                <div className="text-center space-y-4">
+                    <p className="text-gray-400 text-lg">Event not found</p>
+                    <button
+                        onClick={handleBack}
+                        className="text-sm text-cyan-400 hover:text-cyan-300 underline"
+                    >
+                        ← Return to {referrer === "map" ? "map" : "monitor"}
+                    </button>
+                </div>
             </main>
         )
     }
@@ -193,168 +197,248 @@ export default function EventDetail() {
         globalState ? whyThisEventMatters(event, globalState) : []
 
     return (
-        <main
-            className={`
-                mx-auto
-                ${briefingMode
-                    ? "p-4 max-w-4xl space-y-4"
-                    : "p-6 max-w-5xl space-y-6"}
-            `}
-        >
+        <main className="min-h-screen bg-gradient-to-b from-black to-gray-950">
 
-            {/* GLOBAL CONTEXT */}
-            {globalState && <GlobalStateBar state={globalState} />}
-
-            {/* BACK + GLOBAL ACTIONS */}
-            <div className="flex items-center justify-between gap-4">
-
-                {/* LEFT — BACK */}
-                <button
-                    onClick={handleBack}
-                    className="text-xs text-gray-400 hover:text-gray-200 transition"
-                >
-                    ← BACK TO {referrer === "map" ? "MAP" : "MONITOR"}
-                </button>
-
-                {/* RIGHT — ACTIONS */}
-                <div className="flex items-center gap-2">
-
-                    {/* MISSION CONTROL */}
-                    <button
-                        onClick={() => router.push("/map")}
-                        className="
-        text-[11px] px-2 py-1 rounded border
-        border-blue-800/60 text-blue-300
-        hover:border-blue-600 hover:text-blue-200
-        transition
-      "
-                        title="Return to Mission Control"
-                    >
-                        MISSION CONTROL
-                    </button>
-
-                    {/* BRIEFING MODE */}
-                    <button
-                        onClick={() => setBriefingMode(b => !b)}
-                        className="
-        text-[11px] px-2 py-1 rounded border
-        border-gray-700 text-gray-300
-        hover:border-gray-500
-        transition
-      "
-                    >
-                        {briefingMode ? "EXIT BRIEFING" : "BRIEFING MODE"}
-                    </button>
-
+            {/* GLOBAL CONTEXT BAR */}
+            {globalState && (
+                <div className="border-b border-gray-800/50">
+                    <GlobalStateBar state={globalState} />
                 </div>
-            </div>
-
-            {/* ===== TOP GRID ===== */}
-            <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_1fr] gap-6">
-
-                {/* LEFT — EVENT CORE */}
-                <section className="space-y-4">
-
-                    {!briefingMode && event.image && (
-                        <img
-                            src={event.image}
-                            alt={event.title}
-                            className="w-full h-48 object-cover rounded-lg"
-                        />
-                    )}
-
-                    <h1 className="text-2xl font-semibold leading-snug">
-                        {event.title}
-                    </h1>
-
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-gray-400">
-                        <span>{event.source}</span>
-                        <span>•</span>
-                        <span>{new Date(event.date).toLocaleString()}</span>
-                        <span>•</span>
-                        <span>{shortCountry(event.country)}</span>
-                        <span>•</span>
-                        <span
-                            className="uppercase tracking-wide"
-                            style={{ color: category.color }}
-                        >
-                            {category.label}
-                        </span>
-                    </div>
-                </section>
-
-                {/* RIGHT — CONTEXT CORE */}
-                <section className="space-y-4">
-
-                    {globalState && relevanceReasons.length > 0 && (
-                        <WhyThisEventMatters reasons={relevanceReasons} />
-                    )}
-
-                    <section
-                        className={`
-                            border border-gray-800 rounded-lg bg-black/40
-                            ${briefingMode ? "p-3" : "p-4"}
-                        `}
-                    >
-                        <div className="text-[11px] uppercase tracking-wide text-gray-500 mb-1">
-                            Intel assessment
-                        </div>
-                        <p className="text-sm text-gray-200 leading-relaxed">
-                            {intelSummary(event)}
-                        </p>
-                    </section>
-
-                </section>
-            </div>
-
-            {/* ===== BELOW ===== */}
-
-            {/* FACT SUMMARY */}
-            <section className="space-y-3">
-                <div className="text-[11px] uppercase tracking-wide text-gray-500">
-                    Situation overview
-                </div>
-
-                <p className="text-gray-200 leading-relaxed">
-                    {event.summary || "No summary available for this event."}
-                </p>
-            </section>
-
-            {/* EXTENDED CONTEXT */}
-            {!briefingMode && content.length > 0 && (
-                <section className="space-y-4">
-                    <div className="text-[11px] uppercase tracking-wide text-gray-500">
-                        Context & background
-                    </div>
-
-                    {content.map((paragraph, idx) => (
-                        <p
-                            key={idx}
-                            className="text-gray-300 leading-relaxed"
-                        >
-                            {paragraph}
-                        </p>
-                    ))}
-                </section>
             )}
 
-            {/* DISCLAIMER */}
-            <p className="text-[11px] text-gray-500 italic">
-                This assessment is automatically generated from publicly available OSINT sources.
-            </p>
+            {/* CONTAINER */}
+            <div className={`mx-auto ${briefingMode ? "max-w-4xl" : "max-w-6xl"}`}>
 
-            {/* SOURCE LINK */}
-            <div className="pt-4 border-t border-gray-800">
-                <a
-                    href={event.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm underline text-gray-300 hover:text-white"
-                >
-                    Read full article on {event.source} →
-                </a>
+                {/* HEADER ACTIONS */}
+                <div className="sticky top-0 z-20 bg-black/95 backdrop-blur-sm border-b border-gray-800/50">
+                    <div className="flex items-center justify-between px-6 py-4">
+
+                        {/* LEFT — BACK */}
+                        <button
+                            onClick={handleBack}
+                            className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-200 transition group"
+                        >
+                            <svg className="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            </svg>
+                            <span className="font-medium">
+                                {referrer === "map" ? "BACK TO MAP" : "BACK TO MONITOR"}
+                            </span>
+                        </button>
+
+                        {/* RIGHT — ACTIONS */}
+                        <div className="flex items-center gap-3">
+
+                            {/* MISSION CONTROL */}
+                            {referrer !== "map" && (
+                                <button
+                                    onClick={() => {
+                                        sessionStorage.setItem("event-origin", "home")
+                                        router.push("/map")
+                                    }}
+                                    className="
+                                        flex items-center gap-2
+                                        text-xs px-3 py-2 rounded-md
+                                        bg-blue-500/10 border border-blue-500/30
+                                        text-blue-300 hover:bg-blue-500/20
+                                        hover:border-blue-500/50
+                                        transition-all duration-200
+                                    "
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                                    </svg>
+                                    MISSION CONTROL
+                                </button>
+                            )}
+
+                            {/* BRIEFING MODE */}
+                            <button
+                                onClick={() => setBriefingMode(b => !b)}
+                                className={`
+                                    flex items-center gap-2
+                                    text-xs px-3 py-2 rounded-md
+                                    border transition-all duration-200
+                                    ${briefingMode
+                                        ? 'bg-amber-500/10 border-amber-500/30 text-amber-300 hover:bg-amber-500/20'
+                                        : 'bg-gray-800/50 border-gray-700 text-gray-300 hover:bg-gray-800'
+                                    }
+                                `}
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                {briefingMode ? "EXIT BRIEFING" : "BRIEFING MODE"}
+                            </button>
+
+                        </div>
+                    </div>
+                </div>
+
+                {/* CONTENT */}
+                <div className={`${briefingMode ? "p-6 space-y-6" : "p-8 space-y-8"}`}>
+
+                    {/* HERO SECTION */}
+                    <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
+
+                        {/* LEFT — EVENT DETAILS */}
+                        <div className="space-y-6">
+
+                            {/* IMAGE */}
+                            {!briefingMode && event.image && (
+                                <div className="relative overflow-hidden rounded-xl border border-gray-800 shadow-2xl">
+                                    <img
+                                        src={event.image}
+                                        alt={event.title}
+                                        className="w-full h-72 object-cover"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                                </div>
+                            )}
+
+                            {/* TITLE */}
+                            <div className="space-y-4">
+                                <h1 className="text-3xl lg:text-4xl font-bold leading-tight tracking-tight text-gray-100">
+                                    {event.title}
+                                </h1>
+
+                                {/* META */}
+                                <div className="flex flex-wrap items-center gap-3 text-sm">
+                                    <span
+                                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full font-medium"
+                                        style={{
+                                            backgroundColor: `${category.color}20`,
+                                            color: category.color,
+                                            border: `1px solid ${category.color}40`
+                                        }}
+                                    >
+                                        <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: category.color }} />
+                                        {category.label}
+                                    </span>
+
+                                    <span className="text-gray-400">•</span>
+
+                                    <span className="text-gray-400">{event.source}</span>
+
+                                    <span className="text-gray-400">•</span>
+
+                                    <span className="text-gray-400">
+                                        {new Date(event.date).toLocaleString('en-US', {
+                                            month: 'short',
+                                            day: 'numeric',
+                                            year: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        })}
+                                    </span>
+
+                                    {event.country && event.country !== "Unknown" && (
+                                        <>
+                                            <span className="text-gray-400">•</span>
+                                            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-gray-800/50 text-gray-300 text-xs">
+                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                </svg>
+                                                {shortCountry(event.country)}
+                                            </span>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* RIGHT — CONTEXT CARDS */}
+                        <div className="space-y-4">
+
+                            {/* WHY THIS MATTERS */}
+                            {globalState && relevanceReasons.length > 0 && (
+                                <WhyThisEventMatters reasons={relevanceReasons} />
+                            )}
+
+                            {/* INTEL ASSESSMENT */}
+                            <div className="p-5 rounded-xl bg-gradient-to-br from-gray-900/80 to-gray-800/50 border border-gray-700/50">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <h3 className="text-xs font-semibold uppercase tracking-wider text-amber-400">
+                                        Intelligence Assessment
+                                    </h3>
+                                </div>
+                                <p className="text-sm text-gray-300 leading-relaxed">
+                                    {intelSummary(event)}
+                                </p>
+                            </div>
+                            {/* SOURCE LINK */}
+                            <a
+                                href={event.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="
+                                inline-flex items-center gap-2
+                                px-4 py-2 rounded-lg
+                                bg-gray-800/50 hover:bg-gray-800
+                                border border-gray-700/50 hover:border-gray-600
+                                text-sm text-gray-300 hover:text-white
+                                transition-all duration-200
+                                group
+                            "
+                            >
+                                <span>Read full article on {event.source}</span>
+                                <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                </svg>
+                            </a>
+
+                        </div>
+                    </div>
+
+                    {/* SITUATION OVERVIEW */}
+                    <div className="p-6 rounded-xl bg-gray-900/40 border border-gray-800/50">
+                        <div className="flex items-center gap-2 mb-4">
+                            <div className="w-1 h-5 rounded-full bg-cyan-500" />
+                            <h2 className="text-sm font-semibold uppercase tracking-wider text-cyan-400">
+                                Situation Overview
+                            </h2>
+                        </div>
+                        <p className="text-base text-gray-200 leading-relaxed">
+                            {event.summary || "No summary available for this event."}
+                        </p>
+                    </div>
+
+                    {/* EXTENDED CONTEXT */}
+                    {!briefingMode && content.length > 0 && (
+                        <div className="p-6 rounded-xl bg-gray-900/40 border border-gray-800/50">
+                            <div className="flex items-center gap-2 mb-4">
+                                <div className="w-1 h-5 rounded-full bg-purple-500" />
+                                <h2 className="text-sm font-semibold uppercase tracking-wider text-purple-400">
+                                    Context & Background
+                                </h2>
+                            </div>
+                            <div className="space-y-4">
+                                {content.map((paragraph, idx) => (
+                                    <p
+                                        key={idx}
+                                        className="text-base text-gray-300 leading-relaxed"
+                                    >
+                                        {paragraph}
+                                    </p>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* FOOTER */}
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-6 border-t border-gray-800/50">
+
+                        {/* DISCLAIMER */}
+                        <p className="text-xs text-gray-500 italic flex items-start gap-2">
+                            <svg className="w-4 h-4 text-gray-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>This assessment is automatically generated from publicly available OSINT sources.</span>
+                        </p>
+                    </div>
+                </div>
             </div>
-
         </main>
     )
 }
