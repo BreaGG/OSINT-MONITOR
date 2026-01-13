@@ -6,7 +6,7 @@ export async function GET() {
     select *
     from events
     order by date desc
-    limit 100
+    limit 200
   `
   return NextResponse.json(events)
 }
