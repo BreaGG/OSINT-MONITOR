@@ -465,7 +465,7 @@ export default function FullscreenMapPage() {
                                         onSelectRegion={handleSelectRegion}
                                     />
                                 </div>,
-                                { bottom: '44px', right: '44px' },
+                                { bottom: '16px', right: '16px' },
                                 { width: '336px', height: '288px' }
                             )}
 
