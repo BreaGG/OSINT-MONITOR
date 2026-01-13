@@ -116,6 +116,18 @@ export default function EventDetail() {
     // Detectar de dónde viene el usuario
     const [referrer, setReferrer] = useState<"home" | "map">("home")
 
+    // Detectar móvil
+    const [isMobile, setIsMobile] = useState(false)
+
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 768)
+        }
+        checkMobile()
+        window.addEventListener('resize', checkMobile)
+        return () => window.removeEventListener('resize', checkMobile)
+    }, [])
+
     /* ===== BRIEFING MODE ===== */
     const [briefingMode, setBriefingMode] = useState(false)
 
@@ -199,8 +211,8 @@ export default function EventDetail() {
     return (
         <main className="min-h-screen bg-gradient-to-b from-black to-gray-950">
 
-            {/* GLOBAL CONTEXT BAR */}
-            {globalState && (
+            {/* GLOBAL CONTEXT BAR - Oculto en móvil */}
+            {!isMobile && globalState && (
                 <div className="border-b border-gray-800/50">
                     <GlobalStateBar state={globalState} />
                 </div>
@@ -209,77 +221,79 @@ export default function EventDetail() {
             {/* CONTAINER */}
             <div className={`mx-auto ${briefingMode ? "max-w-4xl" : "max-w-6xl"}`}>
 
-                {/* HEADER ACTIONS */}
-                <div className="sticky top-0 z-20 bg-black/95 backdrop-blur-sm border-b border-gray-800/50">
-                    <div className="flex items-center justify-between px-6 py-4">
+                {/* HEADER ACTIONS - Oculto en móvil */}
+                {!isMobile && (
+                    <div className="sticky top-0 z-20 bg-black/95 backdrop-blur-sm border-b border-gray-800/50">
+                        <div className="flex items-center justify-between px-6 py-4">
 
-                        {/* LEFT — BACK */}
-                        <button
-                            onClick={handleBack}
-                            className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-200 transition group"
-                        >
-                            <svg className="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                            </svg>
-                            <span className="font-medium">
-                                {referrer === "map" ? "BACK TO MAP" : "BACK TO MONITOR"}
-                            </span>
-                        </button>
-
-                        {/* RIGHT — ACTIONS */}
-                        <div className="flex items-center gap-3">
-
-                            {/* MISSION CONTROL */}
-                            {referrer !== "map" && (
-                                <button
-                                    onClick={() => {
-                                        sessionStorage.setItem("event-origin", "home")
-                                        router.push("/map")
-                                    }}
-                                    className="
-                                        flex items-center gap-2
-                                        text-xs px-3 py-2 rounded-md
-                                        bg-blue-500/10 border border-blue-500/30
-                                        text-blue-300 hover:bg-blue-500/20
-                                        hover:border-blue-500/50
-                                        transition-all duration-200
-                                    "
-                                >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                                    </svg>
-                                    MISSION CONTROL
-                                </button>
-                            )}
-
-                            {/* BRIEFING MODE */}
+                            {/* LEFT — BACK */}
                             <button
-                                onClick={() => setBriefingMode(b => !b)}
-                                className={`
-                                    flex items-center gap-2
-                                    text-xs px-3 py-2 rounded-md
-                                    border transition-all duration-200
-                                    ${briefingMode
-                                        ? 'bg-amber-500/10 border-amber-500/30 text-amber-300 hover:bg-amber-500/20'
-                                        : 'bg-gray-800/50 border-gray-700 text-gray-300 hover:bg-gray-800'
-                                    }
-                                `}
+                                onClick={handleBack}
+                                className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-200 transition group"
                             >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                <svg className="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                                 </svg>
-                                {briefingMode ? "EXIT BRIEFING" : "BRIEFING MODE"}
+                                <span className="font-medium">
+                                    {referrer === "map" ? "BACK TO MAP" : "BACK TO MONITOR"}
+                                </span>
                             </button>
 
+                            {/* RIGHT — ACTIONS */}
+                            <div className="flex items-center gap-3">
+
+                                {/* MISSION CONTROL */}
+                                {referrer !== "map" && (
+                                    <button
+                                        onClick={() => {
+                                            sessionStorage.setItem("event-origin", "home")
+                                            router.push("/map")
+                                        }}
+                                        className="
+                                            flex items-center gap-2
+                                            text-xs px-3 py-2 rounded-md
+                                            bg-blue-500/10 border border-blue-500/30
+                                            text-blue-300 hover:bg-blue-500/20
+                                            hover:border-blue-500/50
+                                            transition-all duration-200
+                                        "
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                                        </svg>
+                                        MISSION CONTROL
+                                    </button>
+                                )}
+
+                                {/* BRIEFING MODE */}
+                                <button
+                                    onClick={() => setBriefingMode(b => !b)}
+                                    className={`
+                                        flex items-center gap-2
+                                        text-xs px-3 py-2 rounded-md
+                                        border transition-all duration-200
+                                        ${briefingMode
+                                            ? 'bg-amber-500/10 border-amber-500/30 text-amber-300 hover:bg-amber-500/20'
+                                            : 'bg-gray-800/50 border-gray-700 text-gray-300 hover:bg-gray-800'
+                                        }
+                                    `}
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    {briefingMode ? "EXIT BRIEFING" : "BRIEFING MODE"}
+                                </button>
+
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
 
                 {/* CONTENT */}
-                <div className={`${briefingMode ? "p-6 space-y-6" : "p-8 space-y-8"}`}>
+                <div className={`${briefingMode ? "p-6 space-y-6" : isMobile ? "p-4 space-y-4" : "p-8 space-y-8"}`}>
 
-                    {/* HERO SECTION */}
-                    <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
+                    {/* HERO SECTION - Una columna en móvil */}
+                    <div className={`grid ${isMobile ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-[2fr_1fr]"} gap-6`}>
 
                         {/* LEFT — EVENT DETAILS */}
                         <div className="space-y-6">
@@ -290,7 +304,7 @@ export default function EventDetail() {
                                     <img
                                         src={event.image}
                                         alt={event.title}
-                                        className="w-full h-72 object-cover"
+                                        className={`w-full object-cover ${isMobile ? "h-48" : "h-72"}`}
                                     />
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                                 </div>
@@ -298,12 +312,12 @@ export default function EventDetail() {
 
                             {/* TITLE */}
                             <div className="space-y-4">
-                                <h1 className="text-3xl lg:text-4xl font-bold leading-tight tracking-tight text-gray-100">
+                                <h1 className={`font-bold leading-tight tracking-tight text-gray-100 ${isMobile ? "text-2xl" : "text-3xl lg:text-4xl"}`}>
                                     {event.title}
                                 </h1>
 
                                 {/* META */}
-                                <div className="flex flex-wrap items-center gap-3 text-sm">
+                                <div className={`flex flex-wrap items-center gap-3 ${isMobile ? "text-xs" : "text-sm"}`}>
                                     <span
                                         className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full font-medium"
                                         style={{
@@ -357,7 +371,7 @@ export default function EventDetail() {
                             )}
 
                             {/* INTEL ASSESSMENT */}
-                            <div className="p-5 rounded-xl bg-gradient-to-br from-gray-900/80 to-gray-800/50 border border-gray-700/50">
+                            <div className={`rounded-xl bg-gradient-to-br from-gray-900/80 to-gray-800/50 border border-gray-700/50 ${isMobile ? "p-4" : "p-5"}`}>
                                 <div className="flex items-center gap-2 mb-3">
                                     <h3 className="text-xs font-semibold uppercase tracking-wider text-amber-400">
                                         Intelligence Assessment
@@ -367,46 +381,25 @@ export default function EventDetail() {
                                     {intelSummary(event)}
                                 </p>
                             </div>
-                            {/* SOURCE LINK */}
-                            <a
-                                href={event.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="
-                                inline-flex items-center gap-2
-                                px-4 py-2 rounded-lg
-                                bg-gray-800/50 hover:bg-gray-800
-                                border border-gray-700/50 hover:border-gray-600
-                                text-sm text-gray-300 hover:text-white
-                                transition-all duration-200
-                                group
-                            "
-                            >
-                                <span>Read full article on {event.source}</span>
-                                <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                                </svg>
-                            </a>
-
                         </div>
                     </div>
 
                     {/* SITUATION OVERVIEW */}
-                    <div className="p-6 rounded-xl bg-gray-900/40 border border-gray-800/50">
+                    <div className={`rounded-xl bg-gray-900/40 border border-gray-800/50 ${isMobile ? "p-4" : "p-6"}`}>
                         <div className="flex items-center gap-2 mb-4">
                             <div className="w-1 h-5 rounded-full bg-cyan-500" />
                             <h2 className="text-sm font-semibold uppercase tracking-wider text-cyan-400">
                                 Situation Overview
                             </h2>
                         </div>
-                        <p className="text-base text-gray-200 leading-relaxed">
+                        <p className={`text-gray-200 leading-relaxed ${isMobile ? "text-sm" : "text-base"}`}>
                             {event.summary || "No summary available for this event."}
                         </p>
                     </div>
 
                     {/* EXTENDED CONTEXT */}
                     {!briefingMode && content.length > 0 && (
-                        <div className="p-6 rounded-xl bg-gray-900/40 border border-gray-800/50">
+                        <div className={`rounded-xl bg-gray-900/40 border border-gray-800/50 ${isMobile ? "p-4" : "p-6"}`}>
                             <div className="flex items-center gap-2 mb-4">
                                 <div className="w-1 h-5 rounded-full bg-purple-500" />
                                 <h2 className="text-sm font-semibold uppercase tracking-wider text-purple-400">
@@ -417,7 +410,7 @@ export default function EventDetail() {
                                 {content.map((paragraph, idx) => (
                                     <p
                                         key={idx}
-                                        className="text-base text-gray-300 leading-relaxed"
+                                        className={`text-gray-300 leading-relaxed ${isMobile ? "text-sm" : "text-base"}`}
                                     >
                                         {paragraph}
                                     </p>
@@ -425,12 +418,58 @@ export default function EventDetail() {
                             </div>
                         </div>
                     )}
+                    {/* SOURCE LINK */}
+                    <div className="flex flex-col gap-2 w-full">
+                        {/* SOURCE LINK */}
+                        <a
+                            href={event.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="
+                                    inline-flex items-center gap-2
+                                    px-4 py-2 rounded-lg
+                                    bg-gray-800/50 hover:bg-gray-800
+                                    border border-gray-700/50 hover:border-gray-600
+                                    text-sm text-gray-300 hover:text-white
+                                    transition-all duration-200
+                                    group w-full justify-center
+                                "
+                        >
+                            <span>Read full article on {event.source}</span>
+                            <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                            </svg>
+                        </a>
+                        {/* BACK BUTTON - Solo móvil */}
+                        {isMobile && (
+                            <button
+                                onClick={() => {
+                                            sessionStorage.setItem("event-origin", "home")
+                                            router.push("/map")
+                                        }}
+                                className="
+                                            inline-flex items-center justify-center gap-2
+                                            px-4 py-2 rounded-lg
+                                            bg-gray-900/50 hover:bg-gray-900
+                                            border border-gray-700/50 hover:border-gray-600
+                                            text-sm text-gray-300 hover:text-white
+                                            transition-all duration-200
+                                            group w-full
+                                        "
+                            >
+                                <svg className="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                </svg>
+                                <span>MISSION CONTROL</span>
+                            </button>
+                        )}
+                    </div>
 
                     {/* FOOTER */}
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-6 border-t border-gray-800/50">
 
                         {/* DISCLAIMER */}
-                        <p className="text-xs text-gray-500 italic flex items-start gap-2">
+                        <p className={`text-gray-500 italic flex items-start gap-2 ${isMobile ? "text-[10px]" : "text-xs"}`}>
                             <svg className="w-4 h-4 text-gray-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
