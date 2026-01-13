@@ -456,7 +456,7 @@ export default function MapboxMap({
                   : "text-gray-500 hover:text-gray-300 hover:bg-gray-800/50 border border-transparent"
               }`}
             >
-              {showDayNight ? "☀️" : "🌙"} DAY/NIGHT
+              DAY/NIGHT
             </button>
             
             {/* Info visual siempre visible */}
