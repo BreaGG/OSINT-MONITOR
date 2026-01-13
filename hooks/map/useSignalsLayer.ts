@@ -583,7 +583,7 @@ export function useSignalsLayer({
               font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
               min-width: 280px;
               max-width: 340px;
-              background: #0f172a;
+              background: #000;
               border: 1px solid #334155;
               border-radius: 4px;
               overflow: hidden;
