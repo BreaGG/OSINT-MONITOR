@@ -16,6 +16,7 @@ import type { SatelliteFocus } from "@/components/SatelliteView"
 import { buildGlobalState } from "@/lib/gse"
 import { adaptEventsToGSE } from "@/lib/eventToGSE"
 import GlobalStateIndicator from "@/components/GlobalStateIndicator"
+import BriefingExportModal from "@/components/BriefingExportModal"
 
 /* ===================== PRESETS ===================== */
 
@@ -37,6 +38,9 @@ export default function Home() {
 
   /* ===== presets ===== */
   const [preset, setPreset] = useState<Preset>("all")
+  
+  /* ===== briefing modal ===== */
+  const [showBriefingModal, setShowBriefingModal] = useState(false)
   
   /* ===== mobile redirect ===== */
   useEffect(() => {
@@ -232,7 +236,7 @@ export default function Home() {
             )}
           </div>
 
-          {/* RIGHT: FILTERS + CLEAR + ADMIN */}
+          {/* RIGHT: FILTERS + EXPORT + CLEAR + ADMIN */}
           <div className="flex items-center gap-2">
             {/* CATEGORY */}
             <select
@@ -312,7 +316,25 @@ export default function Home() {
               </svg>
             </div>
 
-            {/* CLEAR FILTERS BUTTON - SIEMPRE VISIBLE */}
+            {/* EXPORT BRIEFING BUTTON */}
+            <button
+              onClick={() => setShowBriefingModal(true)}
+              className="
+                flex items-center gap-2 px-3 py-1.5 rounded
+                bg-cyan-500/10 text-cyan-400 border border-cyan-500/30
+                hover:bg-cyan-500/20 hover:border-cyan-500/50
+                transition-all
+                text-[11px] font-medium uppercase tracking-wider
+              "
+              title="Export Intelligence Briefing"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span>Export</span>
+            </button>
+
+            {/* CLEAR FILTERS BUTTON */}
             <button
               onClick={clearFilters}
               disabled={!hasActiveFilters}
@@ -420,6 +442,14 @@ export default function Home() {
 
         </div>
       </div>
+
+      {/* BRIEFING EXPORT MODAL */}
+      {showBriefingModal && (
+        <BriefingExportModal
+          events={events}
+          onClose={() => setShowBriefingModal(false)}
+        />
+      )}
     </main>
   )
 }
