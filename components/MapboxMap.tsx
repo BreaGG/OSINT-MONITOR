@@ -34,6 +34,7 @@ type Props = {
   onSelectSatelliteFocus?: (focus: SatelliteFocus) => void
   heatmapMode?: boolean
   showConnections?: boolean
+  onCountryFocus?: (country: string | null) => void // NUEVO: para filtrar por país
 }
 
 export default function MapboxMap({
@@ -42,6 +43,7 @@ export default function MapboxMap({
   onSelectSatelliteFocus,
   heatmapMode = false,
   showConnections = false,
+  onCountryFocus,
 }: Props) {
   const router = useRouter()
   const pathname = usePathname()
@@ -55,7 +57,11 @@ export default function MapboxMap({
   const [timeWindow, setTimeWindow] = useState<TimeWindow>("24h")
   const mapStyle = "dark"
   const [showDayNight, setShowDayNight] = useState(false)
-  const [projectionMode, setProjectionMode] = useState<"2d" | "3d">("2d") // Nuevo estado para modo 2D/3D
+  const [projectionMode, setProjectionMode] = useState<"2d" | "3d">("2d")
+  
+  // NUEVO: estados para búsqueda de país
+  const [countrySearch, setCountrySearch] = useState("")
+  const [showCountrySearch, setShowCountrySearch] = useState(false)
 
   const [layers, setLayers] = useState({
     events: true,
@@ -258,7 +264,7 @@ export default function MapboxMap({
         container: containerRef.current,
         style: "mapbox://styles/mapbox/dark-v11",
         center: isFullscreenPage ? [10, 25] : MAP_CONFIG.INITIAL_CENTER,
-        zoom: isFullscreenPage ? (projectionMode === "3d" ? 2.4 : 2.2) : MAP_CONFIG.INITIAL_ZOOM, // 3D: 1.8 (más zoom)
+        zoom: isFullscreenPage ? (projectionMode === "3d" ? 2.4 : 2.2) : MAP_CONFIG.INITIAL_ZOOM,
         minZoom: MAP_CONFIG.MIN_ZOOM,
         maxZoom: MAP_CONFIG.MAX_ZOOM,
         projection: projectionMode === "3d" ? { name: "globe" } : { name: "mercator" },
@@ -269,11 +275,11 @@ export default function MapboxMap({
       if (projectionMode === "3d") {
         map.on('style.load', () => {
           map.setFog({
-            color: 'rgb(10, 10, 15)', // Gris muy oscuro profesional
-            'high-color': 'rgb(30, 35, 50)', // Azul grisáceo en horizonte
-            'horizon-blend': 0.03, // Blend más definido
-            'space-color': 'rgb(5, 5, 10)', // Espacio casi negro
-            'star-intensity': 0.1 // SIN estrellas para look profesional
+            color: 'rgb(10, 10, 15)',
+            'high-color': 'rgb(30, 35, 50)',
+            'horizon-blend': 0.03,
+            'space-color': 'rgb(5, 5, 10)',
+            'star-intensity': 0.1
           })
         })
       }
@@ -301,7 +307,7 @@ export default function MapboxMap({
     } catch (error) {
       console.error("Failed to initialize map:", error)
     }
-  }, [isFullscreenPage, projectionMode]) // Añadir projectionMode como dependencia
+  }, [isFullscreenPage, projectionMode])
 
   /* ===================== HOVER HIGHLIGHT ===================== */
 
@@ -392,30 +398,120 @@ export default function MapboxMap({
     // Ajustar zoom apropiado para cada modo
     const currentZoom = map.getZoom()
     const newZoom = newMode === "3d" 
-      ? Math.max(currentZoom * 0.8, 2.0)  // Zoom 1.8 para globe (más zoom que antes)
-      : Math.min(currentZoom * 1.25, 2.2)  // Zoom in para mercator
+      ? Math.max(currentZoom * 0.8, 2.0)
+      : Math.min(currentZoom * 1.25, 2.2)
     
     map.flyTo({
       zoom: newZoom,
       duration: 1500,
     })
     
-    // Configurar fog para modo 3D (sin estrellas - look profesional)
+    // Configurar fog para modo 3D (sin estrellas)
     if (newMode === "3d") {
       map.setFog({
         color: 'rgb(10, 10, 15)',
         'high-color': 'rgb(30, 35, 50)',
         'horizon-blend': 0.03,
         'space-color': 'rgb(5, 5, 10)',
-        'star-intensity': 0 // Sin estrellas
+        'star-intensity': 0
       })
     } else {
-      // Remover fog en modo 2D
       map.setFog(null)
     }
     
     setProjectionMode(newMode)
   }
+
+  /* ===================== COUNTRY COORDINATES ===================== */
+  
+  const COUNTRY_COORDINATES: Record<string, { center: [number, number], zoom: number }> = {
+    "United States": { center: [-95, 38], zoom: 4 },
+    "Russia": { center: [100, 60], zoom: 2.5 },
+    "China": { center: [105, 35], zoom: 4 },
+    "India": { center: [78, 22], zoom: 4.5 },
+    "Brazil": { center: [-50, -10], zoom: 4 },
+    "Canada": { center: [-95, 60], zoom: 3 },
+    "Australia": { center: [133, -27], zoom: 4 },
+    "United Kingdom": { center: [-2, 54], zoom: 5.5 },
+    "France": { center: [2, 47], zoom: 5.5 },
+    "Germany": { center: [10, 51], zoom: 6 },
+    "Italy": { center: [12, 42], zoom: 6 },
+    "Spain": { center: [-4, 40], zoom: 6 },
+    "Ukraine": { center: [31, 49], zoom: 5.5 },
+    "Poland": { center: [20, 52], zoom: 6 },
+    "Iran": { center: [54, 32], zoom: 5 },
+    "Iraq": { center: [44, 33], zoom: 6 },
+    "Syria": { center: [38, 35], zoom: 7 },
+    "Israel": { center: [35, 31], zoom: 7 },
+    "Saudi Arabia": { center: [45, 24], zoom: 5 },
+    "Turkey": { center: [35, 39], zoom: 6 },
+    "Egypt": { center: [30, 26], zoom: 5.5 },
+    "South Africa": { center: [25, -29], zoom: 5.5 },
+    "Japan": { center: [138, 36], zoom: 5 },
+    "South Korea": { center: [128, 36], zoom: 7 },
+    "North Korea": { center: [127, 40], zoom: 7 },
+    "Mexico": { center: [-102, 23], zoom: 5 },
+    "Argentina": { center: [-64, -34], zoom: 4 },
+    "Colombia": { center: [-74, 4], zoom: 5.5 },
+    "Venezuela": { center: [-66, 8], zoom: 6 },
+    "Pakistan": { center: [69, 30], zoom: 5.5 },
+    "Afghanistan": { center: [66, 33], zoom: 6 },
+    "Indonesia": { center: [118, -2], zoom: 4.5 },
+    "Philippines": { center: [122, 12], zoom: 6 },
+    "Vietnam": { center: [106, 16], zoom: 6 },
+    "Thailand": { center: [101, 15], zoom: 6 },
+    "Myanmar": { center: [96, 21], zoom: 5.5 },
+    "Nigeria": { center: [8, 9], zoom: 6 },
+    "Ethiopia": { center: [39, 9], zoom: 6 },
+    "Kenya": { center: [37, 1], zoom: 6 },
+    "Algeria": { center: [3, 28], zoom: 5 },
+    "Libya": { center: [17, 27], zoom: 5 },
+    "Sudan": { center: [30, 15], zoom: 5.5 },
+    "Yemen": { center: [48, 15], zoom: 6.5 },
+    "Oman": { center: [56, 21], zoom: 6 },
+    "UAE": { center: [54, 24], zoom: 7 },
+    "Qatar": { center: [51, 25], zoom: 8 },
+    "Kuwait": { center: [48, 29], zoom: 7.5 },
+    "Lebanon": { center: [36, 34], zoom: 8 },
+    "Jordan": { center: [36, 31], zoom: 7 },
+    "Georgia": { center: [43, 42], zoom: 7 },
+    "Azerbaijan": { center: [48, 40], zoom: 7 },
+    "Armenia": { center: [45, 40], zoom: 7.5 },
+  }
+
+  /* ===================== COUNTRY SEARCH HANDLERS ===================== */
+  
+  const filteredCountries = useMemo(() => {
+    if (!countrySearch) return []
+    
+    const search = countrySearch.toLowerCase()
+    return Object.keys(COUNTRY_COORDINATES)
+      .filter(c => c.toLowerCase().includes(search))
+      .slice(0, 10)
+  }, [countrySearch])
+
+  const handleCountrySearch = (country: string) => {
+    if (!mapRef.current || !country) return
+    
+    const coords = COUNTRY_COORDINATES[country]
+    if (!coords) return
+    
+    // 1. Focus en el mapa
+    flyToCountry(coords.center, coords.zoom)
+    
+    // 2. Activar layer de eventos
+    setLayers(prev => ({ ...prev, events: true }))
+    
+    // 3. Notificar al componente padre para filtrar eventos
+    if (onCountryFocus) {
+      onCountryFocus(country)
+    }
+    
+    // Cerrar búsqueda
+    setShowCountrySearch(false)
+    setCountrySearch("")
+  }
+// ============ CONTINUACIÓN DE PARTE 1 ============
 
   /* ===================== RENDER ===================== */
 
@@ -544,7 +640,6 @@ export default function MapboxMap({
             title={projectionMode === "2d" ? "Switch to 3D Globe View" : "Switch to 2D Flat Map"}
           >
             {projectionMode === "2d" ? (
-              // Icono 3D (esfera)
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <circle cx="12" cy="12" r="9" strokeWidth="2" />
                 <path d="M12 3 C8 8, 8 16, 12 21" strokeWidth="1.5" />
@@ -552,7 +647,6 @@ export default function MapboxMap({
                 <ellipse cx="12" cy="12" rx="9" ry="4" strokeWidth="1.5" />
               </svg>
             ) : (
-              // Icono 2D (mapa plano)
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <rect x="3" y="6" width="18" height="12" strokeWidth="2" rx="1" />
                 <path d="M9 6 L9 18 M15 6 L15 18" strokeWidth="1.5" />
@@ -560,13 +654,11 @@ export default function MapboxMap({
               </svg>
             )}
             
-            {/* Tooltip mejorado */}
             <div className="absolute right-full mr-2 px-2 py-1 bg-black/90 border border-gray-700 rounded text-[9px] text-gray-300 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
               {projectionMode === "2d" ? "3D Globe View" : "2D Flat Map"}
             </div>
           </button>
           
-          {/* Separador visual */}
           <div className="w-9 h-px bg-gray-800 my-0.5" />
           
           {/* Botón centrar mapa */}
@@ -575,19 +667,39 @@ export default function MapboxMap({
               if (mapRef.current) {
                 mapRef.current.flyTo({
                   center: [10, 25],
-                  zoom: projectionMode === "3d" ? 2.4 : 2.2, // 3D: 1.8, 2D: 2.2
+                  zoom: projectionMode === "3d" ? 2.4 : 2.2,
                   duration: 1500,
+                  essential: true,
                 })
               }
             }}
-            className="w-9 h-9 rounded border bg-black/90 border-gray-700 text-gray-300 hover:text-white hover:border-gray-600 transition flex items-center justify-center"
+            className="w-9 h-9 rounded border bg-black/90 border-gray-700 text-gray-300 hover:text-white hover:border-gray-600 transition flex items-center justify-center group"
             title="Center map"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
             </svg>
+            <div className="absolute right-full mr-2 px-2 py-1 bg-black/90 border border-gray-700 rounded text-[9px] text-gray-300 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+              Center Map
+            </div>
           </button>
+          
+          {/* Botón búsqueda de país */}
+          <button
+            onClick={() => setShowCountrySearch(true)}
+            className="w-9 h-9 rounded border bg-black/90 border-gray-700 text-gray-300 hover:text-white hover:border-gray-600 transition flex items-center justify-center group"
+            title="Search country"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <div className="absolute right-full mr-2 px-2 py-1 bg-black/90 border border-gray-700 rounded text-[9px] text-gray-300 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+              Search Country
+            </div>
+          </button>
+          
+          <div className="w-9 h-px bg-gray-800 my-0.5" />
           
           <button
             onClick={() => {
@@ -612,6 +724,68 @@ export default function MapboxMap({
           >
             −
           </button>
+        </div>
+      )}
+
+      {/* COUNTRY SEARCH POPUP (solo fullscreen) */}
+      {isFullscreenPage && showCountrySearch && (
+        <div className="absolute top-2 right-14 z-30">
+          <div className="bg-black/95 border border-gray-700 rounded-lg p-2 w-64 shadow-2xl">
+            <div className="flex items-center gap-2 mb-2">
+              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="text"
+                value={countrySearch}
+                onChange={(e) => setCountrySearch(e.target.value)}
+                placeholder="Search country..."
+                autoFocus
+                className="
+                  flex-1 bg-transparent text-gray-300 text-sm
+                  focus:outline-none placeholder:text-gray-600
+                "
+              />
+              <button
+                onClick={() => {
+                  setShowCountrySearch(false)
+                  setCountrySearch("")
+                  if (onCountryFocus) {
+                    onCountryFocus(null)
+                  }
+                }}
+                className="text-gray-500 hover:text-gray-300 transition"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            {filteredCountries.length > 0 && (
+              <div className="space-y-1 max-h-60 overflow-y-auto custom-scrollbar">
+                {filteredCountries.map((country) => (
+                  <button
+                    key={country}
+                    onClick={() => handleCountrySearch(country)}
+                    className="
+                      w-full text-left px-3 py-2 rounded text-sm
+                      text-gray-300 hover:bg-gray-800 hover:text-white
+                      transition-all
+                    "
+                  >
+                    {country}
+                  </button>
+                ))}
+              </div>
+            )}
+            
+            {countrySearch && filteredCountries.length === 0 && (
+              <div className="text-center py-4 text-sm text-gray-600">
+                No countries found
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -652,12 +826,28 @@ export default function MapboxMap({
 
       {/* TIME WINDOW + COUNTERS */}
       <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2">
-        <div className="text-[11px] text-gray-400 bg-black/90 border border-gray-800 rounded px-3 py-1.5">
-          {/* Indicador de modo (solo en fullscreen) */}
+        <div className="text-[11px] text-gray-400 bg-black/90 border border-gray-800 rounded px-3 py-1.5 flex items-center">
+          {/* Indicador de modo (solo en fullscreen) con SVG */}
           {isFullscreenPage && (
             <>
-              <span className={`font-medium ${projectionMode === "3d" ? "text-purple-400" : "text-cyan-400"}`}>
-                {projectionMode === "3d" ? "🌍 GLOBE" : "🗺️ FLAT"}
+              <span className="inline-flex items-center gap-1.5">
+                {projectionMode === "3d" ? (
+                  <svg className="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="9" strokeWidth="2" />
+                    <path d="M12 3 C8 8, 8 16, 12 21" strokeWidth="1.5" />
+                    <path d="M12 3 C16 8, 16 16, 12 21" strokeWidth="1.5" />
+                    <ellipse cx="12" cy="12" rx="9" ry="4" strokeWidth="1.5" />
+                  </svg>
+                ) : (
+                  <svg className="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <rect x="3" y="6" width="18" height="12" strokeWidth="2" rx="1" />
+                    <path d="M9 6 L9 18 M15 6 L15 18" strokeWidth="1.5" />
+                    <path d="M3 12 L21 12" strokeWidth="1.5" />
+                  </svg>
+                )}
+                <span className={`font-medium ${projectionMode === "3d" ? "text-purple-400" : "text-cyan-400"}`}>
+                  {projectionMode === "3d" ? "GLOBE" : "FLAT"}
+                </span>
               </span>
               <span className="mx-2 text-gray-600">|</span>
             </>

@@ -46,8 +46,9 @@ export function useHotZonesLayer({
       data: hotZonesGeoJSON,
     },
     layers: [
+      // OUTER GLOW - NATO Style
       {
-        id: "hotzones-layer",
+        id: "hotzones-outer-glow",
         type: "circle",
         source: "hot-zones",
         paint: {
@@ -56,9 +57,40 @@ export function useHotZonesLayer({
             ["linear"],
             ["get", "intensity"],
             1.2,
-            40,
+            60,
             3.5,
-            120,
+            140,
+          ],
+          "circle-color": [
+            "match",
+            ["get", "level"],
+            "critical",
+            "#dc2626", // Red oscuro
+            "active",
+            "#f97316", // Orange
+            "watch",
+            "#eab308", // Yellow
+            "#eab308",
+          ],
+          "circle-opacity": 0.08,
+          "circle-blur": 1,
+        },
+      },
+      
+      // MAIN CIRCLE - Definido
+      {
+        id: "hotzones-main",
+        type: "circle",
+        source: "hot-zones",
+        paint: {
+          "circle-radius": [
+            "interpolate",
+            ["linear"],
+            ["get", "intensity"],
+            1.2,
+            35,
+            3.5,
+            100,
           ],
           "circle-color": [
             "match",
@@ -66,25 +98,109 @@ export function useHotZonesLayer({
             "critical",
             "#dc2626",
             "active",
-            "#ef4444",
+            "#f97316",
             "watch",
-            "#fca5a5",
-            "#fca5a5",
+            "#eab308",
+            "#eab308",
           ],
-          "circle-opacity": 0.12,
-          "circle-stroke-width": 1,
-          "circle-stroke-color": "#991b1b",
+          "circle-opacity": 0.15,
+          "circle-stroke-width": 2,
+          "circle-stroke-color": [
+            "match",
+            ["get", "level"],
+            "critical",
+            "#991b1b", // Dark red
+            "active",
+            "#c2410c", // Dark orange
+            "watch",
+            "#a16207", // Dark yellow
+            "#a16207",
+          ],
+          "circle-stroke-opacity": 0.6,
         },
       },
+
+      // INNER CORE - Bright center
       {
-        id: "hotzones-critical-halo",
+        id: "hotzones-core",
+        type: "circle",
+        source: "hot-zones",
+        paint: {
+          "circle-radius": [
+            "interpolate",
+            ["linear"],
+            ["get", "intensity"],
+            1.2,
+            8,
+            3.5,
+            14,
+          ],
+          "circle-color": [
+            "match",
+            ["get", "level"],
+            "critical",
+            "#fca5a5", // Light red
+            "active",
+            "#fdba74", // Light orange
+            "watch",
+            "#fde047", // Light yellow
+            "#fde047",
+          ],
+          "circle-opacity": 0.8,
+          "circle-blur": 0.2,
+        },
+      },
+
+      // PULSE EFFECT - Solo para critical
+      {
+        id: "hotzones-critical-pulse",
         type: "circle",
         source: "hot-zones",
         filter: ["==", ["get", "level"], "critical"],
         paint: {
-          "circle-radius": ["interpolate", ["linear"], ["zoom"], 2, 60, 5, 180],
+          "circle-radius": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            2,
+            70,
+            5,
+            200,
+          ],
           "circle-color": "#dc2626",
-          "circle-opacity": 0.08,
+          "circle-opacity": 0.05,
+          "circle-blur": 1.5,
+        },
+      },
+
+      // DASHED RING - NATO style perimeter
+      {
+        id: "hotzones-perimeter",
+        type: "circle",
+        source: "hot-zones",
+        filter: ["in", ["get", "level"], ["literal", ["critical", "active"]]],
+        paint: {
+          "circle-radius": [
+            "interpolate",
+            ["linear"],
+            ["get", "intensity"],
+            1.2,
+            50,
+            3.5,
+            120,
+          ],
+          "circle-color": "transparent",
+          "circle-stroke-width": 1.5,
+          "circle-stroke-color": [
+            "match",
+            ["get", "level"],
+            "critical",
+            "#ef4444",
+            "active",
+            "#fb923c",
+            "#fb923c",
+          ],
+          "circle-stroke-opacity": 0.4,
         },
       },
     ],

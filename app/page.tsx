@@ -133,6 +133,18 @@ export default function Home() {
     return buildGlobalState(gseEvents)
   }, [events])
 
+  /* ===================== CLEAR FILTERS ===================== */
+  
+  const clearFilters = () => {
+    setCategory("all")
+    setCountry("all")
+    setSearch("")
+    setFocusRegion(null)
+    setPreset("all")
+  }
+
+  const hasActiveFilters = category !== "all" || country !== "all" || search !== "" || focusRegion
+
   /* ===================== RENDER ===================== */
 
   return (
@@ -220,7 +232,7 @@ export default function Home() {
             )}
           </div>
 
-          {/* RIGHT: FILTERS + ADMIN */}
+          {/* RIGHT: FILTERS + CLEAR + ADMIN */}
           <div className="flex items-center gap-2">
             {/* CATEGORY */}
             <select
@@ -299,6 +311,27 @@ export default function Home() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
+
+            {/* CLEAR FILTERS BUTTON - SIEMPRE VISIBLE */}
+            <button
+              onClick={clearFilters}
+              disabled={!hasActiveFilters}
+              className={`
+                px-2.5 py-1.5 rounded text-[11px] font-medium
+                transition-all
+                flex items-center gap-1
+                ${hasActiveFilters
+                  ? "bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20 hover:border-red-500/50 cursor-pointer"
+                  : "bg-gray-900/50 text-gray-700 border border-gray-800 cursor-not-allowed opacity-50"
+                }
+              `}
+              title={hasActiveFilters ? "Clear all filters" : "No active filters"}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              <span className="text-[10px] uppercase tracking-wider">Clear</span>
+            </button>
 
             {/* ADMIN */}
             <AdminIngestButton />

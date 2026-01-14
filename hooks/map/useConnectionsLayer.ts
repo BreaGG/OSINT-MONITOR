@@ -117,42 +117,72 @@ export function useConnectionsLayer({
         source.setData(lineData);
       }
 
-      // Crear layers si no existen
-      if (!map.getLayer("connections-glow")) {
-        // Capa de glow (más ancha, más transparente)
+      // === LAYER 1: OUTER GLOW (más ancho, muy transparente) ===
+      if (!map.getLayer("connections-outer-glow")) {
         map.addLayer({
-          id: "connections-glow",
+          id: "connections-outer-glow",
           type: "line",
           source: "connections-source",
           paint: {
-            "line-color": "#00ffff",
+            "line-color": "#06b6d4", // Cyan NATO
             "line-width": [
               "interpolate",
               ["linear"],
               ["get", "strength"],
               1,
-              4,
-              5,
               8,
+              5,
+              14,
               10,
-              12,
+              20,
             ],
-            "line-opacity": visible ? 0.2 : 0,
-            "line-blur": 4,
+            "line-opacity": visible ? 0.1 : 0,
+            "line-blur": 6,
           },
         });
       } else {
         map.setPaintProperty(
-          "connections-glow",
+          "connections-outer-glow",
           "line-opacity",
-          visible ? 0.2 : 0
+          visible ? 0.1 : 0
         );
       }
 
-      if (!map.getLayer("connections-line")) {
-        // Capa principal (línea definida)
+      // === LAYER 2: MIDDLE GLOW (glow definido) ===
+      if (!map.getLayer("connections-middle-glow")) {
         map.addLayer({
-          id: "connections-line",
+          id: "connections-middle-glow",
+          type: "line",
+          source: "connections-source",
+          paint: {
+            "line-color": "#22d3ee", // Cyan más claro
+            "line-width": [
+              "interpolate",
+              ["linear"],
+              ["get", "strength"],
+              1,
+              5,
+              5,
+              9,
+              10,
+              13,
+            ],
+            "line-opacity": visible ? 0.25 : 0,
+            "line-blur": 3,
+          },
+        });
+      } else {
+        map.setPaintProperty(
+          "connections-middle-glow",
+          "line-opacity",
+          visible ? 0.25 : 0
+        );
+      }
+
+      // === LAYER 3: MAIN LINE (línea principal definida) ===
+      if (!map.getLayer("connections-main-line")) {
+        map.addLayer({
+          id: "connections-main-line",
           type: "line",
           source: "connections-source",
           paint: {
@@ -161,13 +191,15 @@ export function useConnectionsLayer({
               ["linear"],
               ["get", "strength"],
               1,
-              "#00d4ff", // Cyan claro
+              "#06b6d4", // Cyan base
               3,
-              "#00ffff", // Cyan medio
+              "#22d3ee", // Cyan claro
               5,
-              "#00ff88", // Cyan-verde
+              "#67e8f9", // Cyan brillante
+              8,
+              "#a5f3fc", // Cyan muy brillante
               10,
-              "#88ffff", // Cyan brillante
+              "#cffafe", // Casi blanco
             ],
             "line-width": [
               "interpolate",
@@ -180,68 +212,135 @@ export function useConnectionsLayer({
               10,
               3.5,
             ],
-            "line-opacity": visible ? 0.8 : 0,
+            "line-opacity": visible ? 0.9 : 0,
           },
         });
       } else {
         map.setPaintProperty(
-          "connections-line",
+          "connections-main-line",
           "line-opacity",
-          visible ? 0.8 : 0
+          visible ? 0.9 : 0
         );
       }
 
-      // Capa de puntos pulsantes en los nodos
-      if (!map.getLayer("connections-nodes")) {
-        const nodesData = {
-          type: "FeatureCollection" as const,
-          features: connections.flatMap((conn) => [
-            {
-              type: "Feature" as const,
-              properties: { country: conn.from.country },
-              geometry: {
-                type: "Point" as const,
-                coordinates: [conn.from.lon, conn.from.lat],
-              },
-            },
-            {
-              type: "Feature" as const,
-              properties: { country: conn.to.country },
-              geometry: {
-                type: "Point" as const,
-                coordinates: [conn.to.lon, conn.to.lat],
-              },
-            },
-          ]),
-        };
-
-        if (!map.getSource("connections-nodes-source")) {
-          map.addSource("connections-nodes-source", {
-            type: "geojson",
-            data: nodesData,
-          });
-        } else {
-          const source = map.getSource(
-            "connections-nodes-source"
-          ) as mapboxgl.GeoJSONSource;
-          source.setData(nodesData);
-        }
-
+      // === LAYER 4: DASHED OVERLAY (estilo NATO) ===
+      if (!map.getLayer("connections-dashed")) {
         map.addLayer({
-          id: "connections-nodes",
-          type: "circle",
-          source: "connections-nodes-source",
+          id: "connections-dashed",
+          type: "line",
+          source: "connections-source",
+          filter: [">=", ["get", "strength"], 3], // Solo para conexiones fuertes
           paint: {
-            "circle-radius": 4,
-            "circle-color": "#00ffff",
-            "circle-opacity": visible ? 0.6 : 0,
-            "circle-blur": 0.3,
+            "line-color": "#ffffff",
+            "line-width": 1,
+            "line-opacity": visible ? 0.4 : 0,
+            "line-dasharray": [3, 3],
           },
         });
       } else {
         map.setPaintProperty(
-          "connections-nodes",
+          "connections-dashed",
+          "line-opacity",
+          visible ? 0.4 : 0
+        );
+      }
+
+      // === NODES (puntos en los extremos) ===
+      const nodesData = {
+        type: "FeatureCollection" as const,
+        features: connections.flatMap((conn) => [
+          {
+            type: "Feature" as const,
+            properties: {
+              country: conn.from.country,
+              strength: conn.strength,
+            },
+            geometry: {
+              type: "Point" as const,
+              coordinates: [conn.from.lon, conn.from.lat],
+            },
+          },
+          {
+            type: "Feature" as const,
+            properties: {
+              country: conn.to.country,
+              strength: conn.strength,
+            },
+            geometry: {
+              type: "Point" as const,
+              coordinates: [conn.to.lon, conn.to.lat],
+            },
+          },
+        ]),
+      };
+
+      if (!map.getSource("connections-nodes-source")) {
+        map.addSource("connections-nodes-source", {
+          type: "geojson",
+          data: nodesData,
+        });
+      } else {
+        const source = map.getSource(
+          "connections-nodes-source"
+        ) as mapboxgl.GeoJSONSource;
+        source.setData(nodesData);
+      }
+
+      // Node Outer Glow
+      if (!map.getLayer("connections-nodes-glow")) {
+        map.addLayer({
+          id: "connections-nodes-glow",
+          type: "circle",
+          source: "connections-nodes-source",
+          paint: {
+            "circle-radius": 8,
+            "circle-color": "#06b6d4",
+            "circle-opacity": visible ? 0.3 : 0,
+            "circle-blur": 1,
+          },
+        });
+      } else {
+        map.setPaintProperty(
+          "connections-nodes-glow",
           "circle-opacity",
+          visible ? 0.3 : 0
+        );
+      }
+
+      // Node Core
+      if (!map.getLayer("connections-nodes-core")) {
+        map.addLayer({
+          id: "connections-nodes-core",
+          type: "circle",
+          source: "connections-nodes-source",
+          paint: {
+            "circle-radius": [
+              "interpolate",
+              ["linear"],
+              ["get", "strength"],
+              1,
+              3,
+              5,
+              4.5,
+              10,
+              6,
+            ],
+            "circle-color": "#67e8f9",
+            "circle-opacity": visible ? 0.8 : 0,
+            "circle-stroke-width": 1,
+            "circle-stroke-color": "#cffafe",
+            "circle-stroke-opacity": visible ? 0.6 : 0,
+          },
+        });
+      } else {
+        map.setPaintProperty(
+          "connections-nodes-core",
+          "circle-opacity",
+          visible ? 0.8 : 0
+        );
+        map.setPaintProperty(
+          "connections-nodes-core",
+          "circle-stroke-opacity",
           visible ? 0.6 : 0
         );
       }

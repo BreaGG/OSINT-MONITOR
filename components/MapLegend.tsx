@@ -63,8 +63,8 @@ export default function MapLegend() {
                 key={key}
                 className="flex items-center justify-between gap-2 group"
               >
-                <span className="text-gray-400 group-hover:text-gray-300 transition lowercase">
-                  {value.label}
+                <span className="text-gray-400 group-hover:text-gray-300 transition capitalize">
+                  {value.label.toLowerCase()}
                 </span>
                 <div className="relative flex items-center justify-center w-4 h-4">
                   {/* Halo */}
@@ -90,7 +90,7 @@ export default function MapLegend() {
             
             <div className="space-y-1">
               <div className="flex items-center justify-between gap-2 group">
-                <span className="text-gray-400 group-hover:text-gray-300 transition lowercase">strategic capital</span>
+                <span className="text-gray-400 group-hover:text-gray-300 transition capitalize">strategic capital</span>
                 <div className="relative flex items-center justify-center w-4 h-4">
                   <span
                     className="absolute w-2 h-2 rounded-full"
@@ -100,21 +100,21 @@ export default function MapLegend() {
               </div>
 
               <div className="flex items-center justify-between gap-2 group">
-                <span className="text-gray-400 group-hover:text-gray-300 transition lowercase">chokepoint</span>
+                <span className="text-gray-400 group-hover:text-gray-300 transition capitalize">chokepoint</span>
                 <div className="relative flex items-center justify-center w-4 h-4">
                   <span className="absolute text-lg leading-none" style={{ color: "#38bdf8" }}>◆</span>
                 </div>
               </div>
               
               <div className="flex items-center justify-between gap-2 group">
-                <span className="text-gray-400 group-hover:text-gray-300 transition lowercase">military base</span>
+                <span className="text-gray-400 group-hover:text-gray-300 transition capitalize">military base</span>
                 <div className="relative flex items-center justify-center w-4 h-4">
                   <span className="absolute text-purple-400 text-sm leading-none">★</span>
                 </div>
               </div>
 
               <div className="flex items-center justify-between gap-2 group">
-                <span className="text-gray-400 group-hover:text-gray-300 transition lowercase">active conflict</span>
+                <span className="text-gray-400 group-hover:text-gray-300 transition capitalize">active conflict</span>
                 <div className="relative flex items-center justify-center w-4 h-4">
                   <span
                     className="absolute px-1.5 py-0.5 rounded text-[7px] font-bold tracking-wider border"
@@ -142,14 +142,14 @@ export default function MapLegend() {
 
                 <div className="space-y-1">
                   <div className="flex items-center justify-between gap-2 group">
-                    <span className="text-gray-400 group-hover:text-gray-300 transition lowercase">aircraft</span>
+                    <span className="text-gray-400 group-hover:text-gray-300 transition capitalize">aircraft</span>
                     <div className="relative flex items-center justify-center w-4 h-4">
                       <span className="absolute text-yellow-400 text-lg leading-none">✈</span>
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between gap-2 group">
-                    <span className="text-gray-400 group-hover:text-gray-300 transition lowercase">commercial vessel</span>
+                    <span className="text-gray-400 group-hover:text-gray-300 transition capitalize">commercial vessel</span>
                     <div className="flex items-center gap-0.5">
                       <span 
                         className="w-1.5 h-1.5 rounded-full border border-white"
@@ -160,7 +160,7 @@ export default function MapLegend() {
                   </div>
 
                   <div className="flex items-center justify-between gap-2 group">
-                    <span className="text-gray-400 group-hover:text-gray-300 transition lowercase">military vessel</span>
+                    <span className="text-gray-400 group-hover:text-gray-300 transition capitalize">military vessel</span>
                     <div className="flex items-center gap-0.5">
                       <span 
                         className="w-1.5 h-1.5 rounded-full border border-white"
@@ -171,7 +171,7 @@ export default function MapLegend() {
                   </div>
 
                   <div className="flex items-center justify-between gap-2 group">
-                    <span className="text-gray-400 group-hover:text-gray-300 transition lowercase">cruise ship</span>
+                    <span className="text-gray-400 group-hover:text-gray-300 transition capitalize">cruise ship</span>
                     <div className="flex items-center gap-0.5">
                       <span 
                         className="w-2 h-2 rounded-full border border-white"
@@ -190,7 +190,7 @@ export default function MapLegend() {
                 </div>
 
                 <div className="flex items-center justify-between gap-2 group">
-                  <span className="text-gray-400 group-hover:text-gray-300 transition lowercase">internet hub</span>
+                  <span className="text-gray-400 group-hover:text-gray-300 transition capitalize">internet hub</span>
                   <div className="relative flex items-center justify-center w-4 h-4">
                     <span className="absolute text-purple-500 text-base leading-none">◉</span>
                   </div>
@@ -205,21 +205,21 @@ export default function MapLegend() {
 
                 <div className="space-y-1">
                   <div className="flex items-center justify-between gap-2 group">
-                    <span className="text-gray-400 group-hover:text-gray-300 transition lowercase">conflict signal</span>
+                    <span className="text-gray-400 group-hover:text-gray-300 transition capitalize">conflict signal</span>
                     <div className="relative flex items-center justify-center w-4 h-4">
                       <span className="text-red-500 text-sm leading-none">▲</span>
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between gap-2 group">
-                    <span className="text-gray-400 group-hover:text-gray-300 transition lowercase">disaster signal</span>
+                    <span className="text-gray-400 group-hover:text-gray-300 transition capitalize">disaster signal</span>
                     <div className="relative flex items-center justify-center w-4 h-4">
                       <span className="text-orange-500 text-sm leading-none">▲</span>
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between gap-2 group">
-                    <span className="text-gray-400 group-hover:text-gray-300 transition lowercase">social signal</span>
+                    <span className="text-gray-400 group-hover:text-gray-300 transition capitalize">social signal</span>
                     <div className="relative flex items-center justify-center w-4 h-4">
                       <span className="text-blue-500 text-sm leading-none">▲</span>
                     </div>
