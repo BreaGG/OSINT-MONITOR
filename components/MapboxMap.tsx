@@ -10,6 +10,7 @@ import type { SatelliteFocus } from "./SatelliteView"
 
 import { isWithinTimeWindow } from "@/lib/timestampUtils"
 import { hasCoordinates, MAP_CONFIG, TIME_WINDOWS, type TimeWindow } from "@/lib/map/helpers"
+import { applySmartDispersion, getTopCountries, getCountryAcronym } from "@/lib/mapDispersionHelper"
 
 // Custom layer hooks
 import { useEventsLayer } from "@/hooks/map/useEventsLayer"
@@ -52,28 +53,23 @@ export default function MapboxMap({
 
   const [ready, setReady] = useState(false)
   const [timeWindow, setTimeWindow] = useState<TimeWindow>("24h")
-  // Siempre usar dark por defecto
   const mapStyle = "dark"
-  // Day/Night toggle - DESACTIVADO por defecto
   const [showDayNight, setShowDayNight] = useState(false)
 
   const [layers, setLayers] = useState({
     events: true,
-    hotzones: false, // Desactivado por defecto
+    hotzones: false,
     capitals: true,
     chokepoints: true,
     conflicts: true,
     militaryBases: true,
-    hubs: false, // Desactivado por defecto
-    signals: true, // Activado por defecto
-    aircraft: false,  // Desactivado por defecto
+    hubs: false,
+    signals: true,
+    aircraft: false,
     vessels: false,
   })
 
-  // NO activar aircraft automáticamente en fullscreen
-  // El usuario debe activarlo manualmente si lo desea
-
-  // Filtered data by time window
+  // Filtered data by time window CON DISPERSIÓN INTELIGENTE
   const visibleEvents = useMemo(() => {
     if (events.length === 0) return []
 
@@ -93,51 +89,55 @@ export default function MapboxMap({
     })
     
     // Si todos los eventos pasan el filtro (son muy recientes), aplicar límite por cantidad
+    let finalFiltered = filtered
     if (filtered.length === events.length) {
-      // Ordenar por timestamp (más reciente primero)
       const sorted = [...filtered].sort((a, b) => {
         const timeA = a.timestamp || new Date(a.date).getTime()
         const timeB = b.timestamp || new Date(b.date).getTime()
         return timeB - timeA
       })
       
-      // Límites por ventana
       const limits = {
-        "6h": Math.max(Math.floor(events.length * 0.3), 20),  // 30% mínimo 20
-        "24h": Math.max(Math.floor(events.length * 0.6), 40), // 60% mínimo 40
-        "72h": events.length                                   // 100%
+        "6h": Math.max(Math.floor(events.length * 0.3), 20),
+        "24h": Math.max(Math.floor(events.length * 0.6), 40),
+        "72h": events.length
       }
       
-      return sorted.slice(0, limits[timeWindow])
+      finalFiltered = sorted.slice(0, limits[timeWindow])
     }
     
-    return filtered
+    // APLICAR DISPERSIÓN INTELIGENTE
+    const dispersed = applySmartDispersion(finalFiltered)
+    
+    return dispersed
   }, [events, timeWindow])
+
+  // Top countries para presets (solo en fullscreen)
+  const topCountries = useMemo(() => {
+    if (!isFullscreenPage) return []
+    return getTopCountries(visibleEvents, 5)
+  }, [visibleEvents, isFullscreenPage])
 
   /* ===================== CUSTOM LAYER HOOKS ===================== */
 
-  // Heatmap layer
   useHeatmapLayer({
     map: ready ? mapRef.current : null,
     events: visibleEvents,
     visible: heatmapMode,
   })
 
-  // Connections layer
   useConnectionsLayer({
     map: ready ? mapRef.current : null,
     events: visibleEvents,
     visible: showConnections,
   })
 
-  // HotZones layer (PRIMERO para que esté DEBAJO)
   const { hotZones } = useHotZonesLayer({
     map: ready ? mapRef.current : null,
     events: visibleEvents,
-    visible: layers.hotzones && !heatmapMode, // Ocultar hotzones cuando heatmap está activo
+    visible: layers.hotzones && !heatmapMode,
   })
 
-  // Events layer (DESPUÉS para que esté ENCIMA de hotzones)
   useEventsLayer({
     map: ready ? mapRef.current : null,
     events: visibleEvents,
@@ -173,22 +173,19 @@ export default function MapboxMap({
     popupRef,
   })
 
-  // Hubs layer (solo en fullscreen)
   useHubsLayer({
     map: ready ? mapRef.current : null,
-    visible: layers.hubs && isFullscreenPage, // Solo visible en fullscreen
+    visible: layers.hubs && isFullscreenPage,
     popupRef,
     onSelectSatelliteFocus,
   })
 
-  // Signals layer (solo en fullscreen)
   useSignalsLayer({
     map: ready ? mapRef.current : null,
-    visible: layers.signals && isFullscreenPage, // Solo visible en fullscreen
+    visible: layers.signals && isFullscreenPage,
     popupRef,
   })
 
-  // Tráfico en tiempo real (solo si está habilitado)
   const { loading: aircraftLoading, count: aircraftCount } = useTrafficLayer({
     map: ready ? mapRef.current : null,
     type: "aircraft",
@@ -203,7 +200,6 @@ export default function MapboxMap({
     popupRef,
   })
 
-  // Day/Night layer (solo visible en fullscreen por defecto)
   useDayNightLayer({
     map: ready ? mapRef.current : null,
     visible: showDayNight,
@@ -225,7 +221,7 @@ export default function MapboxMap({
   /* ===================== KEYBOARD SHORTCUT ===================== */
 
   useEffect(() => {
-    if (isFullscreenPage) return // Ya está manejado en la página
+    if (isFullscreenPage) return
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key.toLowerCase() === "f") {
@@ -245,17 +241,14 @@ export default function MapboxMap({
     try {
       const map = new mapboxgl.Map({
         container: containerRef.current,
-        style: "mapbox://styles/mapbox/dark-v11", // Siempre dark
-        center: isFullscreenPage ? [10, 25] : MAP_CONFIG.INITIAL_CENTER, // Centrado entre USA/Venezuela y Europa/Oriente Medio
-        zoom: isFullscreenPage ? 2.2 : MAP_CONFIG.INITIAL_ZOOM, // Zoom 2.2 (ligero zoom in pero se ve todo)
+        style: "mapbox://styles/mapbox/dark-v11",
+        center: isFullscreenPage ? [10, 25] : MAP_CONFIG.INITIAL_CENTER,
+        zoom: isFullscreenPage ? 2.2 : MAP_CONFIG.INITIAL_ZOOM,
         minZoom: MAP_CONFIG.MIN_ZOOM,
         maxZoom: MAP_CONFIG.MAX_ZOOM,
         projection: { name: "mercator" },
         attributionControl: false,
       })
-
-      // NO añadir controles de navegación de Mapbox
-      // map.addControl(new mapboxgl.NavigationControl(), "bottom-right")
 
       map.on("load", () => {
         popupRef.current = new mapboxgl.Popup({
@@ -280,7 +273,7 @@ export default function MapboxMap({
     } catch (error) {
       console.error("Failed to initialize map:", error)
     }
-  }, [isFullscreenPage]) // Añadir dependencia de isFullscreenPage
+  }, [isFullscreenPage])
 
   /* ===================== HOVER HIGHLIGHT ===================== */
 
@@ -344,6 +337,19 @@ export default function MapboxMap({
     }
   }, [hoveredEventId, events, ready])
 
+  /* ===================== FLY TO COUNTRY ===================== */
+
+  const flyToCountry = (center: [number, number], zoom: number) => {
+    if (!mapRef.current) return
+    
+    mapRef.current.flyTo({
+      center,
+      zoom,
+      duration: 1500,
+      essential: true,
+    })
+  }
+
   /* ===================== RENDER ===================== */
 
   return (
@@ -361,12 +367,10 @@ export default function MapboxMap({
       {/* LAYER CONTROLS */}
       <div className="absolute top-2 left-2 z-10 space-y-1 text-xs">
         {Object.entries(layers).map(([key, value]) => {
-          // Ocultar controles de tráfico, hubs y signals si no estamos en fullscreen
           if ((key === "aircraft" || key === "vessels" || key === "hubs" || key === "signals") && !isFullscreenPage) {
             return null
           }
 
-          // Labels limpios por capa
           const layerLabels: Record<string, string> = {
             events: "EVENTS",
             hotzones: "HOTZONES",
@@ -405,6 +409,46 @@ export default function MapboxMap({
         })}
       </div>
 
+      {/* COUNTRY PRESETS (solo fullscreen) */}
+      {isFullscreenPage && topCountries.length > 0 && (
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20">
+          <div className="flex items-center gap-2 bg-black/90 border border-gray-800 rounded px-2.5 py-1.5">
+            <div className="flex items-center gap-1 shrink-0">
+              <div className="w-1 h-1 bg-red-500 rounded-full animate-pulse" />
+              <span className="text-[8px] uppercase tracking-[0.12em] font-bold text-gray-500">
+                Hotspots
+              </span>
+            </div>
+            
+            <div className="w-px h-3 bg-gray-800" />
+            
+            <div className="flex items-center gap-1">
+              {topCountries.map(({ country, count, center, zoom }) => (
+                <button
+                  key={country}
+                  onClick={() => flyToCountry(center, zoom)}
+                  className="
+                    flex items-center gap-1 px-2 py-1 rounded
+                    bg-gray-900/50 border border-gray-800
+                    hover:border-gray-700 hover:bg-gray-900
+                    transition-all group
+                  "
+                >
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400 group-hover:text-gray-300 leading-none">
+                    {getCountryAcronym(country)}
+                  </span>
+                  <div className="flex items-center justify-center px-1 py-0.5 bg-red-500/20 border border-red-500/40 rounded min-w-[20px]">
+                    <span className="text-[8px] font-mono font-bold text-red-400 leading-none">
+                      {count}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* FULLSCREEN BUTTON (solo en home) */}
       {!isFullscreenPage && (
         <div className="absolute top-2 right-2 z-20">
@@ -420,12 +464,11 @@ export default function MapboxMap({
       {/* CUSTOM MAP CONTROLS (solo en fullscreen) */}
       {isFullscreenPage && (
         <div className="absolute top-2 right-2 z-20 flex flex-col gap-1">
-          {/* Botón centrar mapa */}
           <button
             onClick={() => {
               if (mapRef.current) {
                 mapRef.current.flyTo({
-                  center: [10, 25], // Centrado entre USA/Venezuela y Europa/Oriente Medio
+                  center: [10, 25],
                   zoom: 2.2,
                   duration: 1500,
                 })
@@ -440,7 +483,6 @@ export default function MapboxMap({
             </svg>
           </button>
           
-          {/* Botón zoom in */}
           <button
             onClick={() => {
               if (mapRef.current) {
@@ -453,7 +495,6 @@ export default function MapboxMap({
             +
           </button>
           
-          {/* Botón zoom out */}
           <button
             onClick={() => {
               if (mapRef.current) {
@@ -483,7 +524,6 @@ export default function MapboxMap({
               DAY/NIGHT
             </button>
             
-            {/* Info visual siempre visible */}
             <div className="mt-2 pt-2 border-t border-gray-800 text-[9px] space-y-1">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: "#000000", opacity: 0.25 }} />
@@ -506,7 +546,6 @@ export default function MapboxMap({
 
       {/* TIME WINDOW + COUNTERS */}
       <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2">
-        {/* Stats bar */}
         <div className="text-[11px] text-gray-400 bg-black/90 border border-gray-800 rounded px-3 py-1.5">
           <span className="text-red-400 font-medium">
             {hotZones.length} hot zones
@@ -515,7 +554,6 @@ export default function MapboxMap({
           <span className="text-blue-400 font-medium">{visibleEvents.length}</span>
           <span className="text-gray-500"> / {events.length} events</span>
           
-          {/* Traffic counters (solo en fullscreen) */}
           {isFullscreenPage && (
             <>
               {layers.aircraft && (
@@ -538,7 +576,6 @@ export default function MapboxMap({
           )}
         </div>
         
-        {/* Time window selector */}
         <div className="flex gap-1.5 bg-black/90 border border-gray-800 rounded p-1">
           {(["6h", "24h", "72h"] as TimeWindow[]).map(v => {
             const isActive = timeWindow === v
