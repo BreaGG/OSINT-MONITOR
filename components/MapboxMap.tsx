@@ -55,6 +55,7 @@ export default function MapboxMap({
   const [timeWindow, setTimeWindow] = useState<TimeWindow>("24h")
   const mapStyle = "dark"
   const [showDayNight, setShowDayNight] = useState(false)
+  const [projectionMode, setProjectionMode] = useState<"2d" | "3d">("2d") // Nuevo estado para modo 2D/3D
 
   const [layers, setLayers] = useState({
     events: true,
@@ -212,11 +213,25 @@ export default function MapboxMap({
     if (stored === "6h" || stored === "24h" || stored === "72h") {
       setTimeWindow(stored)
     }
-  }, [])
+    
+    // Cargar modo de proyección guardado (solo en fullscreen)
+    if (isFullscreenPage) {
+      const storedMode = localStorage.getItem("osint.map.projectionMode")
+      if (storedMode === "2d" || storedMode === "3d") {
+        setProjectionMode(storedMode)
+      }
+    }
+  }, [isFullscreenPage])
 
   useEffect(() => {
     localStorage.setItem("osint.map.timeWindow", timeWindow)
   }, [timeWindow])
+  
+  useEffect(() => {
+    if (isFullscreenPage) {
+      localStorage.setItem("osint.map.projectionMode", projectionMode)
+    }
+  }, [projectionMode, isFullscreenPage])
 
   /* ===================== KEYBOARD SHORTCUT ===================== */
 
@@ -243,12 +258,25 @@ export default function MapboxMap({
         container: containerRef.current,
         style: "mapbox://styles/mapbox/dark-v11",
         center: isFullscreenPage ? [10, 25] : MAP_CONFIG.INITIAL_CENTER,
-        zoom: isFullscreenPage ? 2.2 : MAP_CONFIG.INITIAL_ZOOM,
+        zoom: isFullscreenPage ? (projectionMode === "3d" ? 2.4 : 2.2) : MAP_CONFIG.INITIAL_ZOOM, // 3D: 1.8 (más zoom)
         minZoom: MAP_CONFIG.MIN_ZOOM,
         maxZoom: MAP_CONFIG.MAX_ZOOM,
-        projection: { name: "mercator" },
+        projection: projectionMode === "3d" ? { name: "globe" } : { name: "mercator" },
         attributionControl: false,
       })
+
+      // Configuración especial para modo 3D globe (sin estrellas)
+      if (projectionMode === "3d") {
+        map.on('style.load', () => {
+          map.setFog({
+            color: 'rgb(10, 10, 15)', // Gris muy oscuro profesional
+            'high-color': 'rgb(30, 35, 50)', // Azul grisáceo en horizonte
+            'horizon-blend': 0.03, // Blend más definido
+            'space-color': 'rgb(5, 5, 10)', // Espacio casi negro
+            'star-intensity': 0 // SIN estrellas para look profesional
+          })
+        })
+      }
 
       map.on("load", () => {
         popupRef.current = new mapboxgl.Popup({
@@ -273,7 +301,7 @@ export default function MapboxMap({
     } catch (error) {
       console.error("Failed to initialize map:", error)
     }
-  }, [isFullscreenPage])
+  }, [isFullscreenPage, projectionMode]) // Añadir projectionMode como dependencia
 
   /* ===================== HOVER HIGHLIGHT ===================== */
 
@@ -348,6 +376,45 @@ export default function MapboxMap({
       duration: 1500,
       essential: true,
     })
+  }
+
+  /* ===================== TOGGLE PROJECTION MODE ===================== */
+
+  const toggleProjectionMode = () => {
+    if (!mapRef.current || !isFullscreenPage) return
+    
+    const newMode = projectionMode === "2d" ? "3d" : "2d"
+    const map = mapRef.current
+    
+    // Cambiar proyección
+    map.setProjection(newMode === "3d" ? { name: "globe" } : { name: "mercator" })
+    
+    // Ajustar zoom apropiado para cada modo
+    const currentZoom = map.getZoom()
+    const newZoom = newMode === "3d" 
+      ? Math.max(currentZoom * 0.8, 2.0)  // Zoom 1.8 para globe (más zoom que antes)
+      : Math.min(currentZoom * 1.25, 2.2)  // Zoom in para mercator
+    
+    map.flyTo({
+      zoom: newZoom,
+      duration: 1500,
+    })
+    
+    // Configurar fog para modo 3D (sin estrellas - look profesional)
+    if (newMode === "3d") {
+      map.setFog({
+        color: 'rgb(10, 10, 15)',
+        'high-color': 'rgb(30, 35, 50)',
+        'horizon-blend': 0.03,
+        'space-color': 'rgb(5, 5, 10)',
+        'star-intensity': 0 // Sin estrellas
+      })
+    } else {
+      // Remover fog en modo 2D
+      map.setFog(null)
+    }
+    
+    setProjectionMode(newMode)
   }
 
   /* ===================== RENDER ===================== */
@@ -464,12 +531,51 @@ export default function MapboxMap({
       {/* CUSTOM MAP CONTROLS (solo en fullscreen) */}
       {isFullscreenPage && (
         <div className="absolute top-2 right-2 z-20 flex flex-col gap-1">
+          {/* Botón 2D/3D Toggle */}
+          <button
+            onClick={toggleProjectionMode}
+            className={`
+              w-9 h-9 rounded border transition-all flex items-center justify-center group relative
+              ${projectionMode === "3d"
+                ? "bg-purple-500/20 border-purple-500/50 text-purple-300"
+                : "bg-black/90 border-gray-700 text-gray-300 hover:text-white hover:border-gray-600"
+              }
+            `}
+            title={projectionMode === "2d" ? "Switch to 3D Globe View" : "Switch to 2D Flat Map"}
+          >
+            {projectionMode === "2d" ? (
+              // Icono 3D (esfera)
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="9" strokeWidth="2" />
+                <path d="M12 3 C8 8, 8 16, 12 21" strokeWidth="1.5" />
+                <path d="M12 3 C16 8, 16 16, 12 21" strokeWidth="1.5" />
+                <ellipse cx="12" cy="12" rx="9" ry="4" strokeWidth="1.5" />
+              </svg>
+            ) : (
+              // Icono 2D (mapa plano)
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <rect x="3" y="6" width="18" height="12" strokeWidth="2" rx="1" />
+                <path d="M9 6 L9 18 M15 6 L15 18" strokeWidth="1.5" />
+                <path d="M3 12 L21 12" strokeWidth="1.5" />
+              </svg>
+            )}
+            
+            {/* Tooltip mejorado */}
+            <div className="absolute right-full mr-2 px-2 py-1 bg-black/90 border border-gray-700 rounded text-[9px] text-gray-300 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+              {projectionMode === "2d" ? "3D Globe View" : "2D Flat Map"}
+            </div>
+          </button>
+          
+          {/* Separador visual */}
+          <div className="w-9 h-px bg-gray-800 my-0.5" />
+          
+          {/* Botón centrar mapa */}
           <button
             onClick={() => {
               if (mapRef.current) {
                 mapRef.current.flyTo({
                   center: [10, 25],
-                  zoom: 2.2,
+                  zoom: projectionMode === "3d" ? 2.4 : 2.2, // 3D: 1.8, 2D: 2.2
                   duration: 1500,
                 })
               }
@@ -547,6 +653,16 @@ export default function MapboxMap({
       {/* TIME WINDOW + COUNTERS */}
       <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2">
         <div className="text-[11px] text-gray-400 bg-black/90 border border-gray-800 rounded px-3 py-1.5">
+          {/* Indicador de modo (solo en fullscreen) */}
+          {isFullscreenPage && (
+            <>
+              <span className={`font-medium ${projectionMode === "3d" ? "text-purple-400" : "text-cyan-400"}`}>
+                {projectionMode === "3d" ? "🌍 GLOBE" : "🗺️ FLAT"}
+              </span>
+              <span className="mx-2 text-gray-600">|</span>
+            </>
+          )}
+          
           <span className="text-red-400 font-medium">
             {hotZones.length} hot zones
           </span>
