@@ -32,9 +32,9 @@ const SENSOR_FILTERS: Record<Sensor, string> = {
 }
 
 const SENSOR_MODES: Record<Sensor, string> = {
-    eo: "VISUAL PRIORITY",
-    ir: "THERMAL SIGNATURES",
-    "low-light": "LOW VISIBILITY",
+    eo: "VISUAL",
+    ir: "THERMAL",
+    "low-light": "LOW-VIS",
 }
 
 const DEFAULT_FOCUS: UAVFocus = {
@@ -66,30 +66,21 @@ type Props = {
     isPrimaryAO?: boolean
 }
 
-export default function UAVView({
-    focus,
-    globalStatus,
-    isPrimaryAO,
-}: Props) {
+export default function UAVView({ focus, globalStatus, isPrimaryAO }: Props) {
     const [altitude, setAltitude] = useState<Altitude>("medium")
     const [pattern, setPattern] = useState<Pattern>("orbit")
     const [mission, setMission] = useState<Mission>("surveillance")
     const [sensor, setSensor] = useState<Sensor>("eo")
     const [status, setStatus] = useState<UAVStatus>("standby")
-
     const [onStationMinutes, setOnStationMinutes] = useState(0)
-
     const [cityQuery, setCityQuery] = useState("")
     const [deploying, setDeploying] = useState(false)
     const [error, setError] = useState<string | null>(null)
-
-    const [currentFocus, setCurrentFocus] =
-        useState<UAVFocus>(focus ?? DEFAULT_FOCUS)
+    const [currentFocus, setCurrentFocus] = useState<UAVFocus>(focus ?? DEFAULT_FOCUS)
 
     const originRef = useRef(currentFocus)
     const lastMove = useRef({ dx: 0, dy: 0 })
 
-    /* -------- UPDATE FROM MAP -------- */
     useEffect(() => {
         if (focus) {
             setCurrentFocus(focus)
@@ -99,7 +90,6 @@ export default function UAVView({
         }
     }, [focus])
 
-    /* -------- TIME ON STATION -------- */
     useEffect(() => {
         if (status !== "onstation") return
         const id = setInterval(() => {
@@ -108,7 +98,6 @@ export default function UAVView({
         return () => clearInterval(id)
     }, [status])
 
-    /* -------- GLOBAL STATE AWARENESS -------- */
     const taskingPriority =
         isPrimaryAO && globalStatus !== "stable"
             ? "HIGH"
@@ -118,16 +107,13 @@ export default function UAVView({
 
     useEffect(() => {
         if (globalStatus === "critical" && !isPrimaryAO) {
-            console.warn(
-                "UAV operating outside primary AO during CRITICAL global state"
-            )
+            console.warn("UAV operating outside primary AO during CRITICAL global state")
         }
     }, [globalStatus, isPrimaryAO])
 
     const { zoom, step } = ALTITUDE_CONFIG[altitude]
     const size = "640x360"
 
-    /* -------- DEPLOY TO CITY -------- */
     const deployCity = async () => {
         if (!cityQuery.trim()) return
         setDeploying(true)
@@ -155,7 +141,6 @@ export default function UAVView({
 
             setCurrentFocus(newFocus)
             originRef.current = newFocus
-
             setAltitude("medium")
             setPattern("orbit")
             setMission("surveillance")
@@ -170,7 +155,6 @@ export default function UAVView({
         }
     }
 
-    /* -------- MANUAL MOVE -------- */
     const move = (dx: number, dy: number) => {
         lastMove.current = { dx, dy }
         setCurrentFocus(f => ({
@@ -180,7 +164,6 @@ export default function UAVView({
         }))
     }
 
-    /* -------- AUTO ORBIT -------- */
     useEffect(() => {
         if (pattern !== "orbit") return
 
@@ -214,12 +197,8 @@ export default function UAVView({
         [currentFocus, altitude, mission, sensor]
     )
 
-    const enduranceLeft = Math.max(
-        MAX_ENDURANCE_MIN - onStationMinutes,
-        0
-    )
+    const enduranceLeft = Math.max(MAX_ENDURANCE_MIN - onStationMinutes, 0)
 
-    /* -------- POP OUT -------- */
     const popOut = () => {
         const params = new URLSearchParams({
             lat: String(currentFocus.lat),
@@ -228,49 +207,58 @@ export default function UAVView({
             label: currentFocus.label ?? "",
         })
 
-        window.open(
-            `/uav?${params.toString()}`,
-            "_blank",
-            "noopener,noreferrer"
-        )
+        window.open(`/uav?${params.toString()}`, "_blank", "noopener,noreferrer")
     }
 
-    /* ===================== RENDER ===================== */
-
     return (
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full gap-2">
             {/* DEPLOY BAR */}
-            <div className="px-2 py-1 border-b border-gray-800 flex gap-1 text-[11px]">
+            <div className="flex items-center gap-1 shrink-0">
                 <input
                     value={cityQuery}
                     onChange={e => setCityQuery(e.target.value)}
                     onKeyDown={e => e.key === "Enter" && deployCity()}
-                    placeholder="Deploy UAV to city…"
-                    className="flex-1 bg-black border border-gray-800 px-2 py-1 text-gray-200 outline-none"
+                    placeholder="DEPLOY TO CITY..."
+                    className="
+                        flex-1 bg-gray-900 border border-gray-800 rounded
+                        px-2 py-1 text-[10px] text-gray-300 font-medium
+                        placeholder:text-gray-700 placeholder:uppercase placeholder:tracking-wider
+                        focus:outline-none focus:border-cyan-500/50
+                    "
                 />
                 <button
                     onClick={deployCity}
                     disabled={deploying}
-                    className="px-2 py-1 border border-gray-700 text-gray-200"
+                    className="
+                        px-3 py-1 rounded text-[9px] font-bold uppercase tracking-wider
+                        bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-800
+                        text-white transition-all
+                    "
                 >
-                    {deploying ? "…" : "DEPLOY"}
+                    {deploying ? "..." : "Deploy"}
                 </button>
                 <button
                     onClick={popOut}
-                    className="px-2 py-1 border border-gray-700 text-gray-400"
+                    className="
+                        px-2 py-1 rounded text-[9px] font-bold uppercase tracking-wider
+                        bg-gray-800 hover:bg-gray-700 text-gray-400
+                        border border-gray-700 transition-all
+                    "
                 >
-                    POP OUT
+                    ⤢
                 </button>
             </div>
 
             {error && (
-                <div className="px-2 py-1 text-[10px] text-red-400">
-                    {error}
+                <div className="shrink-0 px-2 py-1 bg-red-500/10 border border-red-500/30 rounded">
+                    <span className="text-[9px] text-red-400 uppercase tracking-wider">
+                        {error}
+                    </span>
                 </div>
             )}
 
             {/* FEED */}
-            <div className="relative aspect-video bg-black overflow-hidden">
+            <div className="relative flex-1 min-h-0 bg-black rounded border border-gray-800 overflow-hidden">
                 <img
                     src={imageUrl}
                     alt="UAV ISR feed"
@@ -281,94 +269,124 @@ export default function UAVView({
                 <div className="absolute inset-0 pointer-events-none opacity-[0.05] bg-[linear-gradient(rgba(255,255,255,0.1)_1px,transparent_1px)] bg-[size:100%_3px]" />
 
                 {/* STATUS HUD */}
-                <div className="absolute top-2 left-2 text-[10px] text-gray-300 bg-black/70 border border-gray-800 rounded px-2 py-1 space-y-0.5">
-                    <div>ASSET UAV-01 · {status.toUpperCase()}</div>
-                    <div>
-                        TASK {mission.toUpperCase()} · ALT{" "}
-                        {altitude.toUpperCase()}
+                <div className="absolute top-2 left-2 bg-black/80 border border-gray-800 rounded px-2 py-1.5 space-y-0.5 text-[9px] font-mono">
+                    <div className="text-cyan-400 font-bold">UAV-01 · {status.toUpperCase()}</div>
+                    <div className="text-gray-400">
+                        MSN {mission.toUpperCase()} · ALT {altitude.toUpperCase()}
                     </div>
-                    <div>
-                        SENSOR {sensor.toUpperCase()} ·{" "}
-                        {SENSOR_MODES[sensor]}
+                    <div className="text-gray-400">
+                        SNS {sensor.toUpperCase()} · {SENSOR_MODES[sensor]}
                     </div>
-                    <div>
-                        HDG {heading} · TOS {onStationMinutes}m
+                    <div className="text-gray-500">
+                        HDG {heading} · TOS {onStationMinutes}M
                     </div>
-                    <div>ENDURANCE {enduranceLeft}m</div>
+                    <div className="text-gray-500">
+                        END {enduranceLeft}M
+                    </div>
 
-                    {/* GLOBAL AWARENESS */}
-                    <div className="pt-0.5 border-t border-gray-700/40">
-                        <div>
-                            TASKING PRIORITY: {taskingPriority}
+                    <div className="pt-1 border-t border-gray-800/50">
+                        <div className={`
+                            ${taskingPriority === "HIGH" ? "text-red-400" : 
+                              taskingPriority === "MEDIUM" ? "text-yellow-400" : 
+                              "text-green-400"}
+                        `}>
+                            PRIORITY: {taskingPriority}
                         </div>
-                        {!isPrimaryAO &&
-                            globalStatus === "critical" && (
-                                <div className="text-gray-400">
-                                    NOTE: UAV outside primary AO
-                                </div>
-                            )}
+                        {!isPrimaryAO && globalStatus === "critical" && (
+                            <div className="text-yellow-500 text-[8px]">
+                                ⚠ OUTSIDE PRIMARY AO
+                            </div>
+                        )}
                     </div>
                 </div>
 
                 {/* MOVEMENT */}
-                <div className="absolute top-2 right-2 grid grid-cols-3 gap-0.5 text-[11px]">
-                    <div />
-                    <button onClick={() => move(0, step)}>▲</button>
-                    <div />
-                    <button onClick={() => move(-step, 0)}>◀</button>
-                    <button onClick={() => setCurrentFocus(originRef.current)}>
-                        ⦿
-                    </button>
-                    <button onClick={() => move(step, 0)}>▶</button>
-                    <div />
-                    <button onClick={() => move(0, -step)}>▼</button>
-                    <div />
+                <div className="absolute top-2 right-2 grid grid-cols-3 gap-0.5">
+                    {[
+                        [null, [0, step], null],
+                        [[-step, 0], "home", [step, 0]],
+                        [null, [0, -step], null],
+                    ].map((row, i) => (
+                        <div key={i} className="contents">
+                            {row.map((cell, j) => {
+                                if (cell === null) return <div key={j} />
+                                if (cell === "home") return (
+                                    <button
+                                        key={j}
+                                        onClick={() => setCurrentFocus(originRef.current)}
+                                        className="w-6 h-6 flex items-center justify-center bg-black/60 border border-gray-700 rounded text-[10px] text-cyan-400 hover:bg-cyan-500/20 transition"
+                                    >
+                                        ⦿
+                                    </button>
+                                )
+                                const [dx, dy] = cell as number[]
+                                return (
+                                    <button
+                                        key={j}
+                                        onClick={() => move(dx, dy)}
+                                        className="w-6 h-6 flex items-center justify-center bg-black/60 border border-gray-700 rounded text-[10px] text-gray-400 hover:bg-cyan-500/20 hover:text-cyan-400 transition"
+                                    >
+                                        {dy > 0 ? "▲" : dy < 0 ? "▼" : dx > 0 ? "▶" : "◀"}
+                                    </button>
+                                )
+                            })}
+                        </div>
+                    ))}
                 </div>
 
-                {/* CONTROLS */}
-                <div className="absolute bottom-2 left-2 flex gap-1 text-[11px] bg-black/70 border border-gray-800 rounded px-1 py-1">
+                {/* ALTITUDE CONTROL */}
+                <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/80 border border-gray-800 rounded px-1.5 py-1">
                     {(["low", "medium", "high"] as Altitude[]).map(a => (
                         <button
                             key={a}
                             onClick={() => setAltitude(a)}
-                            className={
-                                altitude === a
-                                    ? "text-gray-200"
-                                    : "text-gray-500"
-                            }
+                            className={`
+                                px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider
+                                transition-all
+                                ${altitude === a
+                                    ? "bg-cyan-500/30 text-cyan-300 border border-cyan-500/50"
+                                    : "text-gray-600 hover:text-gray-400 border border-transparent"
+                                }
+                            `}
                         >
-                            {a.toUpperCase()}
+                            {a}
                         </button>
                     ))}
                 </div>
 
-                <div className="absolute bottom-2 right-2 flex gap-1 text-[11px] bg-black/70 border border-gray-800 rounded px-1 py-1">
+                {/* SENSOR CONTROL */}
+                <div className="absolute bottom-2 right-2 flex items-center gap-1 bg-black/80 border border-gray-800 rounded px-1.5 py-1">
                     {(["eo", "ir", "low-light"] as Sensor[]).map(s => (
                         <button
                             key={s}
                             onClick={() => setSensor(s)}
-                            className={
-                                sensor === s
-                                    ? "text-gray-200"
-                                    : "text-gray-500"
-                            }
+                            className={`
+                                px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider
+                                transition-all
+                                ${sensor === s
+                                    ? "bg-purple-500/30 text-purple-300 border border-purple-500/50"
+                                    : "text-gray-600 hover:text-gray-400 border border-transparent"
+                                }
+                            `}
                         >
-                            {s.toUpperCase()}
+                            {s}
                         </button>
                     ))}
                 </div>
             </div>
 
             {/* METADATA */}
-            <div className="mt-2 text-[11px] text-gray-500 leading-snug">
-                <div className="text-gray-300">
+            <div className="shrink-0 space-y-1">
+                <div className="text-[9px] text-gray-400 font-medium">
                     AO: {currentFocus.region}
                 </div>
-                <div className="text-gray-400">
+                <div className="text-[9px] text-gray-600">
                     {currentFocus.label ?? "ISR UAV asset"}
                 </div>
-                <div className="text-gray-600 mt-0.5">
-                    Simulated UAV ISR · {timestamp}
+                <div className="flex items-center gap-2 text-[8px] text-gray-700">
+                    <span className="uppercase tracking-wider">Simulated UAV ISR</span>
+                    <span>•</span>
+                    <span className="truncate">{timestamp}</span>
                 </div>
             </div>
         </div>

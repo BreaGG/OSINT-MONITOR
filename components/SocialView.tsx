@@ -25,16 +25,16 @@ const ITEMS_PER_PAGE = 20
 
 const PLATFORM_LABELS: Record<SocialPlatform | "all", string> = {
   all: "ALL",
-  telegram: "TELEGRAM",
+  telegram: "TG",
   twitter: "X",
-  youtube: "YOUTUBE",
-  tiktok: "TIKTOK",
+  youtube: "YT",
+  tiktok: "TT",
 }
 
 const VERIFICATION_COLORS: Record<VerificationLevel, string> = {
   verified: "text-green-400",
   unverified: "text-yellow-400",
-  unknown: "text-gray-500",
+  unknown: "text-gray-600",
 }
 
 /* ===================== HELPERS ===================== */
@@ -56,12 +56,10 @@ function matchesFocus(signal: SocialSignal, focus?: SatelliteFocus) {
 
 export default function SocialView({ focus }: { focus?: SatelliteFocus }) {
   const [signals, setSignals] = useState<SocialSignal[]>([])
-  const [platform, setPlatform] =
-    useState<SocialPlatform | "all">("all")
+  const [platform, setPlatform] = useState<SocialPlatform | "all">("all")
   const [page, setPage] = useState(0)
   const [loading, setLoading] = useState(true)
 
-  /* -------- FETCH DATA -------- */
   useEffect(() => {
     fetch("/api/social")
       .then(res => res.json())
@@ -70,12 +68,10 @@ export default function SocialView({ focus }: { focus?: SatelliteFocus }) {
       .finally(() => setLoading(false))
   }, [])
 
-  /* -------- RESET PAGE ON CONTEXT CHANGE -------- */
   useEffect(() => {
     setPage(0)
   }, [focus?.region, platform])
 
-  /* -------- FILTER + SORT -------- */
   const filtered = useMemo(() => {
     return signals
       .filter(s => matchesFocus(s, focus))
@@ -83,7 +79,6 @@ export default function SocialView({ focus }: { focus?: SatelliteFocus }) {
       .sort((a, b) => hoursAgo(a.timestamp) - hoursAgo(b.timestamp))
   }, [signals, focus, platform])
 
-  /* -------- PAGINATION -------- */
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE)
 
   const paginated = useMemo(() => {
@@ -91,18 +86,12 @@ export default function SocialView({ focus }: { focus?: SatelliteFocus }) {
     return filtered.slice(start, start + ITEMS_PER_PAGE)
   }, [filtered, page])
 
-  /* ===================== RENDER ===================== */
-
   return (
-    <div className="flex flex-col h-full max-h-full min-h-0">
+    <div className="flex flex-col h-full">
 
       {/* HEADER */}
-      <div className="border-b border-gray-800 p-2 text-[11px] flex justify-between shrink-0">
-        <div className="uppercase tracking-wide text-gray-400">
-          Social signals
-        </div>
-
-        <div className="flex gap-1">
+      <div className="flex items-center justify-between gap-2 pb-2 border-b border-gray-800 shrink-0">
+        <div className="flex items-center gap-1">
           {(["all", "telegram", "twitter", "youtube", "tiktok"] as const).map(p => (
             <button
               key={p}
@@ -110,32 +99,46 @@ export default function SocialView({ focus }: { focus?: SatelliteFocus }) {
                 setPlatform(p)
                 setPage(0)
               }}
-              className={`px-2 py-0.5 rounded ${platform === p
-                ? "border border-gray-700 text-gray-200"
-                : "text-gray-500 hover:text-gray-300"
-                }`}
+              className={`
+                px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider
+                transition-all
+                ${platform === p
+                  ? "bg-blue-500/20 text-blue-300 border border-blue-500/40"
+                  : "text-gray-600 hover:text-gray-400 border border-gray-800"
+                }
+              `}
             >
               {PLATFORM_LABELS[p]}
             </button>
           ))}
         </div>
+
+        <div className="text-[9px] text-gray-600 font-mono">
+          {filtered.length}
+        </div>
       </div>
 
       {/* BODY */}
-      <div className="flex-1 min-h-0 flex flex-col">
+      <div className="flex-1 min-h-0 flex flex-col mt-2">
 
         {/* SCROLLABLE LIST */}
-        <div className="flex-1 overflow-y-auto p-2 space-y-2">
+        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2">
 
           {loading && (
-            <div className="text-xs text-gray-500 text-center mt-6">
-              Loading social signals…
+            <div className="flex flex-col items-center justify-center h-32 gap-2">
+              <div className="w-4 h-4 border-2 border-gray-700 border-t-cyan-500 rounded-full animate-spin" />
+              <div className="text-[9px] text-gray-600 uppercase tracking-wider">
+                Loading signals...
+              </div>
             </div>
           )}
 
           {!loading && filtered.length === 0 && (
-            <div className="text-xs text-gray-500 text-center mt-6">
-              No relevant social signals detected
+            <div className="flex flex-col items-center justify-center h-32 gap-2">
+              <div className="text-gray-700 text-2xl">○</div>
+              <div className="text-[9px] text-gray-600 uppercase tracking-wider">
+                No signals detected
+              </div>
             </div>
           )}
 
@@ -150,32 +153,43 @@ export default function SocialView({ focus }: { focus?: SatelliteFocus }) {
                     window.open(externalUrl, "_blank", "noopener,noreferrer")
                   }
                 }}
-                className={`border border-gray-800 rounded bg-black/40 p-3
-                  ${externalUrl ? "cursor-pointer hover:border-gray-600" : ""}
+                className={`
+                  border border-gray-800 rounded bg-gray-950/50 p-2
+                  transition-all
+                  ${externalUrl ? "cursor-pointer hover:border-gray-700 hover:bg-gray-900/50" : ""}
                 `}
               >
-                <div className="flex justify-between text-[11px]">
-                  <span className="text-gray-300">{s.region}</span>
-                  <span className={VERIFICATION_COLORS[s.verification]}>
-                    {s.verification.toUpperCase()}
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[9px] text-gray-400 font-medium uppercase tracking-wide">
+                    {s.region}
+                  </span>
+                  <span className={`text-[8px] uppercase tracking-wider font-bold ${VERIFICATION_COLORS[s.verification]}`}>
+                    {s.verification === "verified" ? "✓" : s.verification === "unverified" ? "?" : "—"}
                   </span>
                 </div>
 
-                <div className="mt-1 text-sm text-gray-200 break-words">
+                <div className="text-[10px] text-gray-300 leading-relaxed mb-2 break-words">
                   {s.description}
                 </div>
 
-                <div className="mt-2 flex justify-between text-[10px] text-gray-500">
-                  <span>
-                    {PLATFORM_LABELS[s.platform]} ·{" "}
-                    {Math.floor(hoursAgo(s.timestamp))}h ago
+                <div className="flex items-center justify-between text-[8px]">
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <span className="uppercase tracking-wider font-bold">
+                      {PLATFORM_LABELS[s.platform]}
+                    </span>
+                    <span>•</span>
+                    <span className="font-mono">
+                      {Math.floor(hoursAgo(s.timestamp))}H
+                    </span>
+                  </div>
+                  <span className="text-gray-700 truncate max-w-[120px]">
+                    {new Date(s.timestamp).toLocaleDateString()}
                   </span>
-                  <span>{new Date(s.timestamp).toUTCString()}</span>
                 </div>
 
                 {s.sourceLabel && (
-                  <div className="mt-1 text-[10px] text-gray-600">
-                    Source: {s.sourceLabel}
+                  <div className="mt-1 text-[8px] text-gray-700 uppercase tracking-wider">
+                    SRC: {s.sourceLabel}
                   </div>
                 )}
               </div>
@@ -185,50 +199,50 @@ export default function SocialView({ focus }: { focus?: SatelliteFocus }) {
 
         {/* PAGINATION */}
         {totalPages > 1 && (
-          <div className="
-    shrink-0
-    border-t border-gray-800
-    backdrop-blur
-    px-3 py-2
-    flex items-center justify-between
-    text-[11px] text-gray-500
-  ">
-            {/* PAGE INFO */}
-            <span className="tracking-wide">
-              PAGE {page + 1} / {totalPages}
-            </span>
+          <div className="shrink-0 pt-2 mt-2 border-t border-gray-800">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-[8px] text-gray-600 uppercase tracking-wider font-bold">
+                  Page
+                </span>
+                <div className="px-2 py-0.5 bg-gray-900 border border-gray-800 rounded">
+                  <span className="text-[9px] text-gray-400 font-mono">
+                    {page + 1}/{totalPages}
+                  </span>
+                </div>
+              </div>
 
-            {/* CONTROLS */}
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setPage(p => Math.max(0, p - 1))}
-                disabled={page === 0}
-                className="
-          px-2 py-1
-          border border-gray-800 rounded
-          text-gray-400
-          hover:text-gray-200 hover:border-gray-600
-          disabled:opacity-30 disabled:cursor-not-allowed
-          transition
-        "
-              >
-                ←
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setPage(p => Math.max(0, p - 1))}
+                  disabled={page === 0}
+                  className="
+                    w-6 h-6 flex items-center justify-center rounded
+                    border border-gray-800 bg-black/50
+                    text-gray-500 text-[10px]
+                    hover:border-gray-700 hover:text-gray-400
+                    disabled:opacity-30 disabled:cursor-not-allowed
+                    transition-all
+                  "
+                >
+                  ←
+                </button>
 
-              <button
-                onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-                disabled={page >= totalPages - 1}
-                className="
-          px-2 py-1
-          border border-gray-800 rounded
-          text-gray-400
-          hover:text-gray-200 hover:border-gray-600
-          disabled:opacity-30 disabled:cursor-not-allowed
-          transition
-        "
-              >
-                →
-              </button>
+                <button
+                  onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                  disabled={page >= totalPages - 1}
+                  className="
+                    w-6 h-6 flex items-center justify-center rounded
+                    border border-gray-800 bg-black/50
+                    text-gray-500 text-[10px]
+                    hover:border-gray-700 hover:text-gray-400
+                    disabled:opacity-30 disabled:cursor-not-allowed
+                    transition-all
+                  "
+                >
+                  →
+                </button>
+              </div>
             </div>
           </div>
         )}

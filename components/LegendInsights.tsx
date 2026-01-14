@@ -166,7 +166,7 @@ export default function LegendInsights({ events }: Props) {
 
         snapshot.countries.forEach(c => {
             if (!previous!.countries.includes(c)) {
-                changes.push(`New country: ${formatCountry(c)}`)
+                changes.push(`New: ${formatCountry(c)}`)
             }
         })
     }
@@ -190,131 +190,149 @@ export default function LegendInsights({ events }: Props) {
     /* ===================== RENDER ===================== */
 
     return (
-        <aside className="mt-1 space-y-1.5 text-xs text-gray-200">
+        <aside className="space-y-2 text-[10px]">
+
+            {/* TITLE */}
+            <div className="flex items-center gap-2 pb-1 border-b border-gray-800">
+                <div className="w-1 h-1 bg-cyan-500 rounded-full" />
+                <span className="text-[9px] uppercase tracking-[0.15em] font-bold text-gray-500">
+                    Intelligence Brief
+                </span>
+            </div>
 
             {/* WHAT CHANGED */}
             {changes.length > 0 && (
-                <>
-                    <div>
-                        <div className="uppercase tracking-wide text-gray-400 mb-0.5">
-                            What changed
-                        </div>
-                        <ul className="space-y-0.5 text-gray-300">
-                            {changes.slice(0, MAX_CHANGES).map((c, i) => (
-                                <li key={i}>• {c}</li>
-                            ))}
-                        </ul>
+                <div className="bg-cyan-500/5 border border-cyan-500/20 rounded p-2">
+                    <div className="text-[8px] uppercase tracking-[0.15em] font-bold text-cyan-400 mb-1.5">
+                        Delta Analysis
                     </div>
-                    <div className="border-t border-gray-800" />
-                </>
+                    <ul className="space-y-0.5 text-gray-400">
+                        {changes.slice(0, MAX_CHANGES).map((c, i) => (
+                            <li key={i} className="flex items-start gap-1.5">
+                                <span className="text-cyan-500 mt-0.5">▸</span>
+                                <span>{c}</span>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
             )}
 
             {/* KEY FIGURE */}
-            <div>
-                <div className="uppercase tracking-wide text-gray-400 mb-0.5">
-                    Key Figure (72h)
+            <div className="border border-gray-800 rounded p-2">
+                <div className="text-[8px] uppercase tracking-[0.15em] font-bold text-gray-500 mb-1.5">
+                    Key Figure • 72H
                 </div>
                 {keyFigure ? (
-                    <>
-                        <div className="font-medium">{keyFigure[0]}</div>
-                        <div className="text-gray-500">{keyFigure[1]} mentions</div>
-                    </>
+                    <div className="space-y-0.5">
+                        <div className="font-bold text-gray-200">{keyFigure[0]}</div>
+                        <div className="text-gray-600 font-mono">{keyFigure[1]} mentions</div>
+                    </div>
                 ) : (
-                    <div className="text-gray-500">No data</div>
+                    <div className="text-gray-600">No data</div>
                 )}
             </div>
-
-            <div className="border-t border-gray-800" />
 
             {/* TRENDING */}
-            <div>
-                <div className="uppercase tracking-wide text-gray-400 mb-0.5">
-                    Trending
-                </div>
-                {trendingEntities.map(([n, c]) => (
-                    <div key={n} className="flex justify-between">
-                        <span className="truncate">{n}</span>
-                        <span className="text-gray-500">{c}</span>
+            {trendingEntities.length > 0 && (
+                <div className="border border-gray-800 rounded p-2">
+                    <div className="text-[8px] uppercase tracking-[0.15em] font-bold text-gray-500 mb-1.5">
+                        Trending Entities
                     </div>
-                ))}
-            </div>
-
-            <div className="border-t border-gray-800" />
+                    <div className="space-y-1">
+                        {trendingEntities.map(([n, c]) => (
+                            <div key={n} className="flex items-center justify-between gap-2">
+                                <span className="truncate text-gray-400">{n}</span>
+                                <span className="text-gray-700 font-mono text-[9px]">{c}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* TOP COUNTRY */}
-            <div>
-                <div className="uppercase tracking-wide text-gray-400 mb-0.5">
-                    Top country
+            <div className="border border-gray-800 rounded p-2">
+                <div className="text-[8px] uppercase tracking-[0.15em] font-bold text-gray-500 mb-1.5">
+                    Primary AO
                 </div>
                 {topCountry ? (
-                    <>
-                        <div className="font-medium">{formatCountry(topCountry[0])}</div>
-                        <div className="text-gray-500">{topCountry[1]} events</div>
-                    </>
-                ) : (
-                    <div className="text-gray-500">Multi-country</div>
-                )}
-            </div>
-
-            <div className="border-t border-gray-800" />
-
-            {/* DOMINANT TOPIC */}
-            <div>
-                <div className="uppercase tracking-wide text-gray-400 mb-0.5">
-                    Dominant topic
-                </div>
-                {hasDominantCategory ? (
-                    <div className="flex items-center gap-2">
-                        <span
-                            className="w-2 h-2 rounded-full"
-                            style={{ backgroundColor: categoryColors[topCategory].color }}
-                        />
-                        <span>{categoryColors[topCategory].label}</span>
-                        <span className="text-gray-500">
-                            {Math.round(dominantRatio * 100)}%
-                        </span>
+                    <div className="space-y-0.5">
+                        <div className="font-bold text-gray-200">{formatCountry(topCountry[0])}</div>
+                        <div className="text-gray-600 font-mono">{topCountry[1]} events</div>
                     </div>
                 ) : (
-                    <div className="text-gray-500">None</div>
+                    <div className="text-gray-600">Multi-region</div>
                 )}
             </div>
 
-            <div className="border-t border-gray-800" />
+            {/* DOMINANT TOPIC */}
+            <div className="border border-gray-800 rounded p-2">
+                <div className="text-[8px] uppercase tracking-[0.15em] font-bold text-gray-500 mb-1.5">
+                    Dominant Category
+                </div>
+                {hasDominantCategory ? (
+                    <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                            <span
+                                className="w-2 h-2 rounded-full"
+                                style={{ backgroundColor: categoryColors[topCategory].color }}
+                            />
+                            <span className="text-gray-200 font-medium">{categoryColors[topCategory].label}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="flex-1 h-1 bg-gray-900 rounded-full overflow-hidden">
+                                <div 
+                                    className="h-full rounded-full transition-all"
+                                    style={{ 
+                                        width: `${Math.round(dominantRatio * 100)}%`,
+                                        backgroundColor: categoryColors[topCategory].color
+                                    }}
+                                />
+                            </div>
+                            <span className="text-gray-600 font-mono text-[9px]">
+                                {Math.round(dominantRatio * 100)}%
+                            </span>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="text-gray-600">None detected</div>
+                )}
+            </div>
 
             {/* ACTIVITY */}
-            <div>
-                <div className="uppercase tracking-wide text-gray-400 mb-0.5">
-                    Activity
+            <div className="border border-gray-800 rounded p-2">
+                <div className="text-[8px] uppercase tracking-[0.15em] font-bold text-gray-500 mb-1.5">
+                    Activity Level
                 </div>
-                <div className={`font-medium ${activityLevel === "High"
-                        ? "text-red-400"
-                        : activityLevel === "Medium"
-                            ? "text-yellow-400"
-                            : "text-green-400"
+                <div className="flex items-center justify-between">
+                    <div className={`font-bold uppercase tracking-wider ${
+                        activityLevel === "High"
+                            ? "text-red-400"
+                            : activityLevel === "Medium"
+                                ? "text-yellow-400"
+                                : "text-green-400"
                     }`}>
-                    {activityLevel}
-                </div>
-                <div className="text-gray-500">
-                    ≈ {eventsPerDay.toFixed(1)} / day
+                        {activityLevel}
+                    </div>
+                    <div className="text-gray-600 font-mono text-[9px]">
+                        {eventsPerDay.toFixed(1)}/day
+                    </div>
                 </div>
             </div>
 
-            <div className="border-t border-gray-800" />
-
             {/* SOURCE */}
-            <div>
-                <div className="uppercase tracking-wide text-gray-400 mb-0.5">
-                    Dominant source
+            <div className="border border-gray-800 rounded p-2">
+                <div className="text-[8px] uppercase tracking-[0.15em] font-bold text-gray-500 mb-1.5">
+                    Primary Source
                 </div>
                 {dominantSource ? (
-                    <>
-                        <div className="font-medium">{dominantSource[0]}</div>
-                        <div className="text-gray-500">
-                            {Math.round(dominantSourceRatio * 100)}%
+                    <div className="space-y-0.5">
+                        <div className="font-medium text-gray-200 truncate">{dominantSource[0]}</div>
+                        <div className="text-gray-600 font-mono text-[9px]">
+                            {Math.round(dominantSourceRatio * 100)}% coverage
                         </div>
-                    </>
+                    </div>
                 ) : (
-                    <div className="text-gray-500">No data</div>
+                    <div className="text-gray-600">No data</div>
                 )}
             </div>
         </aside>

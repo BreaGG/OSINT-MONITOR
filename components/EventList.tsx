@@ -11,6 +11,23 @@ type Props = {
 
 const PAGE_SIZE = 20
 
+/* ===================== COUNTRY ACRONYMS ===================== */
+
+const COUNTRY_ACRONYMS: Record<string, string> = {
+  "United States": "USA",
+  "United States of America": "USA",
+  "United Kingdom": "UK",
+  "Russian Federation": "RUS",
+  "South Korea": "ROK",
+  "North Korea": "DPRK",
+  "European Union": "EU",
+  "United Arab Emirates": "UAE",
+}
+
+function formatCountry(name: string) {
+  return COUNTRY_ACRONYMS[name] || name
+}
+
 export default function EventList({ events, onHover }: Props) {
   const [page, setPage] = useState(1)
 
@@ -58,26 +75,34 @@ export default function EventList({ events, onHover }: Props) {
     <div className="flex flex-col">
 
       {/* LIST */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         {Object.entries(grouped).map(([country, countryEvents]) => (
-          <section key={country} className="space-y-2">
+          <section key={country}>
 
-            {/* COUNTRY HEADER */}
-            <div className="flex items-center gap-2 text-[11px] uppercase tracking-wide text-gray-400">
-              <span>{country}</span>
-              <span className="text-gray-600">
-                ({countryEvents.length})
-              </span>
-              <div className="flex-1 h-px bg-gray-800" />
+            {/* COUNTRY HEADER NATO-STYLE */}
+            <div className="flex items-center gap-2 mb-2 pb-1 border-b border-gray-900">
+              <div className="flex items-center gap-1.5">
+                <div className="w-1 h-1 bg-cyan-500 rounded-full" />
+                <span className="text-[9px] uppercase tracking-[0.15em] font-bold text-gray-500">
+                  {formatCountry(country)}
+                </span>
+              </div>
+              <div className="flex items-center gap-1 px-1.5 py-0.5 bg-gray-900 border border-gray-800 rounded">
+                <span className="text-[8px] text-gray-600 font-mono">
+                  {countryEvents.length}
+                </span>
+              </div>
+              <div className="flex-1 h-px bg-gray-900" />
             </div>
 
             {/* EVENTS */}
-            <ul className="space-y-1">
+            <ul className="space-y-0">
               {countryEvents.map(event => (
                 <li
                   key={event.id}
                   onMouseEnter={() => onHover?.(event.id)}
                   onMouseLeave={() => onHover?.(null)}
+                  className="border-b border-gray-900 last:border-0"
                 >
                   <EventCard event={event} />
                 </li>
@@ -87,31 +112,52 @@ export default function EventList({ events, onHover }: Props) {
         ))}
       </div>
 
-      {/* PAGINATION */}
+      {/* PAGINATION NATO-STYLE */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between pt-3 text-sm text-gray-400">
-          <span>
-            Page {page} of {totalPages}
-          </span>
+        <div className="mt-4 pt-3 border-t border-gray-800">
+          <div className="flex items-center justify-between">
+            {/* Page Info */}
+            <div className="flex items-center gap-2">
+              <span className="text-[9px] text-gray-600 uppercase tracking-wider font-bold">
+                Page
+              </span>
+              <div className="px-2 py-0.5 bg-gray-900 border border-gray-800 rounded">
+                <span className="text-[10px] text-gray-400 font-mono">
+                  {page}/{totalPages}
+                </span>
+              </div>
+            </div>
 
-          <div className="flex gap-2">
-            <button
-              disabled={page === 1}
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-              className="px-3 py-1 border border-gray-800 rounded hover:border-gray-600 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              Previous
-            </button>
+            {/* Navigation Buttons */}
+            <div className="flex gap-2">
+              <button
+                disabled={page === 1}
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                className="
+                  px-3 py-1 rounded text-[9px] font-bold uppercase tracking-wider
+                  border border-gray-800 bg-black/50 text-gray-500
+                  hover:border-gray-700 hover:text-gray-400
+                  disabled:opacity-30 disabled:cursor-not-allowed
+                  transition-all
+                "
+              >
+                Prev
+              </button>
 
-            <button
-              disabled={page === totalPages}
-              onClick={() =>
-                setPage(p => Math.min(totalPages, p + 1))
-              }
-              className="px-3 py-1 border border-gray-800 rounded hover:border-gray-600 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              Next
-            </button>
+              <button
+                disabled={page === totalPages}
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                className="
+                  px-3 py-1 rounded text-[9px] font-bold uppercase tracking-wider
+                  border border-gray-800 bg-black/50 text-gray-500
+                  hover:border-gray-700 hover:text-gray-400
+                  disabled:opacity-30 disabled:cursor-not-allowed
+                  transition-all
+                "
+              >
+                Next
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -65,10 +65,12 @@ export default function NewAndEscalatingPanel({
     events,
     preset,
     onSelectRegion,
+    hideTitle = false,
 }: {
     events: Event[]
     preset: Preset
     onSelectRegion?: (region: string) => void
+    hideTitle?: boolean
 }) {
     /* ===================== PRESET FILTER ===================== */
 
@@ -143,115 +145,116 @@ export default function NewAndEscalatingPanel({
 
     const focusSorted = focus
         .sort((a, b) => b.recent - a.recent)
-        .slice(0, 4)
+        .slice(0, 3)
 
-    const newSorted = newlyActive.slice(0, 4)
+    const newSorted = newlyActive.slice(0, 3)
 
     /* ===================== RENDER ===================== */
 
     return (
-        <section className="flex flex-col space-y-2 text-xs text-gray-200">
+        <section className="h-full flex flex-col text-[10px]">
 
-            {/* HEADER */}
-            <div className="flex items-center justify-between">
-                <div className="uppercase tracking-wide text-gray-400">
-                    Focus & Signals
-                    <span className="ml-1 text-[10px] text-gray-500">
-                        [{preset.toUpperCase()}]
-                    </span>
+            {/* HEADER NATO-STYLE */}
+            {!hideTitle && (
+                <div className="flex items-center justify-between gap-2 pb-2 mb-2 border-b border-gray-800">
+                    <div className="flex items-center gap-2">
+                        <div className="w-1 h-1 bg-red-500 rounded-full animate-pulse" />
+                        <span className="text-[9px] uppercase tracking-[0.15em] font-bold text-gray-500">
+                            Priority Signals
+                        </span>
+                    </div>
+                    <div className="px-1.5 py-0.5 bg-gray-900 border border-gray-800 rounded">
+                        <span className="text-[8px] text-gray-600 uppercase tracking-wider font-bold">
+                            {preset}
+                        </span>
+                    </div>
                 </div>
-                <div className="text-[10px] text-gray-500">
-                    Decision support
-                </div>
-            </div>
+            )}
 
             {/* TWO COLUMNS */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1">
+            <div className="grid grid-cols-2 gap-3 flex-1 min-h-0">
 
                 {/* LEFT — FOCUS & PRIORITY */}
-                <div>
-                    <div className="text-[11px] uppercase text-red-400 mb-1">
-                        Focus & priority
+                <div className="flex flex-col">
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                        <div className="w-1 h-1 bg-red-500 rounded-full" />
+                        <span className="text-[8px] uppercase tracking-[0.15em] font-bold text-red-400">
+                            Priority AO
+                        </span>
                     </div>
 
                     {focusSorted.length > 0 ? (
-                        <ul className="space-y-1">
+                        <ul className="space-y-1.5">
                             {focusSorted.map(item => (
                                 <li
                                     key={item.region}
                                     onClick={() => onSelectRegion?.(item.region)}
-                                    className="cursor-pointer hover:text-white"
+                                    className="cursor-pointer group"
                                 >
-                                    {/* LINE 1 — REGION */}
-                                    <div className="flex items-center gap-1 leading-tight">
-                                        <span className="text-red-400">●</span>
-                                        <span className="font-medium uppercase tracking-wide">
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="text-red-500 text-[8px]">●</span>
+                                        <span className="font-bold uppercase tracking-wider text-gray-300 group-hover:text-white transition">
                                             {item.region}
                                         </span>
                                     </div>
-
-                                    {/* LINE 2 — FIXED HEIGHT CONTEXT */}
-                                    <div className="
-    ml-4 text-[10px] text-gray-500
-    truncate whitespace-nowrap overflow-hidden
-  ">
-                                        {item.category} · {item.recent} events · 24h
+                                    <div className="ml-3 text-[9px] text-gray-600 truncate">
+                                        {item.category} • {item.recent} • 24H
                                     </div>
                                 </li>
-
                             ))}
                         </ul>
                     ) : (
-                        <div className="text-[11px] text-gray-500 italic">
-                            No immediate priority regions
+                        <div className="text-[9px] text-gray-700 italic">
+                            No priority regions
                         </div>
                     )}
                 </div>
 
                 {/* RIGHT — NEW ACTIVITY */}
-                <div>
-                    <div className="text-[11px] uppercase text-amber-400 mb-1">
-                        Newly active
+                <div className="flex flex-col">
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                        <div className="w-1 h-1 bg-amber-500 rounded-full" />
+                        <span className="text-[8px] uppercase tracking-[0.15em] font-bold text-amber-400">
+                            New Activity
+                        </span>
                     </div>
 
                     {newSorted.length > 0 ? (
-                        <ul className="space-y-1">
+                        <ul className="space-y-1.5">
                             {newSorted.map(item => (
                                 <li
                                     key={item.region}
                                     onClick={() => onSelectRegion?.(item.region)}
-                                    className="cursor-pointer hover:text-white"
+                                    className="cursor-pointer group"
                                 >
-                                    {/* LINE 1 — REGION */}
-                                    <div className="flex items-center gap-1 leading-tight">
-                                        <span className="text-amber-400">●</span>
-                                        <span className="font-medium uppercase tracking-wide">
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="text-amber-500 text-[8px]">●</span>
+                                        <span className="font-bold uppercase tracking-wider text-gray-300 group-hover:text-white transition">
                                             {item.region}
                                         </span>
                                     </div>
-
-                                    {/* LINE 2 — FIXED HEIGHT CONTEXT */}
-                                    <div className="
-    ml-4 text-[10px] text-gray-500
-    truncate whitespace-nowrap overflow-hidden
-  ">
-                                        {item.category} · first activity · 72h
+                                    <div className="ml-3 text-[9px] text-gray-600 truncate">
+                                        {item.category} • NEW • 72H
                                     </div>
                                 </li>
-
                             ))}
                         </ul>
                     ) : (
-                        <div className="text-[11px] text-gray-500 italic">
-                            No new regions detected
+                        <div className="text-[9px] text-gray-700 italic">
+                            No new regions
                         </div>
                     )}
                 </div>
             </div>
 
             {/* FOOTER */}
-            <div className="pt-2 border-t border-gray-800 text-[10px] text-gray-600">
-                {/* Monitoring {filteredEvents.length} events · last {HOURS_BASELINE}h */}
+            <div className="mt-2 pt-1.5 border-t border-gray-800 flex items-center justify-between">
+                <span className="text-[8px] text-gray-700 uppercase tracking-wider">
+                    Decision Support
+                </span>
+                <span className="text-[8px] text-gray-800 font-mono">
+                    {filteredEvents.length} EVT
+                </span>
             </div>
         </section>
     )

@@ -576,6 +576,7 @@ export default function FullscreenMapPage() {
                                     <FocusTimeline
                                         events={filteredEvents}
                                         onSelectRegion={handleSelectRegion}
+                                        hideTitle={true}
                                     />
                                 </div>,
                                 { bottom: '16px', right: '16px' },
@@ -610,10 +611,11 @@ export default function FullscreenMapPage() {
                                         events={filteredEvents}
                                         preset={preset}
                                         onSelectRegion={handleSelectRegion}
+                                        hideTitle={true}
                                     />
                                 </div>,
                                 { left: '50%', top: '100px' },
-                                { width: '380px', height: '240px' }
+                                { width: '380px', height: '200px' }
                             )}
                         </>
                     )}

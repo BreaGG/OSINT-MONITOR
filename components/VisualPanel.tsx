@@ -34,6 +34,14 @@ const AVAILABLE_MODES: VisualMode[] = [
     "uav",
 ]
 
+const MODE_LABELS: Record<VisualMode, string> = {
+    stream: "BROADCAST",
+    cameras: "VISUAL",
+    satellite: "SAT",
+    social: "SOCIAL",
+    uav: "UAV",
+}
+
 /* ===================== COMPONENT ===================== */
 
 export default function VisualPanel({ satelliteFocus }: Props) {
@@ -52,59 +60,52 @@ export default function VisualPanel({ satelliteFocus }: Props) {
         localStorage.setItem(STORAGE_KEY, mode)
     }, [mode])
 
-    /* -------- MODE → COMPONENT MAP (INSIDE SCOPE) -------- */
+    /* -------- MODE → COMPONENT MAP -------- */
     const MODE_COMPONENTS: Record<VisualMode, ReactNode> = {
         stream: <Stream />,
         cameras: <VisualFeeds />,
         satellite: <SatelliteView focus={satelliteFocus} />,
-        social: <SocialView />,
+        social: <SocialView focus={satelliteFocus} />,
         uav: <UAVView focus={satelliteFocus} />,
     }
 
     return (
-        <section className="flex flex-col h-full overflow-hidden">
-            {/* ===================== MODE SELECTOR ===================== */}
-            <div className="flex items-center gap-2 px-3 py-1.5 border-b border-gray-800 text-[11px]">
-                <span className="text-gray-500 tracking-wide">VIEW</span>
-
-                {AVAILABLE_MODES.map(m => (
-                    <button
-                        key={m}
-                        onClick={() => setMode(m)}
-                        className={`
-              px-2.5 py-1 rounded transition
-              ${mode === m
-                                ? "bg-black text-gray-200 border border-gray-700"
-                                : "text-gray-500 hover:text-gray-300"
-                            }
-            `}
-                    >
-                        {m === "stream" && "BROADCAST"}
-                        {m === "cameras" && "VISUAL SOURCES"}
-                        {m === "satellite" && "SATELLITE"}
-                        {m === "social" && "SOCIAL"}
-                        {m === "uav" && "UAV"}
-                    </button>
-                ))}
-            </div>
-
-            {/* ===================== CONTENT SLOT ===================== */}
-            <div className="flex-1 min-h-0 p-2 overflow-hidden">
-
-                <div
-                    className={`
-      ${mode === "social"
-                            ? "h-[50vh] max-h-[380px]"
-                            : "h-full"
-                        }
-      min-h-0
-    `}
-                >
-                    <div className="h-full scale-[0.92] origin-top">
-                        {MODE_COMPONENTS[mode]}
-                    </div>
+        <section className="flex flex-col h-full bg-gray-950 border border-gray-900 rounded overflow-hidden">
+            {/* HEADER NATO-STYLE */}
+            <div className="flex items-center justify-between gap-2 px-3 py-2 bg-gray-900/50 border-b border-gray-800 shrink-0">
+                <div className="flex items-center gap-2">
+                    <div className="w-1 h-1 bg-purple-500 rounded-full" />
+                    <span className="text-[9px] uppercase tracking-[0.15em] font-bold text-gray-500">
+                        Visual Intelligence
+                    </span>
                 </div>
 
+                {/* MODE SELECTOR */}
+                <div className="flex items-center gap-1">
+                    {AVAILABLE_MODES.map(m => (
+                        <button
+                            key={m}
+                            onClick={() => setMode(m)}
+                            className={`
+                                px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider
+                                transition-all
+                                ${mode === m
+                                    ? "bg-purple-500/20 text-purple-300 border border-purple-500/40"
+                                    : "text-gray-600 hover:text-gray-400 border border-transparent"
+                                }
+                            `}
+                        >
+                            {MODE_LABELS[m]}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* CONTENT AREA */}
+            <div className="flex-1 min-h-0 p-3 overflow-hidden">
+                <div className="h-full">
+                    {MODE_COMPONENTS[mode]}
+                </div>
             </div>
         </section>
     )

@@ -7,20 +7,17 @@ const PRESET_STREAMS = [
     {
         label: "France 24",
         url: "https://www.youtube.com/watch?v=Ap-UM1O9RBU",
-        description:
-            "International public broadcaster. Broad geopolitical and diplomatic coverage.",
+        description: "International public broadcaster. Broad geopolitical and diplomatic coverage.",
     },
     {
         label: "Al Jazeera",
         url: "https://www.youtube.com/watch?v=gCNeDWCI0vo",
-        description:
-            "Middle East–focused coverage with strong conflict and regional reporting.",
+        description: "Middle East–focused coverage with strong conflict and regional reporting.",
     },
     {
         label: "DW News",
         url: "https://www.youtube.com/watch?v=LuKwFajn37U",
-        description:
-            "European perspective with emphasis on politics, economy, and security.",
+        description: "European perspective with emphasis on politics, economy, and security.",
     },
 ]
 
@@ -37,8 +34,6 @@ export default function Stream() {
         ? `${baseEmbed}?autoplay=1&mute=1&controls=1&enablejsapi=1`
         : null
 
-    /* ===================== CONTEXT ===================== */
-
     const activePreset = useMemo(() => {
         return PRESET_STREAMS.find(s => s.url === url) || null
     }, [url])
@@ -47,8 +42,7 @@ export default function Stream() {
         ? activePreset.description
         : "Custom live stream selected by the analyst."
 
-    /* ===================== YT CONTROL ===================== */
-
+    /* -------- YT CONTROL -------- */
     function sendCommand(command: "mute" | "unMute") {
         iframeRef.current?.contentWindow?.postMessage(
             JSON.stringify({
@@ -66,22 +60,15 @@ export default function Stream() {
         setMuted(!muted)
     }
 
-    // Reset mute when stream changes
     useEffect(() => {
         setMuted(true)
     }, [url])
 
-    /* ===================== RENDER ===================== */
-
     return (
-        <section className="flex flex-col gap-2 text-xs text-gray-200">
-            {/* HEADER */}
-            <div className="flex items-center gap-2">
-                <span className="uppercase tracking-wide text-gray-400">
-                    LIVE SIGNAL
-                </span>
-
-                <div className="flex items-center gap-1">
+        <div className="flex flex-col h-full gap-2">
+            {/* CONTROLS */}
+            <div className="flex items-center justify-between gap-2 shrink-0">
+                <div className="flex items-center gap-1 flex-wrap">
                     {PRESET_STREAMS.map(stream => (
                         <button
                             key={stream.label}
@@ -89,32 +76,45 @@ export default function Stream() {
                                 setUrl(stream.url)
                                 setEditing(false)
                             }}
-                            className={`px-2 py-0.5 rounded border transition ${
-                                url === stream.url
-                                    ? "border-gray-500 text-gray-200"
-                                    : "border-gray-800 text-gray-500 hover:text-gray-300"
-                            }`}
+                            className={`
+                                px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider
+                                transition-all
+                                ${url === stream.url
+                                    ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40"
+                                    : "text-gray-600 hover:text-gray-400 border border-gray-800"
+                                }
+                            `}
                         >
-                            {stream.label}
+                            {stream.label.split(" ")[0]}
                         </button>
                     ))}
 
                     <button
                         onClick={() => setEditing(!editing)}
-                        className={`px-2 py-0.5 rounded border transition ${
-                            !activePreset && editing
-                                ? "border-gray-500 text-gray-200"
-                                : "border-gray-800 text-gray-500 hover:text-gray-300"
-                        }`}
+                        className={`
+                            px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider
+                            transition-all
+                            ${!activePreset && editing
+                                ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40"
+                                : "text-gray-600 hover:text-gray-400 border border-gray-800"
+                            }
+                        `}
                     >
                         Custom
                     </button>
                 </div>
 
-                {/* MUTE */}
+                {/* MUTE TOGGLE */}
                 <button
                     onClick={toggleMute}
-                    className="ml-auto text-gray-400 hover:text-gray-100 transition"
+                    className={`
+                        px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider
+                        transition-all
+                        ${!muted
+                            ? "bg-green-500/20 text-green-400 border border-green-500/40"
+                            : "text-gray-600 border border-gray-800"
+                        }
+                    `}
                     title={muted ? "Unmute stream" : "Mute stream"}
                 >
                     {muted ? "Muted" : "Live"}
@@ -123,13 +123,18 @@ export default function Stream() {
 
             {/* CUSTOM INPUT */}
             {editing && (
-                <div className="flex gap-2">
+                <div className="flex gap-2 shrink-0">
                     <input
                         type="url"
-                        placeholder="Paste YouTube URL"
+                        placeholder="PASTE YOUTUBE URL"
                         value={input}
                         onChange={e => setInput(e.target.value)}
-                        className="flex-1 bg-black border border-gray-800 px-2 py-1 text-xs text-gray-200 placeholder-gray-500 focus:outline-none focus:border-gray-600"
+                        className="
+                            flex-1 bg-gray-900 border border-gray-800 rounded
+                            px-2 py-1 text-[10px] text-gray-300
+                            placeholder:text-gray-700 placeholder:uppercase placeholder:tracking-wider
+                            focus:outline-none focus:border-cyan-500/50
+                        "
                     />
                     <button
                         onClick={() => {
@@ -140,7 +145,11 @@ export default function Stream() {
                                 setEditing(false)
                             }
                         }}
-                        className="px-2 text-gray-300 hover:text-gray-100 transition"
+                        className="
+                            px-3 py-1 rounded text-[9px] font-bold uppercase tracking-wider
+                            bg-cyan-600 hover:bg-cyan-700 text-white
+                            transition-all
+                        "
                     >
                         Load
                     </button>
@@ -148,7 +157,7 @@ export default function Stream() {
             )}
 
             {/* PLAYER */}
-            <div className="w-full aspect-video bg-black overflow-hidden rounded border border-gray-800">
+            <div className="flex-1 min-h-0 bg-black rounded border border-gray-800 overflow-hidden">
                 {embedUrl ? (
                     <iframe
                         ref={iframeRef}
@@ -158,16 +167,19 @@ export default function Stream() {
                         allowFullScreen
                     />
                 ) : (
-                    <div className="flex items-center justify-center h-full text-gray-500">
-                        Invalid YouTube URL
+                    <div className="flex flex-col items-center justify-center h-full gap-2">
+                        <div className="text-gray-700 text-2xl">⚠</div>
+                        <div className="text-[9px] text-gray-600 uppercase tracking-wider">
+                            Invalid URL
+                        </div>
                     </div>
                 )}
             </div>
 
             {/* DESCRIPTION */}
-            <div className="text-[11px] text-gray-500 leading-snug">
+            <div className="shrink-0 text-[9px] text-gray-600 leading-relaxed">
                 {description}
             </div>
-        </section>
+        </div>
     )
 }
