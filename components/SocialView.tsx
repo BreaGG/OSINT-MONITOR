@@ -25,10 +25,10 @@ const ITEMS_PER_PAGE = 20
 
 const PLATFORM_LABELS: Record<SocialPlatform | "all", string> = {
   all: "ALL",
-  telegram: "TG",
+  telegram: "TELEGRAM",
   twitter: "X",
-  youtube: "YT",
-  tiktok: "TT",
+  youtube: "YOUTUBE",
+  tiktok: "TIKTOK",
 }
 
 const VERIFICATION_COLORS: Record<VerificationLevel, string> = {

@@ -85,7 +85,7 @@ export default function Stream() {
                                 }
                             `}
                         >
-                            {stream.label.split(" ")[0]}
+                            {stream.label}
                         </button>
                     ))}
 
@@ -109,7 +109,7 @@ export default function Stream() {
                     onClick={toggleMute}
                     className={`
                         px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider
-                        transition-all
+                        transition-all shrink-0
                         ${!muted
                             ? "bg-green-500/20 text-green-400 border border-green-500/40"
                             : "text-gray-600 border border-gray-800"

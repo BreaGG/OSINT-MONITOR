@@ -273,7 +273,7 @@ export default function MapboxMap({
             'high-color': 'rgb(30, 35, 50)', // Azul grisáceo en horizonte
             'horizon-blend': 0.03, // Blend más definido
             'space-color': 'rgb(5, 5, 10)', // Espacio casi negro
-            'star-intensity': 0 // SIN estrellas para look profesional
+            'star-intensity': 0.1 // SIN estrellas para look profesional
           })
         })
       }

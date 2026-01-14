@@ -72,10 +72,10 @@ export default function EventList({ events, onHover }: Props) {
   }
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col h-full">
 
-      {/* LIST */}
-      <div className="space-y-3">
+      {/* LIST CON SCROLL */}
+      <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar space-y-3 pr-1">
         {Object.entries(grouped).map(([country, countryEvents]) => (
           <section key={country}>
 
@@ -112,9 +112,9 @@ export default function EventList({ events, onHover }: Props) {
         ))}
       </div>
 
-      {/* PAGINATION NATO-STYLE */}
+      {/* PAGINATION NATO-STYLE - FIJA EN LA PARTE INFERIOR */}
       {totalPages > 1 && (
-        <div className="mt-4 pt-3 border-t border-gray-800">
+        <div className="shrink-0 mt-3 pt-3 border-t border-gray-800 bg-gray-950">
           <div className="flex items-center justify-between">
             {/* Page Info */}
             <div className="flex items-center gap-2">
