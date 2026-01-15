@@ -1,238 +1,436 @@
 # Global OSINT Monitor
 
-**Global OSINT Monitor** is an intelligence-oriented web platform designed to support real-time situational awareness through the collection, structuring, and visualization of open-source intelligence (OSINT) related to global events.
+**Real-time intelligence platform for global situational awareness through open-source intelligence**
 
-Rather than functioning as a traditional news aggregator, the platform focuses on **transforming fragmented public information into coherent, actionable signals**. It provides users with a clear understanding of *what is happening*, *where it is happening*, and *why it matters* within a broader global context.
+![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)
+![Next.js](https://img.shields.io/badge/Next.js-000000?logo=next.js&logoColor=white)
+![Vercel](https://img.shields.io/badge/Vercel-000000?logo=vercel&logoColor=white)
 
-The system emphasizes clarity, prioritization, and contextual relevance, enabling users to move from raw information to informed insight with minimal friction.
+---
+
+## Overview
+
+Global OSINT Monitor is an **intelligence-grade web platform** designed to transform fragmented public information into coherent, actionable intelligence. Rather than functioning as a traditional news aggregator, it provides structured event intelligence with automated threat assessment, geospatial analysis, and professional briefing generation.
+
+The platform serves **OSINT analysts, security professionals, researchers, and strategic monitoring teams** who need to move from raw information to informed insight with minimal friction.
 
 ![Global OSINT Monitor – Situation Room View](./docs/monitor-overview.png)
 
 ---
 
-## Intelligence-Focused Vision
-
-In an environment defined by information overload, Global OSINT Monitor is built to **reduce noise and surface meaningful signals**.
-
-Thousands of news items are published every hour. Most are isolated, repetitive, or lack contextual framing. This platform addresses that challenge by:
-
-* Structuring unstructured news into discrete events
-* Classifying events by domain and relevance
-* Anchoring events geographically and temporally
-* Highlighting emerging patterns, focus areas, and shifts in global dynamics
-
-The objective is not to replace human analysis, but to **augment it**, offering a continuously updated operational picture that supports faster understanding and better prioritization.
-
----
-
 ## Core Capabilities
 
-### Continuous Situational Awareness
+### **Real-Time Situational Awareness**
+Continuous monitoring and visualization of global events across multiple intelligence domains:
+- Military Operations & Conflicts
+- Political Developments
+- Economic Disruptions
+- Cyber Operations
+- Terrorism & Security Threats
+- Energy & Infrastructure
+- Space & Technology
+- Natural Disasters
 
-The platform maintains a live, evolving view of global events across multiple domains, allowing users to quickly assess the current international landscape at a glance.
+### **Automated Threat Assessment**
+Intelligence-grade analysis engine that generates:
+- **Threat Level Classification** (LOW → CRITICAL)
+- **Pattern Recognition**: Emerging trends and multi-domain operations
+- **Geographic Hotspot Detection**: Activity concentration analysis
+- **Temporal Trend Analysis**: Escalation and de-escalation tracking
+- **Risk Assessment**: Strategic impact evaluation
+- **Tactical Recommendations**: Actionable intelligence outputs
 
-### Structured Event Intelligence
+### **Global State Evaluation (GSE)**
+Proprietary algorithm that assesses overall global stability through:
+- Regional pressure analysis
+- Cross-domain activity correlation
+- Confidence-weighted scoring
+- Historical baseline comparison
 
-Each event is transformed into a structured intelligence unit, including:
+### **Interactive Geospatial Intelligence**
+Advanced mapping system with:
+- Real-time event clustering
+- Heat map visualization
+- Satellite imagery integration
+- Tactical focus modes (UAV simulation)
+- Geographic correlation analysis
 
-* Category and thematic classification
-* Geographic attribution
-* Temporal context
-* Source traceability
-* Extended narrative context
+### **Professional Briefing Generation**
+Automated intelligence report creation with:
+- **Executive Summary**: AI-generated analysis with methodology
+- **Threat Assessment**: 5-level classification system
+- **Event Categorization**: Structured by domain and priority
+- **Source Attribution**: Full citation and verification
+- **Export to PDF**: Professional, print-ready intelligence reports
+- **UNCLASSIFIED** marking (OSINT-appropriate)
 
-This structure enables both high-level monitoring and detailed drill-down.
-
-### Global Context & Signal Assessment
-
-Beyond individual events, the system evaluates **aggregate patterns** to infer the overall global state. This includes identifying:
-
-* Regions under increased activity
-* Domains showing abnormal concentration
-* Areas requiring closer monitoring or analytical focus
-
-This layer provides essential context for understanding how isolated events relate to broader trends.
-
-### Visual and Spatial Exploration
-
-An interactive global map enables immediate spatial comprehension of events, while supporting components (timelines, focus panels, signal summaries) help users understand **when and where attention should be directed**.
-
-### Focused Briefings & Event Views
-
-Detailed event pages consolidate all relevant information into a concise briefing format. Users can quickly grasp:
-
-* The core facts
-* The intelligence assessment
-* Why the event is relevant in the current global context
-
-This design supports fast consumption without sacrificing depth.
-
-### Persistence & Historical Perspective
-
-All processed events are stored persistently, allowing users to review past developments and understand how situations evolve over time. This supports longitudinal analysis rather than ephemeral news consumption.
-
----
-
-## How to Read This Monitor
-
-*A briefing-oriented guide*
-
-Global OSINT Monitor is not designed to be consumed linearly.
-It is meant to be **read like an intelligence briefing**, where each panel answers a specific analytical question.
-
-The recommended reading flow is **top-down, left-to-right**, focusing on *signals first*, *details later*.
+### **Mission Control Interface**
+Dedicated analytical workspace featuring:
+- **New & Escalating Events Panel**: Priority signal detection
+- **Focus Timeline**: Temporal pattern analysis
+- **Market Indicators**: Economic context correlation
+- **Visual Panels**: Satellite and UAV perspective views
+- **Adaptive Filtering**: Category, country, and search-based refinement
 
 ---
 
-### 1. Global Status — *What is the overall situation?*
+## Intelligence Workflow
 
-At the top of the interface, the **Global Status Indicator** summarizes the current state of the international environment.
-
-This is not a simple counter of events.
-It reflects **aggregated pressure across regions and categories**, derived from severity, volume, and diversity of events.
-
-Key questions answered here:
-
-* Is the global situation stable or deteriorating?
-* Is activity localized or spreading across regions?
-* How confident is the assessment based on available data?
-
-Hovering the status reveals *why* the system is in its current state.
-
----
-
-### 2. Map View — *Where is activity concentrating?*
-
-The map is the **primary situational awareness layer**.
-
-Each marker represents a structured event, not raw news.
-Density, clustering, and geographic repetition matter more than individual points.
-
-Use the map to:
-
-* Identify hotspots and emerging areas of interest
-* Shift analytical focus geographically
-* Correlate spatial patterns with other panels (timeline, focus, UAV, satellite)
-
-Clicking a region propagates focus across the system.
+```
+┌─────────────────────────────────────────────────────┐
+│ 1. COLLECTION                                       │
+│    Open-source news aggregation from global media   │
+└─────────────────┬───────────────────────────────────┘
+                  │
+┌─────────────────▼───────────────────────────────────┐
+│ 2. PROCESSING                                       │
+│    Event extraction, classification, geolocation    │
+└─────────────────┬───────────────────────────────────┘
+                  │
+┌─────────────────▼───────────────────────────────────┐
+│ 3. ANALYSIS                                         │
+│    Pattern detection, threat assessment, GSE calc   │
+└─────────────────┬───────────────────────────────────┘
+                  │
+┌─────────────────▼───────────────────────────────────┐
+│ 4. VISUALIZATION                                    │
+│    Map, timeline, panels, mission control           │
+└─────────────────┬───────────────────────────────────┘
+                  │
+┌─────────────────▼───────────────────────────────────┐
+│ 5. DISSEMINATION                                    │
+│    Briefing generation, PDF export, sharing         │
+└─────────────────────────────────────────────────────┘
+```
 
 ---
 
-### 3. Focus & Signals Panel — *Where should attention go now?*
+## Key Features
 
-This panel answers a critical intelligence question:
+### **Automated Intelligence Collection**
+- Multi-source event ingestion
+- Real-time processing pipeline
+- Duplicate detection and merging
+- Source verification
 
-> **“If I only had 30 seconds, where should I look?”**
+### **AI-Powered Analysis**
+- Automated threat level calculation
+- Emerging pattern detection
+- Geographic clustering algorithms
+- Temporal trend identification
+- Multi-domain correlation
 
-It highlights:
+### **Focus & Priority System**
+- **Hot Zones**: Areas requiring immediate attention
+- **New Activity**: First-time or re-emerging signals
+- **Escalation Detection**: Activity intensity monitoring
+- **Focus Propagation**: Cross-panel analytical linking
 
-* **Focus & Priority**: regions with sustained or intense recent activity in sensitive domains
-* **New Activity**: regions showing first-time or re-emerging signals within the monitoring window
+### **Intelligence Dashboards**
+- **Global State Indicator**: Overall situation assessment
+- **Category Distribution**: Domain-specific breakdowns
+- **Geographic Heat Maps**: Spatial concentration analysis
+- **Temporal Timelines**: Event sequencing and patterns
 
-This is not escalation detection by volume alone.
-It is **attention guidance**, designed to surface *relevance*, not alarm.
+### **Professional Briefing System**
+- **Configurable Exports**: Time window, countries, categories
+- **Executive Summary**: Key findings, patterns, risks
+- **Source Citations**: Full attribution for every event
+- **PDF Generation**: Print-ready intelligence reports
+- **Shareable Links**: Collaborative analysis support
 
----
-
-### 4. Timeline — *Is this noise or a pattern?*
-
-The timeline provides **temporal context**.
-
-It helps distinguish:
-
-* One-off events from sustained activity
-* Short spikes from developing trends
-* Recent developments versus fading signals
-
-Scrolling the timeline allows analysts to observe **how attention should evolve over time**.
-
----
-
-### 5. Visual Panels (Satellite / UAV / Streams) — *Contextual grounding*
-
-These panels do **not claim live ISR capability**.
-
-Their purpose is contextual:
-
-* Satellite view → strategic geographic understanding
-* UAV view → tactical focus simulation
-* Streams → narrative and broadcast context
-
-They help anchor abstract signals to **real-world geography and media environments**.
-
----
-
-### 6. Event Detail / Briefing Mode — *Why does this matter?*
-
-Individual event pages are designed as **mini briefings**, not articles.
-
-Each briefing consolidates:
-
-* Facts and source context
-* Automated intelligence assessment
-* “Why this event matters” in the current global situation
-
-The goal is rapid understanding, not exhaustive reading.
+### **Advanced Filtering**
+- Category-based filtering
+- Country-specific views
+- Text search across all events
+- Preset analytical focuses (Conflicts, Strategic)
+- Combined filter modes
 
 ---
 
-## Design Philosophy
+## Technology Stack
 
-Global OSINT Monitor is guided by the following principles:
+### Frontend
+- **Framework**: Next.js 14 (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **Mapping**: Mapbox GL JS
+- **Charts**: Recharts
+- **PDF Generation**: jsPDF + jspdf-autotable
 
-* **Signal over noise**
-  Prioritize relevance, patterns, and context over raw volume.
+### Backend
+- **API**: Next.js API Routes (serverless)
+- **Database**: JSON-based event store (extensible)
+- **Deployment**: Vercel (edge network)
 
-* **Context-first intelligence**
-  Events are meaningful only when understood within a wider operational picture.
-
-* **Automation with transparency**
-  Processes are automated, but their outputs remain interpretable and explainable.
-
-* **Analyst-centric design**
-  Interfaces are built to support rapid comprehension and decision support, not passive reading.
-
-* **Extensible by nature**
-  The system is designed as a foundation for future analytical layers and workflows.
-
----
-
-## Intended Use Cases
-
-The platform is particularly suited for:
-
-* OSINT analysts and practitioners
-* Strategic and geopolitical monitoring
-* Risk and security awareness contexts
-* Journalistic and academic research
-* Educational demonstrations of intelligence workflows
-* Portfolio or showcase projects focused on intelligence systems
-
-While generic by design, its structure aligns closely with real-world intelligence monitoring needs.
+### Intelligence Engine
+- **GSE Algorithm**: Custom global state evaluation
+- **Pattern Detection**: Statistical clustering
+- **Threat Assessment**: Multi-factor analysis
+- **Source Processing**: Text extraction and classification
 
 ---
 
-## Project Status
+## Usage Guide
 
-The project is **stable, functional, and operational**.
+### **Mission Control (Desktop)**
+The primary analytical interface for comprehensive monitoring:
 
-It represents a complete end-to-end intelligence workflow, from ingestion and structuring to visualization and contextual analysis. The platform is suitable both as a standalone monitoring tool and as a foundation for further experimentation or real-world adaptation.
+1. **Header**: Global state, presets, filters, export
+2. **Left Sidebar**: Legend, category insights
+3. **Center Map**: Interactive geospatial view
+4. **Right Panel**: Event feed with live updates
+5. **Bottom Panels**: Visual context (satellite/UAV), signals (new/escalating), timeline
+
+**Reading Order**: Status → Map → Signals → Timeline → Feed
+
+### **Map View (Mobile)**
+Simplified touch-optimized interface:
+- Full-screen interactive map
+- Bottom sheet with event list
+- Swipe gestures for navigation
+- Filter drawer for refinement
+
+### **Briefing Generator**
+Create professional intelligence reports:
+
+1. Click **"Export"** in header
+2. Configure briefing parameters:
+   - Time window (6h / 24h / 72h)
+   - Countries (multi-select)
+   - Categories (multi-select)
+   - Additional components (signals, hot zones, timeline)
+3. Review configuration and event count
+4. Generate briefing (opens in new window)
+5. Export to PDF for distribution
+
+**Briefing Includes:**
+- Classification header (UNCLASSIFIED)
+- Executive summary with methodology
+- Threat assessment (5 levels)
+- Key findings and emerging patterns
+- Risk evaluation by domain
+- Tactical recommendations
+- Detailed event listings with sources
+- Geographic distribution analysis
+- Data source attribution
+- Professional disclaimer
+
+---
+
+## Intelligence Methodology
+
+### Event Classification
+Events are categorized using a multi-factor system:
+- **Domain**: Primary area of impact
+- **Severity**: Assessed impact level
+- **Geographic Scope**: Local, regional, or global
+- **Temporal Relevance**: Ongoing vs historical
+
+### Threat Assessment Levels
+```
+CRITICAL  >80% conflict ratio OR >50% terrorism ratio
+HIGH      >60% conflict ratio OR >30% terrorism ratio  
+ELEVATED  >40% conflict ratio OR >20% terrorism ratio
+MODERATE  Default baseline state
+LOW       Minimal detected activity
+```
+
+### Pattern Detection
+Automated identification of:
+- **Multi-domain operations**: ≥5 active categories
+- **Regional instability**: Conflict ratio >30%
+- **Cyber escalation**: >5 cyber events
+- **Temporal acceleration**: Recent activity >60% of total
+
+### Global State Evaluation (GSE)
+Proprietary algorithm calculating:
+```
+GSE Score = Σ(Regional Pressure × Domain Weight × Recency Factor)
+
+Where:
+- Regional Pressure = Event count × Severity
+- Domain Weight = Category criticality (conflict=1.5, terrorism=1.3, etc.)
+- Recency Factor = Time decay function
+```
+
+**States:**
+- **STABLE** (GSE < 30): Normal activity levels
+- **ELEVATED** (30-60): Increased monitoring required
+- **HEIGHTENED** (60-90): Significant activity detected
+- **CRITICAL** (>90): Major crisis or multiple concurrent events
+
+---
+
+## Project Structure
+
+```
+global-osint-monitor/
+├── app/
+│   ├── page.tsx              # Mission Control (desktop)
+│   ├── map/
+│   │   └── page.tsx          # Mobile map view
+│   ├── briefing/
+│   │   └── page.tsx          # Briefing generator page
+│   └── api/
+│       ├── events/           # Event data endpoints
+│       └── briefing/
+│           └── pdf/          # PDF generation API
+├── components/
+│   ├── MapboxMap.tsx         # Interactive geospatial view
+│   ├── EventList.tsx         # Event feed component
+│   ├── GlobalStateIndicator.tsx  # GSE display
+│   ├── NewAndEscalatingPanel.tsx # Priority signals
+│   ├── FocusTimeline.tsx     # Temporal analysis
+│   ├── VisualPanel.tsx       # Satellite/UAV views
+│   ├── MarketSnapshot.tsx    # Economic indicators
+│   ├── BriefingExportModal.tsx   # Export configurator
+│   └── ...
+├── lib/
+│   ├── gse.ts                # Global State Evaluation engine
+│   ├── eventToGSE.ts         # Event processing logic
+│   ├── pdfGenerator.ts       # Professional PDF creation
+│   ├── types.ts              # TypeScript definitions
+│   └── categoryColors.ts     # Visual configuration
+├── public/
+│   └── events/               # Event data storage
+└── docs/
+    └── screenshots/          # Documentation assets
+```
+
+---
+
+## Advanced Features
+
+### **Analytical Focus System**
+Click any region to propagate focus across all panels:
+- Map centers on region
+- Timeline filters to region
+- Signals panel highlights regional activity
+- Event feed shows regional events only
+
+### **Visual Context Panels**
+- **Satellite View**: Strategic geographic perspective
+- **UAV Simulation**: Tactical focus visualization
+- **Stream View**: Media context (when available)
+
+### **Civil Signals Analysis**
+Supplementary indicators tracked:
+- **Conflict Signals**: Displacement, casualties, military movements
+- **Disaster Signals**: Natural disaster impacts
+- **Social Signals**: Protests, civil unrest, economic disruption
+
+### **Live Updates**
+- Automatic event refresh
+- Real-time map updates
+- Dynamic GSE recalculation
+- Timestamp synchronization
+
+---
+
+## Use Cases
+
+### OSINT Analysts
+- Continuous global monitoring
+- Pattern recognition and correlation
+- Threat assessment generation
+- Professional briefing creation
+
+### Security Professionals
+- Risk monitoring for operations
+- Geographic threat mapping
+- Situational awareness dashboards
+- Client reporting automation
+
+### Researchers & Academics
+- Geopolitical trend analysis
+- Historical event correlation
+- Methodology demonstration
+- Educational intelligence workflows
+
+### Journalists
+- Story discovery and tracking
+- Source verification
+- Geographic context mapping
+- Background research
+
+---
+
+## Roadmap
+
+### Current Version (v1.0)
+- Real-time event monitoring
+- Interactive geospatial mapping
+- Global State Evaluation (GSE)
+- Mission Control interface
+- Briefing generation system
+- Professional PDF export
+- Mobile-responsive design
+
+---
+
+## Security & Privacy
+
+### Data Handling
+- All data from **public sources only**
+- No user tracking or analytics
+- No personal information collected
+- Client-side processing where possible
+
+### Classification
+- All outputs marked **UNCLASSIFIED**
+- Appropriate for open-source use
+- No classified data processed
+- Public distribution approved
 
 ---
 
 ## Disclaimer
 
-This project is intended **solely for educational, research, and demonstration purposes**.
+**For Educational, Research, and Demonstration Purposes Only**
 
-Global OSINT Monitor processes information exclusively from publicly available sources. It does not generate original intelligence, nor does it verify, validate, or guarantee the accuracy, completeness, or reliability of the information presented.
+Global OSINT Monitor processes information exclusively from **publicly available sources**. It does not generate original intelligence, nor does it verify, validate, or guarantee the accuracy, completeness, or reliability of the information presented.
 
-All content reflects the original sources and should be interpreted accordingly.
-The platform is **not intended for operational, legal, political, or security decision-making**.
+All content reflects original sources and should be interpreted accordingly.
 
-The author assumes no responsibility for any actions taken based on the information displayed.
+**This platform is NOT intended for:**
+- Operational military or security decision-making
+- Legal or law enforcement actions
+- Political or governmental policy formation
+- Emergency response or crisis management
+- Any high-stakes decision-making without independent verification
+
+The author assumes **no responsibility** for any actions taken based on information displayed by this system.
 
 ---
 
 ## License
 
 MIT License
+
+Copyright (c) 2025
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+**Built with intelligence. Powered by open source.**
+
+Global OSINT Monitor – *Transforming public information into actionable intelligence*
