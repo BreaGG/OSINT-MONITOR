@@ -527,6 +527,24 @@ All analytical products should be considered inputs for human analysis, not fina
 - Professional PDF export capability
 - Mobile-responsive design
 
+### Planned Enhancements (v1.1)
+- Machine learning event classification refinement
+- Sentiment analysis integration for narrative assessment
+- Multi-language source processing
+- Enhanced export formats (DOCX, Excel, JSON)
+- Historical database expansion (12-month archive)
+- Custom alert configuration by user
+
+### Future Development (v2.0)
+- Predictive analytics using historical patterns
+- Network graph analysis for actor relationships
+- API access for external tool integration
+- Collaborative annotation and sharing
+- Advanced statistical analysis tools
+- Real-time streaming event updates
+
+---
+
 ## Disclaimer
 
 **For Educational, Research, and Demonstration Purposes Only**
@@ -549,20 +567,6 @@ Users are responsible for:
 - Compliance with applicable laws and regulations
 - Ethical use of intelligence products
 - Proper handling and classification of outputs
-
----
-
-## License
-
-MIT License
-
-Copyright (c) 2025
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ---
 
