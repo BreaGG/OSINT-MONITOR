@@ -2,13 +2,6 @@
 
 **Real-time intelligence platform for global situational awareness through open-source intelligence**
 
-![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
-![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)
-![Next.js](https://img.shields.io/badge/Next.js-000000?logo=next.js&logoColor=white)
-![Vercel](https://img.shields.io/badge/Vercel-000000?logo=vercel&logoColor=white)
-
----
-
 ## Overview
 
 Global OSINT Monitor is an **intelligence-grade web platform** designed to transform fragmented public information into coherent, actionable intelligence. Rather than functioning as a traditional news aggregator, it provides structured event intelligence with automated threat assessment, geospatial analysis, and professional briefing generation.
